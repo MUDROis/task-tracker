@@ -11,6 +11,15 @@
     let tasks = [];
     let users = [];
 
+    // ---------- Конфигурация EmailJS (бесплатно: https://www.emailjs.com) ----------
+    // 1. Зарегистрируйтесь на emailjs.com
+    // 2. Создайте Email Service (Gmail, Outlook и т.д.) → скопируйте Service ID
+    // 3. Создайте Email Template с переменными: to_email, to_name, task_title, from_name
+    // 4. Вставьте значения ниже
+    const EMAILJS_PUBLIC_KEY = 'lb2TPZ78OFd1qVw_Z';   // ваш Public Key (Account → API Keys)
+    const EMAILJS_SERVICE_ID = 'service_ikd99cp';   // ваш Service ID (Email Services)
+    const EMAILJS_TEMPLATE_ID = 'template_49sirvf';  // ваш Template ID (Email Templates)
+
     // DOM-элементы
     const loginPage = document.getElementById('loginPage');
     const mainPage = document.getElementById('mainPage');
@@ -160,6 +169,10 @@
         } else {
             console.log('Сессия не найдена, показываем логин');
             showLoginPage();
+        }
+        // Инициализация EmailJS
+        if (EMAILJS_PUBLIC_KEY && typeof emailjs !== 'undefined') {
+            try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch (e) {}
         }
     }
 
@@ -607,9 +620,24 @@
             task.updatedAt = new Date().toISOString();
             saveData();
             renderBoard();
+            sendEmailNotification(selected, task.title);
             modal.remove();
         });
         modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+    }
+
+    // ---------- Уведомления по почте ----------
+    function sendEmailNotification(toLogin, taskTitle) {
+        if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) return;
+        if (typeof emailjs === 'undefined') return;
+        try {
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                to_email: toLogin + '@example.com',
+                to_name: toLogin,
+                task_title: taskTitle,
+                from_name: currentUser.login
+            });
+        } catch (e) {}
     }
 
     // ---------- Популяция select исполнителей ----------
