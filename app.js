@@ -18,7 +18,7 @@
     // 4. Вставьте значения ниже
     const EMAILJS_PUBLIC_KEY = 'lb2TPZ78OFd1qVw_Z';   // ваш Public Key (Account → API Keys)
     const EMAILJS_SERVICE_ID = 'service_ikd99cp';   // ваш Service ID (Email Services)
-    const EMAILJS_TEMPLATE_ID = 'template_49sirvf';  // ваш Template ID (Email Templates)
+    const EMAILJS_TEMPLATE_ID = 'template_vd7pyer';  // ваш Template ID (Email Templates)
 
     // DOM-элементы
     const loginPage = document.getElementById('loginPage');
