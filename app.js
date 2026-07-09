@@ -625,6 +625,7 @@
         document.body.appendChild(modal);
         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
             const selected = document.getElementById('delegateSelect').value;
+            console.log('Delegate: выбран сотрудник', selected);
             task.assignedTo = selected;
             task.delegated = true;
             task.updatedAt = new Date().toISOString();
@@ -638,6 +639,7 @@
 
     // ---------- Уведомления по почте ----------
     function sendEmailNotification(toLogin, taskTitle) {
+        console.log('EmailJS: sendEmailNotification вызвана, toLogin=' + toLogin);
         if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
             console.warn('EmailJS: не заполнены ключи конфигурации');
             return;
