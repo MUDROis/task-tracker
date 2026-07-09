@@ -82,7 +82,7 @@
 
     function loadData() {
         if (!isLocalStorageAvailable()) {
-            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6' }];
+            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6', email: '' }];
             tasks = [];
             return;
         }
@@ -95,10 +95,11 @@
                 users = users.map(u => ({
                     ...u,
                     role: u.role || 'employee',
-                    color: u.color || DEFAULT_COLORS[users.indexOf(u) % DEFAULT_COLORS.length]
+                    color: u.color || DEFAULT_COLORS[users.indexOf(u) % DEFAULT_COLORS.length],
+                    email: u.email || ''
                 }));
             } else {
-                users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6' }];
+                users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6', email: '' }];
                 tasks = [];
                 saveData();
             }
@@ -106,7 +107,7 @@
             tasks.forEach(t => { if (t.status === 'delegated') t.status = 'in_progress'; });
         } catch (e) {
             console.error('Ошибка загрузки данных:', e);
-            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6' }];
+            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6', email: '' }];
             tasks = [];
             saveData();
         }
@@ -239,7 +240,7 @@
             <div class="user-row" data-user="${u.login}">
                 <div class="user-row-view">
                     <span class="user-color-dot" style="background:${u.color || '#94a3b8'}"></span>
-                    <span><strong>${u.login}</strong> (${u.role === 'admin' ? 'Руководитель' : 'Сотрудник'})</span>
+                    <span><strong>${u.login}</strong> (${u.role === 'admin' ? 'Руководитель' : 'Сотрудник'})${u.email ? ' · ' + u.email : ''}</span>
                     <div class="user-row-actions">
                         ${!isAdmin ? `<button class="btn outline btn-edit-user" data-login="${u.login}" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>` : ''}
                         ${!isAdmin ? `<button class="btn outline btn-delete-user" data-login="${u.login}" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>` : ''}
@@ -292,6 +293,10 @@
                         <input type="password" id="editPassword" placeholder="••••••">
                     </div>
                     <div class="form-group">
+                        <label for="editEmail">Email для уведомлений</label>
+                        <input type="email" id="editEmail" value="${escapeHtml(user.email || '')}" placeholder="user@example.com">
+                    </div>
+                    <div class="form-group">
                         <label for="editColor">Цвет на доске</label>
                         <div class="color-picker-row">
                             <input type="color" id="editColor" value="${user.color || '#3b82f6'}">
@@ -324,6 +329,7 @@
             const newLogin = modal.querySelector('#editLogin').value.trim();
             const newPassword = modal.querySelector('#editPassword').value;
             const newColor = colorInput.value;
+            const newEmail = modal.querySelector('#editEmail').value.trim();
 
             if (!newLogin) {
                 alert('Логин не может быть пустым');
@@ -337,6 +343,7 @@
             const oldLogin = user.login;
             user.login = newLogin;
             user.color = newColor;
+            user.email = newEmail;
             if (newPassword) {
                 user.passwordHash = hashPassword(newPassword);
             }
@@ -367,6 +374,7 @@
         const login = newLogin.value.trim();
         const password = newPassword.value.trim();
         const color = document.getElementById('newUserColor').value;
+        const email = document.getElementById('newUserEmail').value.trim();
         if (!login || !password) return;
         if (users.find(u => u.login === login)) {
             alert('Пользователь с таким логином уже существует');
@@ -376,12 +384,14 @@
             login: login,
             passwordHash: hashPassword(password),
             role: 'employee',
-            color: color
+            color: color,
+            email: email
         });
         saveData();
         renderUsersList();
         newLogin.value = '';
         newPassword.value = '';
+        document.getElementById('newUserEmail').value = '';
         populateAssigneeSelect();
     });
 
@@ -630,9 +640,12 @@
     function sendEmailNotification(toLogin, taskTitle) {
         if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) return;
         if (typeof emailjs === 'undefined') return;
+        const user = users.find(u => u.login === toLogin);
+        const toEmail = user && user.email ? user.email : '';
+        if (!toEmail) return;
         try {
             emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                to_email: toLogin + '@example.com',
+                to_email: toEmail,
                 to_name: toLogin,
                 task_title: taskTitle,
                 from_name: currentUser.login
