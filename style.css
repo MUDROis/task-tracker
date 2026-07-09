@@ -191,6 +191,15 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
+.column[data-status="urgent"] {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.column[data-status="urgent"] .column-header {
+    border-bottom-color: #fca5a5;
+}
+
 .column-header {
     display: flex;
     justify-content: space-between;
@@ -239,6 +248,16 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
+.task-card .task-delegate-arrow {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.5rem;
+    font-size: 1rem;
+    color: #3b82f6;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .task-card.priority-high {
     border-left-color: #ef4444;
 }
@@ -282,6 +301,13 @@ body {
     transition: background 0.15s;
 }
 
+.task-card .task-actions .btn-done {
+    background: #dcfce7;
+    color: #166534;
+}
+.task-card .task-actions .btn-done:hover {
+    background: #bbf7d0;
+}
 .task-card .task-actions .btn-delegate {
     background: #dbeafe;
     color: #1e40af;
@@ -289,12 +315,12 @@ body {
 .task-card .task-actions .btn-delegate:hover {
     background: #bfdbfe;
 }
-.task-card .task-actions .btn-done {
-    background: #dcfce7;
-    color: #166534;
+.task-card .task-actions .btn-restore {
+    background: #fef3c7;
+    color: #92400e;
 }
-.task-card .task-actions .btn-done:hover {
-    background: #bbf7d0;
+.task-card .task-actions .btn-restore:hover {
+    background: #fde68a;
 }
 .task-card .task-actions .btn-delete {
     background: #fee2e2;
@@ -317,13 +343,13 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15,23,42,0.6);
-    backdrop-filter: blur(4px);
+    background: transparent;
     align-items: center;
     justify-content: center;
     z-index: 1000;
     padding: 1rem;
 }
+
 
 .modal.active {
     display: flex;
@@ -403,4 +429,71 @@ body {
 ::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 8px;
+}
+
+/* ===== USER LIST ===== */
+.user-row {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+.user-row-view {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.user-color-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid rgba(0,0,0,0.1);
+}
+.user-row-view span:not(.user-color-dot) {
+    flex: 1;
+}
+.user-row-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+/* ===== COLOR PICKER ===== */
+.color-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.color-picker-row input[type="color"] {
+    width: 40px;
+    height: 36px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    padding: 2px;
+}
+.color-preview {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+.color-presets {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+.color-preset-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+    padding: 0;
+}
+.color-preset-btn:hover {
+    border-color: #1e293b;
+    transform: scale(1.15);
 }

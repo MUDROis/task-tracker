@@ -6,14 +6,6 @@
 (function() {
     'use strict';
 
-    // ---------- Конфигурация EmailJS ----------
-    const EMAILJS_CONFIG = {
-        serviceID: 'service_xxxxx',
-        templateID: 'template_xxxxx',
-        publicKey: 'user_xxxxx'
-    };
-    const EMAILJS_ENABLED = EMAILJS_CONFIG.serviceID !== 'service_xxxxx';
-
     // ---------- Глобальные переменные ----------
     let currentUser = null;
     let tasks = [];
@@ -49,6 +41,21 @@
     const newLogin = document.getElementById('newLogin');
     const newPassword = document.getElementById('newPassword');
 
+    // ---------- Color picker interactivity for add-user form ----------
+    const newUserColorInput = document.getElementById('newUserColor');
+    if (newUserColorInput) {
+        const newUserColorPreview = newUserColorInput.closest('.color-picker-row').querySelector('.color-preview');
+        newUserColorInput.addEventListener('input', function() {
+            newUserColorPreview.style.background = this.value;
+        });
+        document.querySelectorAll('#addUserForm .color-preset-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                newUserColorInput.value = this.dataset.color;
+                newUserColorPreview.style.background = this.dataset.color;
+            });
+        });
+    }
+
     // ---------- Работа с localStorage (с защитой) ----------
     function isLocalStorageAvailable() {
         try {
@@ -62,10 +69,11 @@
         }
     }
 
+    const DEFAULT_COLORS = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
+
     function loadData() {
         if (!isLocalStorageAvailable()) {
-            // Если localStorage недоступен, создаём фейковые данные в памяти
-            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin' }];
+            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6' }];
             tasks = [];
             return;
         }
@@ -75,16 +83,21 @@
                 const data = JSON.parse(stored);
                 tasks = data.tasks || [];
                 users = data.users || [];
-                // Гарантируем роль
-                users = users.map(u => ({ ...u, role: u.role || 'employee' }));
+                users = users.map(u => ({
+                    ...u,
+                    role: u.role || 'employee',
+                    color: u.color || DEFAULT_COLORS[users.indexOf(u) % DEFAULT_COLORS.length]
+                }));
             } else {
-                users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin' }];
+                users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6' }];
                 tasks = [];
                 saveData();
             }
+            // Миграция: старый статус "delegated" → "in_progress"
+            tasks.forEach(t => { if (t.status === 'delegated') t.status = 'in_progress'; });
         } catch (e) {
             console.error('Ошибка загрузки данных:', e);
-            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin' }];
+            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6' }];
             tasks = [];
             saveData();
         }
@@ -148,14 +161,6 @@
             console.log('Сессия не найдена, показываем логин');
             showLoginPage();
         }
-        // Инициализация EmailJS только если включено
-        if (EMAILJS_ENABLED && typeof emailjs !== 'undefined') {
-            try {
-                emailjs.init(EMAILJS_CONFIG.publicKey);
-            } catch (e) {
-                console.warn('EmailJS не инициализирован:', e);
-            }
-        }
     }
 
     // ---------- Страницы ----------
@@ -215,13 +220,22 @@
     });
 
     function renderUsersList() {
-        usersList.innerHTML = users.map(u => `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid #e2e8f0;">
-                <span><strong>${u.login}</strong> (${u.role === 'admin' ? 'Руководитель' : 'Сотрудник'})</span>
-                ${u.login !== 'admin' ? `<button class="btn outline" data-login="${u.login}" style="padding:0.2rem 0.8rem;font-size:0.8rem;">Удалить</button>` : ''}
-            </div>
-        `).join('');
-        usersList.querySelectorAll('[data-login]').forEach(btn => {
+        usersList.innerHTML = users.map(u => {
+            const isAdmin = u.login === 'admin';
+            return `
+            <div class="user-row" data-user="${u.login}">
+                <div class="user-row-view">
+                    <span class="user-color-dot" style="background:${u.color || '#94a3b8'}"></span>
+                    <span><strong>${u.login}</strong> (${u.role === 'admin' ? 'Руководитель' : 'Сотрудник'})</span>
+                    <div class="user-row-actions">
+                        ${!isAdmin ? `<button class="btn outline btn-edit-user" data-login="${u.login}" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>` : ''}
+                        ${!isAdmin ? `<button class="btn outline btn-delete-user" data-login="${u.login}" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        usersList.querySelectorAll('.btn-delete-user').forEach(btn => {
             btn.addEventListener('click', function() {
                 const login = this.dataset.login;
                 if (confirm(`Удалить пользователя "${login}"?`)) {
@@ -237,12 +251,109 @@
                 }
             });
         });
+
+        usersList.querySelectorAll('.btn-edit-user').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const login = this.dataset.login;
+                openEditUserModal(login);
+            });
+        });
+    }
+
+    function openEditUserModal(login) {
+        const user = users.find(u => u.login === login);
+        if (!user) return;
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:400px;">
+                <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
+                <h3>Редактировать сотрудника</h3>
+                <form id="editUserForm">
+                    <div class="form-group">
+                        <label for="editLogin">Логин</label>
+                        <input type="text" id="editLogin" value="${escapeHtml(user.login)}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPassword">Новый пароль (оставьте пустым без изменений)</label>
+                        <input type="password" id="editPassword" placeholder="••••••">
+                    </div>
+                    <div class="form-group">
+                        <label for="editColor">Цвет на доске</label>
+                        <div class="color-picker-row">
+                            <input type="color" id="editColor" value="${user.color || '#3b82f6'}">
+                            <span class="color-preview" style="background:${user.color || '#3b82f6'}"></span>
+                            <div class="color-presets">
+                                ${DEFAULT_COLORS.map(c => `<button type="button" class="color-preset-btn" data-color="${c}" style="background:${c}"></button>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn primary">Сохранить</button>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const colorInput = modal.querySelector('#editColor');
+        const colorPreview = modal.querySelector('.color-preview');
+        colorInput.addEventListener('input', function() {
+            colorPreview.style.background = this.value;
+        });
+        modal.querySelectorAll('.color-preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                colorInput.value = this.dataset.color;
+                colorPreview.style.background = this.dataset.color;
+            });
+        });
+
+        modal.querySelector('#editUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newLogin = modal.querySelector('#editLogin').value.trim();
+            const newPassword = modal.querySelector('#editPassword').value;
+            const newColor = colorInput.value;
+
+            if (!newLogin) {
+                alert('Логин не может быть пустым');
+                return;
+            }
+            if (newLogin !== login && users.find(u => u.login === newLogin)) {
+                alert('Пользователь с таким логином уже существует');
+                return;
+            }
+
+            const oldLogin = user.login;
+            user.login = newLogin;
+            user.color = newColor;
+            if (newPassword) {
+                user.passwordHash = hashPassword(newPassword);
+            }
+
+            if (oldLogin !== newLogin) {
+                tasks.forEach(t => {
+                    if (t.createdBy === oldLogin) t.createdBy = newLogin;
+                    if (t.assignedTo === oldLogin) t.assignedTo = newLogin;
+                });
+                if (currentUser.login === oldLogin) {
+                    currentUser.login = newLogin;
+                    saveSession(currentUser);
+                }
+            }
+
+            saveData();
+            renderUsersList();
+            renderBoard();
+            populateAssigneeSelect();
+            modal.remove();
+        });
+
+        modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
     }
 
     addUserForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const login = newLogin.value.trim();
         const password = newPassword.value.trim();
+        const color = document.getElementById('newUserColor').value;
         if (!login || !password) return;
         if (users.find(u => u.login === login)) {
             alert('Пользователь с таким логином уже существует');
@@ -251,7 +362,8 @@
         users.push({
             login: login,
             passwordHash: hashPassword(password),
-            role: 'employee'
+            role: 'employee',
+            color: color
         });
         saveData();
         renderUsersList();
@@ -265,11 +377,6 @@
         el.addEventListener('click', function() {
             this.closest('.modal').classList.remove('active');
         });
-    });
-    window.addEventListener('click', function(e) {
-        if (e.target.classList.contains('modal')) {
-            e.target.classList.remove('active');
-        }
     });
 
     // ---------- Работа с задачами ----------
@@ -288,7 +395,7 @@
             const userTasks = getTasksForUser();
             userTasks.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            const columns = ['in_progress', 'done', 'delegated'];
+            const columns = ['urgent', 'in_progress', 'done'];
             columns.forEach(status => {
                 const list = document.getElementById(`list_${status}`);
                 const countEl = document.getElementById(`count_${status}`);
@@ -320,10 +427,16 @@
         div.draggable = true;
         div.dataset.id = task.id;
 
+        const assigneeUser = task.assignedTo ? users.find(u => u.login === task.assignedTo) : null;
         const assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
         const createdBy = task.createdBy || '—';
+        const borderColor = assigneeUser ? assigneeUser.color : '';
+        if (borderColor) {
+            div.style.borderLeftColor = borderColor;
+        }
 
         div.innerHTML = `
+            ${task.delegated ? '<span class="task-delegate-arrow">↗</span>' : ''}
             <div class="task-title">${escapeHtml(task.title)}</div>
             <div class="task-meta">
                 <span>📅 ${new Date(task.createdAt).toLocaleDateString()}</span>
@@ -331,8 +444,8 @@
                 ${task.dueDate ? `<span>⏳ ${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
             </div>
             <div class="task-actions">
-                ${task.status !== 'done' ? `<button class="btn-done" data-action="done">✅ Выполнено</button>` : ''}
-                ${task.status !== 'delegated' && currentUser.role === 'admin' ? `<button class="btn-delegate" data-action="delegate">📤 Делегировать</button>` : ''}
+                ${task.status !== 'done' ? `<button class="btn-done" data-action="done">✅ Выполнить</button>` : `<button class="btn-restore" data-action="restore">↩ Вернуть</button>`}
+                ${task.status !== 'done' && currentUser.role === 'admin' ? `<button class="btn-delegate" data-action="delegate">📤 Делегировать</button>` : ''}
                 <button class="btn-delete" data-action="delete">🗑 Удалить</button>
             </div>
         `;
@@ -347,6 +460,8 @@
                     }
                 } else if (action === 'done') {
                     changeStatus(task.id, 'done');
+                } else if (action === 'restore') {
+                    changeStatus(task.id, task.previousStatus || 'in_progress');
                 } else if (action === 'delegate') {
                     showDelegateModal(task.id);
                 }
@@ -416,7 +531,9 @@
             id: generateId(),
             title: taskData.title.trim(),
             description: taskData.description || '',
-            status: taskData.assignee ? 'delegated' : 'in_progress',
+            status: 'in_progress',
+            previousStatus: '',
+            delegated: false,
             createdBy: currentUser.login,
             assignedTo: taskData.assignee || '',
             priority: taskData.priority || 'medium',
@@ -427,9 +544,6 @@
         tasks.push(newTask);
         saveData();
         renderBoard();
-        if (newTask.status === 'delegated' && newTask.assignedTo) {
-            sendEmailNotification(newTask.assignedTo, newTask.title, newTask.dueDate);
-        }
         return newTask;
     }
 
@@ -442,9 +556,8 @@
     function changeStatus(id, newStatus) {
         const task = tasks.find(t => t.id === id);
         if (!task) return;
-        if (newStatus === 'delegated' && currentUser.role !== 'admin') {
-            alert('Только руководитель может делегировать задачи');
-            return;
+        if (newStatus === 'done') {
+            task.previousStatus = task.status;
         }
         task.status = newStatus;
         task.updatedAt = new Date().toISOString();
@@ -476,11 +589,11 @@
             <div class="modal-content" style="max-width:400px;">
                 <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
                 <h3>Делегировать задачу</h3>
-                <p><strong>${task.title}</strong></p>
+                <p><strong>${escapeHtml(task.title)}</strong></p>
                 <div class="form-group">
                     <label for="delegateSelect">Выберите сотрудника</label>
                     <select id="delegateSelect">
-                        ${assignees.map(login => `<option value="${login}">${login}</option>`).join('')}
+                        ${assignees.map(login => `<option value="${login}" ${task.assignedTo === login ? 'selected' : ''}>${login}</option>`).join('')}
                     </select>
                 </div>
                 <button id="delegateConfirmBtn" class="btn primary">Делегировать</button>
@@ -489,45 +602,14 @@
         document.body.appendChild(modal);
         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
             const selected = document.getElementById('delegateSelect').value;
-            if (selected) {
-                task.assignedTo = selected;
-                task.status = 'delegated';
-                task.updatedAt = new Date().toISOString();
-                saveData();
-                renderBoard();
-                sendEmailNotification(selected, task.title, task.dueDate);
-                modal.remove();
-            }
+            task.assignedTo = selected;
+            task.delegated = true;
+            task.updatedAt = new Date().toISOString();
+            saveData();
+            renderBoard();
+            modal.remove();
         });
         modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
-    }
-
-    // ---------- Уведомления по почте ----------
-    function sendEmailNotification(toLogin, taskTitle, dueDate) {
-        if (!EMAILJS_ENABLED || typeof emailjs === 'undefined') {
-            console.warn('EmailJS не настроен или не загружен');
-            return;
-        }
-        const user = users.find(u => u.login === toLogin);
-        if (!user) return;
-        const toEmail = `${toLogin}@example.com`;
-        const templateParams = {
-            to_email: toEmail,
-            to_name: toLogin,
-            task_title: taskTitle,
-            due_date: dueDate ? new Date(dueDate).toLocaleDateString() : 'не указан',
-            from_name: currentUser.login
-        };
-        try {
-            emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.templateID, templateParams, EMAILJS_CONFIG.publicKey)
-                .then(function(response) {
-                    console.log('Уведомление отправлено:', response);
-                }, function(error) {
-                    console.error('Ошибка отправки:', error);
-                });
-        } catch (e) {
-            console.error('Ошибка при отправке email:', e);
-        }
     }
 
     // ---------- Популяция select исполнителей ----------
@@ -584,24 +666,14 @@
                     alert('Вы не можете редактировать эту задачу');
                     return;
                 }
-                const oldAssignee = task.assignedTo;
                 task.title = title;
                 task.description = description;
                 task.priority = priority;
                 task.dueDate = dueDate;
-                if (assignee) {
-                    task.assignedTo = assignee;
-                    task.status = 'delegated';
-                } else {
-                    task.assignedTo = '';
-                    if (task.status === 'delegated') task.status = 'in_progress';
-                }
+                task.assignedTo = assignee || '';
                 task.updatedAt = new Date().toISOString();
                 saveData();
                 renderBoard();
-                if (assignee && oldAssignee !== assignee) {
-                    sendEmailNotification(assignee, title, dueDate);
-                }
             }
         } else {
             const newTask = {
@@ -630,7 +702,7 @@
             'ID': t.id,
             'Заголовок': t.title,
             'Описание': t.description || '',
-            'Статус': t.status === 'in_progress' ? 'В работе' : (t.status === 'done' ? 'Выполнено' : 'Делегировано'),
+            'Статус': t.status === 'urgent' ? 'Срочно' : (t.status === 'in_progress' ? 'В работе' : 'Выполнено'),
             'Создал': t.createdBy || '',
             'Исполнитель': t.assignedTo || '',
             'Приоритет': t.priority || 'medium',
@@ -678,7 +750,7 @@
                     if (existing) {
                         existing.title = row['Заголовок'] || existing.title;
                         existing.description = row['Описание'] || existing.description;
-                        existing.status = row['Статус'] === 'В работе' ? 'in_progress' : (row['Статус'] === 'Выполнено' ? 'done' : 'delegated');
+                        existing.status = row['Статус'] === 'Срочно' ? 'urgent' : (row['Статус'] === 'В работе' ? 'in_progress' : 'done');
                         existing.assignedTo = row['Исполнитель'] || existing.assignedTo;
                         existing.priority = row['Приоритет'] || existing.priority;
                         existing.dueDate = row['Срок'] || existing.dueDate;
@@ -688,7 +760,7 @@
                             id: id,
                             title: row['Заголовок'] || 'Без названия',
                             description: row['Описание'] || '',
-                            status: row['Статус'] === 'В работе' ? 'in_progress' : (row['Статус'] === 'Выполнено' ? 'done' : 'delegated'),
+                            status: row['Статус'] === 'Срочно' ? 'urgent' : (row['Статус'] === 'В работе' ? 'in_progress' : 'done'),
                             createdBy: row['Создал'] || 'admin',
                             assignedTo: row['Исполнитель'] || '',
                             priority: row['Приоритет'] || 'medium',
