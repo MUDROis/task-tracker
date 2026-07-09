@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Трекер задач · Администрация</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <!-- SheetJS для Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- EmailJS для уведомлений -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Страница входа -->
+        <div id="loginPage" class="page active">
+            <div class="login-container">
+                <h1>📋 Вход в систему</h1>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginInput">Логин</label>
+                        <input type="text" id="loginInput" placeholder="Введите логин" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="passwordInput">Пароль</label>
+                        <input type="password" id="passwordInput" placeholder="Введите пароль" required>
+                    </div>
+                    <button type="submit" class="btn primary">Войти</button>
+                    <div id="loginError" class="error-message"></div>
+                </form>
+                <p class="hint">* По умолчанию: admin / admin</p>
+            </div>
+        </div>
+
+        <!-- Основное приложение -->
+        <div id="mainPage" class="page">
+            <header class="app-header">
+                <div class="header-left">
+                    <h2>📌 Задачи</h2>
+                    <span id="userRoleBadge" class="role-badge">Руководитель</span>
+                </div>
+                <div class="header-right">
+                    <button id="logoutBtn" class="btn outline">Выйти</button>
+                </div>
+            </header>
+
+            <!-- Панель управления -->
+            <div class="toolbar">
+                <button id="addTaskBtn" class="btn primary">➕ Новая задача</button>
+                <button id="exportBtn" class="btn secondary">📤 Выгрузить Excel</button>
+                <button id="importBtn" class="btn secondary">📥 Импорт Excel</button>
+                <input type="file" id="fileInput" accept=".xlsx" style="display:none">
+                <button id="manageUsersBtn" class="btn outline" style="display:none;">👥 Управление</button>
+            </div>
+
+            <!-- Доска Kanban -->
+            <div class="board" id="board">
+                <div class="column" data-status="in_progress">
+                    <div class="column-header">
+                        <h3>🔄 В работе</h3>
+                        <span class="count" id="count_in_progress">0</span>
+                    </div>
+                    <div class="task-list" id="list_in_progress"></div>
+                </div>
+                <div class="column" data-status="done">
+                    <div class="column-header">
+                        <h3>✅ Выполнено</h3>
+                        <span class="count" id="count_done">0</span>
+                    </div>
+                    <div class="task-list" id="list_done"></div>
+                </div>
+                <div class="column" data-status="delegated">
+                    <div class="column-header">
+                        <h3>📤 Делегировано</h3>
+                        <span class="count" id="count_delegated">0</span>
+                    </div>
+                    <div class="task-list" id="list_delegated"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно создания/редактирования задачи -->
+        <div id="taskModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3 id="modalTitle">Новая задача</h3>
+                <form id="taskForm">
+                    <input type="hidden" id="taskId">
+                    <div class="form-group">
+                        <label for="taskTitle">Заголовок *</label>
+                        <input type="text" id="taskTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDesc">Описание</label>
+                        <textarea id="taskDesc" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskPriority">Приоритет</label>
+                        <select id="taskPriority">
+                            <option value="low">Низкий</option>
+                            <option value="medium" selected>Средний</option>
+                            <option value="high">Высокий</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDueDate">Срок выполнения</label>
+                        <input type="date" id="taskDueDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskAssignee">Исполнитель (делегировать)</label>
+                        <select id="taskAssignee">
+                            <option value="">Не назначен</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn primary">Сохранить</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Модальное окно управления пользователями -->
+        <div id="usersModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3>👥 Управление сотрудниками</h3>
+                <div id="usersList"></div>
+                <hr>
+                <h4>Добавить сотрудника</h4>
+                <form id="addUserForm">
+                    <div class="form-group">
+                        <label for="newLogin">Логин</label>
+                        <input type="text" id="newLogin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Пароль</label>
+                        <input type="password" id="newPassword" required>
+                    </div>
+                    <button type="submit" class="btn primary">Добавить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
