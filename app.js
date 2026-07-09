@@ -638,19 +638,31 @@
 
     // ---------- Уведомления по почте ----------
     function sendEmailNotification(toLogin, taskTitle) {
-        if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) return;
-        if (typeof emailjs === 'undefined') return;
+        if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
+            console.warn('EmailJS: не заполнены ключи конфигурации');
+            return;
+        }
+        if (typeof emailjs === 'undefined') {
+            console.warn('EmailJS: библиотека не загружена');
+            return;
+        }
         const user = users.find(u => u.login === toLogin);
         const toEmail = user && user.email ? user.email : '';
-        if (!toEmail) return;
-        try {
-            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                to_email: toEmail,
-                to_name: toLogin,
-                task_title: taskTitle,
-                from_name: currentUser.login
-            });
-        } catch (e) {}
+        if (!toEmail) {
+            console.warn('EmailJS: у пользователя ' + toLogin + ' не указана почта');
+            return;
+        }
+        console.log('EmailJS: отправка на', toEmail);
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_email: toEmail,
+            to_name: toLogin,
+            task_title: taskTitle,
+            from_name: currentUser.login
+        }).then(function(res) {
+            console.log('EmailJS: письмо отправлено', res);
+        }).catch(function(err) {
+            console.error('EmailJS: ошибка отправки', err);
+        });
     }
 
     // ---------- Популяция select исполнителей ----------
