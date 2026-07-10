@@ -7,9 +7,9 @@
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "./grifon.png",
+      "src": "./grifon.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
