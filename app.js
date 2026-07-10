@@ -191,6 +191,8 @@
         mainPage.classList.add('active');
         userRoleBadge.textContent = currentUser.role === 'admin' ? 'Руководитель' : 'Сотрудник';
         manageUsersBtn.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
+        const mobileManage = document.getElementById('mobileManageBtn');
+        if (mobileManage) mobileManage.style.display = currentUser.role === 'admin' ? 'flex' : 'none';
         populateAssigneeSelect();
     }
 
@@ -466,12 +468,14 @@
                 <span>👤 ${assigneeName}</span>
                 ${task.dueDate ? `<span>⏳ ${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
             </div>
-            <div class="task-actions">
-                <button class="btn-open" data-action="open" title="Открыть">⭕</button>
-                <button class="btn-settings" data-action="settings" title="Настройки">⚙️</button>
+            <div class="task-actions-row1">
                 ${task.status !== 'done' ? `<button class="btn-done" data-action="done">✅ Выполнить</button>` : `<button class="btn-restore" data-action="restore">↩ Вернуть</button>`}
                 ${task.status !== 'done' && currentUser.role === 'admin' ? `<button class="btn-delegate" data-action="delegate">📤 Делегировать</button>` : ''}
-                <button class="btn-delete" data-action="delete">🗑</button>
+            </div>
+            <div class="task-actions-row2">
+                <button class="btn-open" data-action="open" title="Открыть">⭕</button>
+                <button class="btn-settings" data-action="settings" title="Настройки">⚙️</button>
+                <button class="btn-delete" data-action="delete" title="Удалить">🗑</button>
             </div>
         `;
 
@@ -784,6 +788,46 @@
 
     addTaskBtn.addEventListener('click', function() {
         openTaskModal(null);
+    });
+
+    // ---------- Мобильные кнопки ----------
+    const mobileAddBtn = document.getElementById('mobileAddBtn');
+    const mobileManageBtn = document.getElementById('mobileManageBtn');
+    const mobileSettingsBtn = document.getElementById('mobileSettingsBtn');
+    const mobileSettingsDropdown = document.getElementById('mobileSettingsDropdown');
+    const mobileExportBtn = document.getElementById('mobileExportBtn');
+    const mobileImportBtn = document.getElementById('mobileImportBtn');
+
+    if (mobileAddBtn) {
+        mobileAddBtn.addEventListener('click', function() { openTaskModal(null); });
+    }
+    if (mobileManageBtn) {
+        mobileManageBtn.addEventListener('click', function() {
+            if (currentUser.role !== 'admin') return;
+            renderUsersList();
+            usersModal.classList.add('active');
+        });
+    }
+    if (mobileSettingsBtn) {
+        mobileSettingsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            mobileSettingsDropdown.classList.toggle('active');
+        });
+    }
+    if (mobileExportBtn) {
+        mobileExportBtn.addEventListener('click', function() {
+            mobileSettingsDropdown.classList.remove('active');
+            exportBtn.click();
+        });
+    }
+    if (mobileImportBtn) {
+        mobileImportBtn.addEventListener('click', function() {
+            mobileSettingsDropdown.classList.remove('active');
+            importBtn.click();
+        });
+    }
+    document.addEventListener('click', function() {
+        if (mobileSettingsDropdown) mobileSettingsDropdown.classList.remove('active');
     });
 
     // ---------- Экспорт Excel ----------

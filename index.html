@@ -45,7 +45,7 @@
         <div id="mainPage" class="page">
             <header class="app-header">
                 <div class="header-left">
-                    <h2><img src="grifon.png" alt="" style="height:1.4em;vertical-align:middle;margin-right:0.3em;">Задачи</h2>
+                    <h2><img src="grifon.png" alt="" style="height:1.55em;vertical-align:middle;margin-right:0.3em;">Задачи</h2>
                     <span id="userRoleBadge" class="role-badge">Руководитель</span>
                     <button id="logoutBtn" class="btn-logout-inline">Выйти</button>
                 </div>
@@ -58,6 +58,19 @@
                 <button id="importBtn" class="btn secondary btn-sm">📥 Импорт</button>
                 <input type="file" id="fileInput" accept=".xlsx" style="display:none">
                 <button id="manageUsersBtn" class="btn outline btn-sm" style="display:none;">👥 Управление</button>
+            </div>
+
+            <!-- Мобильная нижняя панель -->
+            <div class="mobile-bar">
+                <button id="mobileManageBtn" class="mobile-bar-btn" title="Управление">👥</button>
+                <button id="mobileAddBtn" class="mobile-bar-btn mobile-bar-btn-main" title="Новая задача">➕</button>
+                <div class="mobile-bar-btn-group">
+                    <button id="mobileSettingsBtn" class="mobile-bar-btn" title="Настройки">⚙️</button>
+                    <div id="mobileSettingsDropdown" class="mobile-settings-dropdown">
+                        <button id="mobileExportBtn" class="mobile-dropdown-item">📤 Экспорт Excel</button>
+                        <button id="mobileImportBtn" class="mobile-dropdown-item">📥 Импорт Excel</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Доска Kanban -->

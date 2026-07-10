@@ -195,6 +195,7 @@ body {
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
     line-height: 1.4;
+    margin-left: 0.4rem;
 }
 .btn-logout-inline:hover {
     background: #fee2e2;
@@ -320,14 +321,24 @@ body {
     margin-top: 0.3rem;
 }
 
-.task-card .task-actions {
+.task-card .task-actions-row1 {
     display: flex;
+    justify-content: space-between;
     gap: 0.5rem;
     margin-top: 0.5rem;
-    flex-wrap: wrap;
 }
 
-.task-card .task-actions button {
+.task-card .task-actions-row2 {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.task-card .task-actions-row1 button,
+.task-card .task-actions-row2 button {
     background: none;
     border: none;
     font-size: 0.8rem;
@@ -337,32 +348,32 @@ body {
     transition: background 0.15s;
 }
 
-.task-card .task-actions .btn-done {
+.task-card .btn-done {
     background: #dcfce7;
     color: #166534;
 }
-.task-card .task-actions .btn-done:hover {
+.task-card .btn-done:hover {
     background: #bbf7d0;
 }
-.task-card .task-actions .btn-delegate {
+.task-card .btn-delegate {
     background: #dbeafe;
     color: #1e40af;
 }
-.task-card .task-actions .btn-delegate:hover {
+.task-card .btn-delegate:hover {
     background: #bfdbfe;
 }
-.task-card .task-actions .btn-restore {
+.task-card .btn-restore {
     background: #fef3c7;
     color: #92400e;
 }
-.task-card .task-actions .btn-restore:hover {
+.task-card .btn-restore:hover {
     background: #fde68a;
 }
-.task-card .task-actions .btn-delete {
+.task-card .btn-delete {
     background: #fee2e2;
     color: #b91c1c;
 }
-.task-card .task-actions .btn-delete:hover {
+.task-card .btn-delete:hover {
     background: #fecaca;
 }
 
@@ -416,6 +427,11 @@ body {
     color: #0f172a;
 }
 
+/* ===== MOBILE BAR ===== */
+.mobile-bar {
+    display: none;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
     .board {
@@ -423,29 +439,81 @@ body {
         padding-bottom: 4.5rem;
     }
     .toolbar {
+        display: none;
+    }
+    .mobile-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        background: white;
-        border-top: 1px solid #e2e8f0;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
-        flex-direction: row;
-        flex-wrap: nowrap;
-        justify-content: space-around;
-        gap: 0.3rem;
-        padding: 0.5rem 0.4rem;
-        margin-bottom: 0;
+        background: #e2e8f0;
+        border-top: 1px solid #d1d5db;
+        padding: 0.5rem 1rem;
         z-index: 100;
     }
-    .toolbar .btn {
-        width: auto;
-        flex: 1;
-        min-width: 0;
-        padding: 0.4rem 0.3rem;
-        font-size: 0.75rem;
-        text-align: center;
-        white-space: nowrap;
+    .mobile-bar-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        border: none;
+        background: transparent;
+        font-size: 1.4rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+    }
+    .mobile-bar-btn:hover {
+        background: rgba(0,0,0,0.08);
+    }
+    .mobile-bar-btn-main {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #1e40af;
+        color: white;
+        font-size: 1.8rem;
+        box-shadow: 0 2px 8px rgba(30,64,175,0.4);
+    }
+    .mobile-bar-btn-main:hover {
+        background: #1e3a8a;
+    }
+    .mobile-bar-btn-group {
+        position: relative;
+    }
+    .mobile-settings-dropdown {
+        display: none;
+        position: absolute;
+        bottom: 56px;
+        right: 0;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        min-width: 180px;
+        overflow: hidden;
+        z-index: 200;
+    }
+    .mobile-settings-dropdown.active {
+        display: block;
+    }
+    .mobile-dropdown-item {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: none;
+        background: none;
+        font-size: 0.9rem;
+        text-align: left;
+        cursor: pointer;
+        color: #1e293b;
+        transition: background 0.15s;
+    }
+    .mobile-dropdown-item:hover {
+        background: #f1f5f9;
     }
     .app-header {
         flex-direction: row;
@@ -461,9 +529,6 @@ body {
     }
     .modal-content {
         padding: 1.5rem;
-    }
-    .task-actions {
-        flex-wrap: wrap;
     }
 }
 
