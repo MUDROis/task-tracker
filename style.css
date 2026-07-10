@@ -175,6 +175,12 @@ body {
     color: #0f172a;
 }
 
+.header-right {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
 .role-badge {
     background: #dbeafe;
     color: #1e40af;
@@ -195,7 +201,6 @@ body {
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
     line-height: 1.4;
-    margin-left: 0.4rem;
 }
 .btn-logout-inline:hover {
     background: #fee2e2;
