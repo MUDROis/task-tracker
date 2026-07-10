@@ -467,9 +467,11 @@
                 ${task.dueDate ? `<span>⏳ ${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
             </div>
             <div class="task-actions">
+                <button class="btn-open" data-action="open" title="Открыть">⭕</button>
+                <button class="btn-settings" data-action="settings" title="Настройки">⚙️</button>
                 ${task.status !== 'done' ? `<button class="btn-done" data-action="done">✅ Выполнить</button>` : `<button class="btn-restore" data-action="restore">↩ Вернуть</button>`}
                 ${task.status !== 'done' && currentUser.role === 'admin' ? `<button class="btn-delegate" data-action="delegate">📤 Делегировать</button>` : ''}
-                <button class="btn-delete" data-action="delete">🗑 Удалить</button>
+                <button class="btn-delete" data-action="delete">🗑</button>
             </div>
         `;
 
@@ -487,6 +489,14 @@
                     changeStatus(task.id, task.previousStatus || 'in_progress');
                 } else if (action === 'delegate') {
                     showDelegateModal(task.id);
+                } else if (action === 'open') {
+                    showTaskDetails(task);
+                } else if (action === 'settings') {
+                    if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
+                        alert('Вы не можете редактировать эту задачу');
+                        return;
+                    }
+                    openTaskModal(task);
                 }
             });
         });
@@ -595,6 +605,35 @@
         task.updatedAt = new Date().toISOString();
         saveData();
         renderBoard();
+    }
+
+    // ---------- Показ деталей задачи ----------
+    function showTaskDetails(task) {
+        const assigneeUser = task.assignedTo ? users.find(u => u.login === task.assignedTo) : null;
+        const assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
+        const priorityLabels = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
+        const statusLabels = { urgent: 'Срочно', in_progress: 'В работе', done: 'Выполнено' };
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:450px;">
+                <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
+                <h3>${escapeHtml(task.title)}</h3>
+                <div style="margin-top:1rem;font-size:0.95rem;color:#334155;">
+                    <p><strong>Описание:</strong> ${task.description ? escapeHtml(task.description) : '<em>нет</em>'}</p>
+                    <p><strong>Статус:</strong> ${statusLabels[task.status] || task.status}</p>
+                    <p><strong>Приоритет:</strong> ${priorityLabels[task.priority] || task.priority}</p>
+                    <p><strong>Исполнитель:</strong> ${assigneeName}</p>
+                    <p><strong>Создал:</strong> ${task.createdBy || '—'}</p>
+                    <p><strong>Создано:</strong> ${new Date(task.createdAt).toLocaleString()}</p>
+                    ${task.dueDate ? `<p><strong>Срок:</strong> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
+                    ${task.updatedAt ? `<p><strong>Обновлено:</strong> ${new Date(task.updatedAt).toLocaleString()}</p>` : ''}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
     // ---------- Делегирование ----------

@@ -45,33 +45,31 @@
                 <div class="header-left">
                     <h2>📌 Задачи</h2>
                     <span id="userRoleBadge" class="role-badge">Руководитель</span>
-                </div>
-                <div class="header-right">
-                    <button id="logoutBtn" class="btn outline">Выйти</button>
+                    <button id="logoutBtn" class="btn-logout-inline">Выйти</button>
                 </div>
             </header>
 
             <!-- Панель управления -->
             <div class="toolbar">
-                <button id="addTaskBtn" class="btn primary">➕ Новая задача</button>
-                <button id="exportBtn" class="btn secondary">📤 Выгрузить Excel</button>
-                <button id="importBtn" class="btn secondary">📥 Импорт Excel</button>
+                <button id="addTaskBtn" class="btn primary btn-sm">➕ Новая задача</button>
+                <button id="exportBtn" class="btn secondary btn-sm">📤 Excel</button>
+                <button id="importBtn" class="btn secondary btn-sm">📥 Импорт</button>
                 <input type="file" id="fileInput" accept=".xlsx" style="display:none">
-                <button id="manageUsersBtn" class="btn outline" style="display:none;">👥 Управление</button>
+                <button id="manageUsersBtn" class="btn outline btn-sm" style="display:none;">👥 Управление</button>
             </div>
 
             <!-- Доска Kanban -->
             <div class="board" id="board">
                 <div class="column" data-status="urgent">
                     <div class="column-header">
-                        <h3>🔥 Срочные</h3>
+                        <h3>🍳 Срочные</h3>
                         <span class="count" id="count_urgent">0</span>
                     </div>
                     <div class="task-list" id="list_urgent"></div>
                 </div>
                 <div class="column" data-status="in_progress">
                     <div class="column-header">
-                        <h3>🔄 В работе</h3>
+                        <h3>▶️ В работе</h3>
                         <span class="count" id="count_in_progress">0</span>
                     </div>
                     <div class="task-list" id="list_in_progress"></div>
