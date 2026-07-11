@@ -425,11 +425,18 @@
         modal.innerHTML =
             '<div class="modal-content" style="max-width:400px;">' +
                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
-                '<h3>Редактировать сотрудника</h3>' +
+                '<h3>Редактировать: ' + escapeHtml(user.login) + '</h3>' +
                 '<form id="editUserForm">' +
                     '<div class="form-group">' +
                         '<label for="editLogin">Логин</label>' +
                         '<input type="text" id="editLogin" value="' + escapeHtml(user.login) + '" required>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label for="editRole">Роль</label>' +
+                        '<select id="editRole">' +
+                            '<option value="admin"' + (user.role === 'admin' ? ' selected' : '') + '>Руководитель</option>' +
+                            '<option value="employee"' + (user.role !== 'admin' ? ' selected' : '') + '>Сотрудник</option>' +
+                        '</select>' +
                     '</div>' +
                     '<div class="form-group">' +
                         '<label for="editPassword">Новый пароль (оставьте пустым без изменений)</label>' +
@@ -472,6 +479,7 @@
             e.preventDefault();
             const newLoginVal = modal.querySelector('#editLogin').value.trim();
             const newPasswordVal = modal.querySelector('#editPassword').value;
+            const newRole = modal.querySelector('#editRole').value;
             const newColor = colorInput.value;
             const newEmail = modal.querySelector('#editEmail').value.trim();
 
@@ -487,6 +495,7 @@
             const oldLogin = user.login;
             const updatedUser = Object.assign({}, user, {
                 login: newLoginVal,
+                role: newRole,
                 color: newColor,
                 email: newEmail
             });
