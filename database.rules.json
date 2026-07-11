@@ -3,9 +3,10 @@
     "teams": {
       "$teamId": {
         "users": {
+          ".read": "auth != null",
+          ".write": "auth != null",
           "$uid": {
-            ".read": "auth != null",
-            ".write": "auth != null"
+            ".validate": "newData.hasChildren(['uid', 'login', 'role']) && newData.child('role').val().matches(/^(admin|employee)$/) && newData.child('login').isString() && newData.child('uid').isString()"
           }
         },
         "tasks": {
