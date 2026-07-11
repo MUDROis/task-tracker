@@ -392,9 +392,12 @@
     });
 
     // ---------- Управление пользователями ----------
-    manageUsersBtn.addEventListener('click', function() {
-        if (currentUser.role !== 'admin') return;
-        // Явно загружаем пользователей перед открытием панели
+    function openManagePanel() {
+        console.log('openManagePanel: currentUser =', currentUser);
+        if (!currentUser || currentUser.role !== 'admin') {
+            console.log('openManagePanel: нет доступа, role =', currentUser && currentUser.role);
+            return;
+        }
         getUsersRef().once('value').then(function(snapshot) {
             const data = snapshot.val();
             users = data ? Object.values(data) : [];
@@ -407,8 +410,14 @@
             });
             renderUsersList();
             usersModal.classList.add('active');
+        }).catch(function(err) {
+            console.error('Ошибка загрузки пользователей:', err);
+            alert('Не удалось загрузить список пользователей');
         });
-    });
+    }
+
+    console.log('manageUsersBtn =', manageUsersBtn);
+    manageUsersBtn.addEventListener('click', openManagePanel);
 
     function renderUsersList() {
         usersList.innerHTML = users.map(function(u) {
@@ -984,22 +993,7 @@
         mobileAddBtn.addEventListener('click', function() { openTaskModal(null); });
     }
     if (mobileManageBtn) {
-        mobileManageBtn.addEventListener('click', function() {
-            if (currentUser.role !== 'admin') return;
-            getUsersRef().once('value').then(function(snapshot) {
-                const data = snapshot.val();
-                users = data ? Object.values(data) : [];
-                users = users.map(function(u) {
-                    return Object.assign({}, u, {
-                        role: u.role || 'employee',
-                        color: u.color || DEFAULT_COLORS[0],
-                        email: u.email || ''
-                    });
-                });
-                renderUsersList();
-                usersModal.classList.add('active');
-            });
-        });
+        mobileManageBtn.addEventListener('click', openManagePanel);
     }
     if (mobileSettingsBtn) {
         mobileSettingsBtn.addEventListener('click', function(e) {
