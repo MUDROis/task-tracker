@@ -277,6 +277,8 @@
                             email: ''
                         };
                         saveUser(currentUser);
+                        // Сразу добавляем в массив, чтобы управление видело пользователя
+                        users.push(currentUser);
                     }
                     saveSession(currentUser);
                     showMainPage();
