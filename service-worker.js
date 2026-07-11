@@ -1,13 +1,16 @@
-const CACHE_NAME = 'task-tracker-v3';
+const CACHE_NAME = 'task-tracker-v4';
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './app.js',
+    './firebase-config.js',
     './manifest.json',
     './grifon.png',
     './grifon.ico',
-    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'
 ];
 
 self.addEventListener('install', function(e) {

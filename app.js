@@ -1,6 +1,6 @@
 // ============================================================
-//  Трекер задач — PWA (администрация) — исправленная версия
-//  Добавлена защита от ошибок localStorage, CDN-зависимости
+//  Трекер задач — PWA с Firebase Realtime Database
+//  Данные синхронизируются между всеми устройствами в реальном времени
 // ============================================================
 
 (function() {
@@ -10,17 +10,23 @@
     let currentUser = null;
     let tasks = [];
     let users = [];
+    let firebaseReady = false;
+    let db = null;
 
-    // ---------- Конфигурация EmailJS (бесплатно: https://www.emailjs.com) ----------
-    // 1. Зарегистрируйтесь на emailjs.com
-    // 2. Создайте Email Service (Gmail, Outlook и т.д.) → скопируйте Service ID
-    // 3. Создайте Email Template с переменными: to_email, to_name, task_title, from_name
-    // 4. Вставьте значения ниже
-    const EMAILJS_PUBLIC_KEY = 'lb2TPZ78OFd1qVw_Z';   // ваш Public Key (Account → API Keys)
-    const EMAILJS_SERVICE_ID = 'service_ikd99cp';   // ваш Service ID (Email Services)
-    const EMAILJS_TEMPLATE_ID = 'template_vd7pyer';  // ваш Template ID (Email Templates)
+    // ---------- Конфигурация EmailJS ----------
+    const EMAILJS_PUBLIC_KEY = 'lb2TPZ78OFd1qVw_Z';
+    const EMAILJS_SERVICE_ID = 'service_ikd99cp';
+    const EMAILJS_TEMPLATE_ID = 'template_vd7pyer';
 
-    // DOM-элементы
+    // ---------- Firebase пути ----------
+    function getTasksRef() {
+        return firebase.database().ref('teams/' + TEAM_ID + '/tasks');
+    }
+    function getUsersRef() {
+        return firebase.database().ref('teams/' + TEAM_ID + '/users');
+    }
+
+    // ---------- DOM-элементы ----------
     const loginPage = document.getElementById('loginPage');
     const mainPage = document.getElementById('mainPage');
     const loginForm = document.getElementById('loginForm');
@@ -50,7 +56,7 @@
     const newLogin = document.getElementById('newLogin');
     const newPassword = document.getElementById('newPassword');
 
-    // ---------- Color picker interactivity for add-user form ----------
+    // ---------- Color picker interactivity ----------
     const newUserColorInput = document.getElementById('newUserColor');
     if (newUserColorInput) {
         const newUserColorPreview = newUserColorInput.closest('.color-picker-row').querySelector('.color-preview');
@@ -65,7 +71,9 @@
         });
     }
 
-    // ---------- Работа с localStorage (с защитой) ----------
+    const DEFAULT_COLORS = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
+
+    // ---------- Работа с localStorage (сессия) ----------
     function isLocalStorageAvailable() {
         try {
             const test = '__test__';
@@ -73,53 +81,7 @@
             localStorage.removeItem(test);
             return true;
         } catch (e) {
-            console.warn('localStorage недоступен:', e);
             return false;
-        }
-    }
-
-    const DEFAULT_COLORS = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
-
-    function loadData() {
-        if (!isLocalStorageAvailable()) {
-            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6', email: '' }];
-            tasks = [];
-            return;
-        }
-        try {
-            const stored = localStorage.getItem('taskTracker_data');
-            if (stored) {
-                const data = JSON.parse(stored);
-                tasks = data.tasks || [];
-                users = data.users || [];
-                users = users.map(u => ({
-                    ...u,
-                    role: u.role || 'employee',
-                    color: u.color || DEFAULT_COLORS[users.indexOf(u) % DEFAULT_COLORS.length],
-                    email: u.email || ''
-                }));
-            } else {
-                users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6', email: '' }];
-                tasks = [];
-                saveData();
-            }
-            // Миграция: старый статус "delegated" → "in_progress"
-            tasks.forEach(t => { if (t.status === 'delegated') t.status = 'in_progress'; });
-        } catch (e) {
-            console.error('Ошибка загрузки данных:', e);
-            users = [{ login: 'admin', passwordHash: hashPassword('admin'), role: 'admin', color: '#3b82f6', email: '' }];
-            tasks = [];
-            saveData();
-        }
-    }
-
-    function saveData() {
-        if (!isLocalStorageAvailable()) return;
-        try {
-            localStorage.setItem('taskTracker_data', JSON.stringify({ tasks, users }));
-        } catch (e) {
-            console.error('Ошибка сохранения данных:', e);
-            alert('Не удалось сохранить данные. Возможно, хранилище переполнено.');
         }
     }
 
@@ -127,9 +89,7 @@
         if (!isLocalStorageAvailable()) return;
         try {
             localStorage.setItem('taskTracker_session', JSON.stringify(user));
-        } catch (e) {
-            console.error('Ошибка сохранения сессии:', e);
-        }
+        } catch (e) {}
     }
 
     function clearSession() {
@@ -137,6 +97,15 @@
         try {
             localStorage.removeItem('taskTracker_session');
         } catch (e) {}
+    }
+
+    function loadSession() {
+        if (!isLocalStorageAvailable()) return null;
+        try {
+            const raw = localStorage.getItem('taskTracker_session');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return null;
     }
 
     // ---------- Хеширование пароля ----------
@@ -150,27 +119,93 @@
         return hash.toString(16);
     }
 
+    // ---------- Firebase: загрузка данных ----------
+    function initFirebaseListeners() {
+        // Слушаем задачи в реальном времени
+        getTasksRef().on('value', function(snapshot) {
+            const data = snapshot.val();
+            tasks = data ? Object.values(data) : [];
+            tasks.forEach(function(t) {
+                if (t.status === 'delegated') t.status = 'in_progress';
+            });
+            renderBoard();
+        });
+
+        // Слушаем пользователей в реальном времени
+        getUsersRef().on('value', function(snapshot) {
+            const data = snapshot.val();
+            users = data ? Object.values(data) : [];
+            users = users.map(function(u) {
+                return Object.assign({}, u, {
+                    role: u.role || 'employee',
+                    color: u.color || DEFAULT_COLORS[users.indexOf(u) % DEFAULT_COLORS.length],
+                    email: u.email || ''
+                });
+            });
+            // Если текущий пользователь есть в списке — обновляем его данные
+            if (currentUser) {
+                const fresh = users.find(function(u) { return u.login === currentUser.login; });
+                if (fresh) {
+                    currentUser = { login: fresh.login, role: fresh.role };
+                }
+            }
+            populateAssigneeSelect();
+        });
+    }
+
+    // ---------- Firebase: запись данных ----------
+    function saveTask(task) {
+        getTasksRef().child(task.id).set(task);
+    }
+
+    function removeTask(taskId) {
+        getTasksRef().child(taskId).remove();
+    }
+
+    function saveUser(user) {
+        getUsersRef().child(user.login).set(user);
+    }
+
+    function removeUser(login) {
+        getUsersRef().child(login).remove();
+    }
+
+    // ---------- Автосоздание admin-пользователя ----------
+    function ensureAdminUser() {
+        getUsersRef().child('admin').once('value').then(function(snapshot) {
+            if (!snapshot.val()) {
+                saveUser({
+                    login: 'admin',
+                    passwordHash: hashPassword('1'),
+                    role: 'admin',
+                    color: '#3b82f6',
+                    email: ''
+                });
+                console.log('Создан пользователь admin (пароль: 1)');
+            }
+        });
+    }
+
     // ---------- Инициализация ----------
     function init() {
         console.log('Инициализация приложения...');
-        loadData();
+
+        // Создаём admin если его нет
+        ensureAdminUser();
+
         // Проверяем сессию
-        let session = null;
-        if (isLocalStorageAvailable()) {
-            try {
-                const raw = localStorage.getItem('taskTracker_session');
-                if (raw) session = JSON.parse(raw);
-            } catch (e) {}
-        }
-        if (session && session.login && users.find(u => u.login === session.login)) {
+        const session = loadSession();
+        if (session && session.login) {
             currentUser = session;
             console.log('Сессия восстановлена для', currentUser.login);
             showMainPage();
-            renderBoard();
+            // Подключаем Firebase listeners
+            initFirebaseListeners();
         } else {
             console.log('Сессия не найдена, показываем логин');
             showLoginPage();
         }
+
         // Инициализация EmailJS
         if (EMAILJS_PUBLIC_KEY && typeof emailjs !== 'undefined') {
             try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch (e) {}
@@ -205,27 +240,36 @@
             loginError.textContent = 'Заполните оба поля';
             return;
         }
-        const user = users.find(u => u.login === login);
-        if (!user) {
-            loginError.textContent = 'Пользователь не найден';
-            return;
-        }
-        if (user.passwordHash !== hashPassword(password)) {
-            loginError.textContent = 'Неверный пароль';
-            return;
-        }
-        currentUser = { login: user.login, role: user.role };
-        saveSession(currentUser);
-        console.log('Вход выполнен:', currentUser.login);
-        showMainPage();
-        renderBoard();
+
+        // Проверяем пользователя в Firebase
+        getUsersRef().child(login).once('value').then(function(snapshot) {
+            const user = snapshot.val();
+            if (!user) {
+                loginError.textContent = 'Пользователь не найден';
+                return;
+            }
+            if (user.passwordHash !== hashPassword(password)) {
+                loginError.textContent = 'Неверный пароль';
+                return;
+            }
+            currentUser = { login: user.login, role: user.role };
+            saveSession(currentUser);
+            console.log('Вход выполнен:', currentUser.login);
+            showMainPage();
+            initFirebaseListeners();
+        }).catch(function(err) {
+            console.error('Ошибка Firebase:', err);
+            loginError.textContent = 'Ошибка подключения к серверу';
+        });
     });
 
     logoutBtn.addEventListener('click', function() {
+        // Отключаем listeners
+        getTasksRef().off();
+        getUsersRef().off();
         clearSession();
         currentUser = null;
         showLoginPage();
-        console.log('Выход выполнен');
     });
 
     // ---------- Управление пользователями ----------
@@ -236,82 +280,84 @@
     });
 
     function renderUsersList() {
-        usersList.innerHTML = users.map(u => {
-            const isAdmin = u.login === 'admin';
-            return `
-            <div class="user-row" data-user="${u.login}">
-                <div class="user-row-view">
-                    <span class="user-color-dot" style="background:${u.color || '#94a3b8'}"></span>
-                    <span><strong>${u.login}</strong> (${u.role === 'admin' ? 'Руководитель' : 'Сотрудник'})${u.email ? ' · ' + u.email : ''}</span>
-                    <div class="user-row-actions">
-                        ${!isAdmin ? `<button class="btn outline btn-edit-user" data-login="${u.login}" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>` : ''}
-                        ${!isAdmin ? `<button class="btn outline btn-delete-user" data-login="${u.login}" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>` : ''}
-                    </div>
-                </div>
-            </div>`;
+        usersList.innerHTML = users.map(function(u) {
+            var isAdmin = u.login === 'admin';
+            return '<div class="user-row" data-user="' + escapeHtml(u.login) + '">' +
+                '<div class="user-row-view">' +
+                    '<span class="user-color-dot" style="background:' + (u.color || '#94a3b8') + '"></span>' +
+                    '<span><strong>' + escapeHtml(u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
+                    '<div class="user-row-actions">' +
+                        '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
+                        (!isAdmin ? '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>' : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>';
         }).join('');
 
-        usersList.querySelectorAll('.btn-delete-user').forEach(btn => {
+        usersList.querySelectorAll('.btn-delete-user').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                const login = this.dataset.login;
-                if (confirm(`Удалить пользователя "${login}"?`)) {
-                    users = users.filter(u => u.login !== login);
-                    saveData();
-                    renderUsersList();
+                var login = this.dataset.login;
+                if (confirm('Удалить пользователя "' + login + '"?')) {
+                    removeUser(login);
+                    // Удаляем задачи пользователя
+                    tasks.forEach(function(t) {
+                        if (t.createdBy === login || t.assignedTo === login) {
+                            removeTask(t.id);
+                        }
+                    });
                     if (currentUser.login === login) {
                         clearSession();
                         currentUser = null;
                         showLoginPage();
                     }
-                    populateAssigneeSelect();
                 }
             });
         });
 
-        usersList.querySelectorAll('.btn-edit-user').forEach(btn => {
+        usersList.querySelectorAll('.btn-edit-user').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                const login = this.dataset.login;
-                openEditUserModal(login);
+                openEditUserModal(this.dataset.login);
             });
         });
     }
 
     function openEditUserModal(login) {
-        const user = users.find(u => u.login === login);
+        const user = users.find(function(u) { return u.login === login; });
         if (!user) return;
         const modal = document.createElement('div');
         modal.className = 'modal active';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width:400px;">
-                <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
-                <h3>Редактировать сотрудника</h3>
-                <form id="editUserForm">
-                    <div class="form-group">
-                        <label for="editLogin">Логин</label>
-                        <input type="text" id="editLogin" value="${escapeHtml(user.login)}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="editPassword">Новый пароль (оставьте пустым без изменений)</label>
-                        <input type="password" id="editPassword" placeholder="••••••">
-                    </div>
-                    <div class="form-group">
-                        <label for="editEmail">Email для уведомлений</label>
-                        <input type="email" id="editEmail" value="${escapeHtml(user.email || '')}" placeholder="user@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="editColor">Цвет на доске</label>
-                        <div class="color-picker-row">
-                            <input type="color" id="editColor" value="${user.color || '#3b82f6'}">
-                            <span class="color-preview" style="background:${user.color || '#3b82f6'}"></span>
-                            <div class="color-presets">
-                                ${DEFAULT_COLORS.map(c => `<button type="button" class="color-preset-btn" data-color="${c}" style="background:${c}"></button>`).join('')}
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn primary">Сохранить</button>
-                </form>
-            </div>
-        `;
+        modal.innerHTML =
+            '<div class="modal-content" style="max-width:400px;">' +
+                '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
+                '<h3>Редактировать сотрудника</h3>' +
+                '<form id="editUserForm">' +
+                    '<div class="form-group">' +
+                        '<label for="editLogin">Логин</label>' +
+                        '<input type="text" id="editLogin" value="' + escapeHtml(user.login) + '" required>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label for="editPassword">Новый пароль (оставьте пустым без изменений)</label>' +
+                        '<input type="password" id="editPassword" placeholder="••••••">' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label for="editEmail">Email для уведомлений</label>' +
+                        '<input type="email" id="editEmail" value="' + escapeHtml(user.email || '') + '" placeholder="user@example.com">' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label for="editColor">Цвет на доске</label>' +
+                        '<div class="color-picker-row">' +
+                            '<input type="color" id="editColor" value="' + (user.color || '#3b82f6') + '">' +
+                            '<span class="color-preview" style="background:' + (user.color || '#3b82f6') + '"></span>' +
+                            '<div class="color-presets">' +
+                                DEFAULT_COLORS.map(function(c) {
+                                    return '<button type="button" class="color-preset-btn" data-color="' + c + '" style="background:' + c + '"></button>';
+                                }).join('') +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button type="submit" class="btn primary">Сохранить</button>' +
+                '</form>' +
+            '</div>';
         document.body.appendChild(modal);
 
         const colorInput = modal.querySelector('#editColor');
@@ -319,7 +365,7 @@
         colorInput.addEventListener('input', function() {
             colorPreview.style.background = this.value;
         });
-        modal.querySelectorAll('.color-preset-btn').forEach(btn => {
+        modal.querySelectorAll('.color-preset-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 colorInput.value = this.dataset.color;
                 colorPreview.style.background = this.dataset.color;
@@ -328,47 +374,52 @@
 
         modal.querySelector('#editUserForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const newLogin = modal.querySelector('#editLogin').value.trim();
-            const newPassword = modal.querySelector('#editPassword').value;
+            const newLoginVal = modal.querySelector('#editLogin').value.trim();
+            const newPasswordVal = modal.querySelector('#editPassword').value;
             const newColor = colorInput.value;
             const newEmail = modal.querySelector('#editEmail').value.trim();
 
-            if (!newLogin) {
+            if (!newLoginVal) {
                 alert('Логин не может быть пустым');
                 return;
             }
-            if (newLogin !== login && users.find(u => u.login === newLogin)) {
+            if (newLoginVal !== login && users.find(function(u) { return u.login === newLoginVal; })) {
                 alert('Пользователь с таким логином уже существует');
                 return;
             }
 
             const oldLogin = user.login;
-            user.login = newLogin;
-            user.color = newColor;
-            user.email = newEmail;
-            if (newPassword) {
-                user.passwordHash = hashPassword(newPassword);
+            const updatedUser = Object.assign({}, user, {
+                login: newLoginVal,
+                color: newColor,
+                email: newEmail
+            });
+            if (newPasswordVal) {
+                updatedUser.passwordHash = hashPassword(newPasswordVal);
             }
 
-            if (oldLogin !== newLogin) {
-                tasks.forEach(t => {
-                    if (t.createdBy === oldLogin) t.createdBy = newLogin;
-                    if (t.assignedTo === oldLogin) t.assignedTo = newLogin;
+            // Удаляем старую запись, создаём новую (если логин изменился)
+            if (oldLogin !== newLoginVal) {
+                removeUser(oldLogin);
+                // Обновляем ссылки в задачах
+                tasks.forEach(function(t) {
+                    if (t.createdBy === oldLogin || t.assignedTo === oldLogin) {
+                        var updated = Object.assign({}, t);
+                        if (updated.createdBy === oldLogin) updated.createdBy = newLoginVal;
+                        if (updated.assignedTo === oldLogin) updated.assignedTo = newLoginVal;
+                        saveTask(updated);
+                    }
                 });
                 if (currentUser.login === oldLogin) {
-                    currentUser.login = newLogin;
+                    currentUser.login = newLoginVal;
                     saveSession(currentUser);
                 }
             }
-
-            saveData();
-            renderUsersList();
-            renderBoard();
-            populateAssigneeSelect();
+            saveUser(updatedUser);
             modal.remove();
         });
 
-        modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+        modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
     }
 
     addUserForm.addEventListener('submit', function(e) {
@@ -378,27 +429,24 @@
         const color = document.getElementById('newUserColor').value;
         const email = document.getElementById('newUserEmail').value.trim();
         if (!login || !password) return;
-        if (users.find(u => u.login === login)) {
+        if (users.find(function(u) { return u.login === login; })) {
             alert('Пользователь с таким логином уже существует');
             return;
         }
-        users.push({
+        saveUser({
             login: login,
             passwordHash: hashPassword(password),
             role: 'employee',
             color: color,
             email: email
         });
-        saveData();
-        renderUsersList();
         newLogin.value = '';
         newPassword.value = '';
         document.getElementById('newUserEmail').value = '';
-        populateAssigneeSelect();
     });
 
     // Закрытие модальных окон
-    document.querySelectorAll('.close-modal').forEach(el => {
+    document.querySelectorAll('.close-modal').forEach(function(el) {
         el.addEventListener('click', function() {
             this.closest('.modal').classList.remove('active');
         });
@@ -411,33 +459,30 @@
 
     function getTasksForUser() {
         if (currentUser.role === 'admin') return tasks;
-        return tasks.filter(t => t.createdBy === currentUser.login || t.assignedTo === currentUser.login);
+        return tasks.filter(function(t) {
+            return t.createdBy === currentUser.login || t.assignedTo === currentUser.login;
+        });
     }
 
     function renderBoard() {
-        console.log('Рендеринг доски...');
         try {
             const userTasks = getTasksForUser();
-            userTasks.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            userTasks.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
 
             const columns = ['urgent', 'in_progress', 'done'];
-            columns.forEach(status => {
-                const list = document.getElementById(`list_${status}`);
-                const countEl = document.getElementById(`count_${status}`);
-                if (!list || !countEl) {
-                    console.warn('Элемент не найден для статуса', status);
-                    return;
-                }
-                const filtered = userTasks.filter(t => t.status === status);
+            columns.forEach(function(status) {
+                const list = document.getElementById('list_' + status);
+                const countEl = document.getElementById('count_' + status);
+                if (!list || !countEl) return;
+                const filtered = userTasks.filter(function(t) { return t.status === status; });
                 countEl.textContent = filtered.length;
                 list.innerHTML = '';
                 if (filtered.length === 0) {
                     list.innerHTML = '<p style="color:#94a3b8;font-size:0.9rem;text-align:center;padding:1rem 0;">Нет задач</p>';
                     return;
                 }
-                filtered.forEach(task => {
-                    const card = createTaskCard(task);
-                    list.appendChild(card);
+                filtered.forEach(function(task) {
+                    list.appendChild(createTaskCard(task));
                 });
             });
             populateAssigneeSelect();
@@ -448,44 +493,46 @@
 
     function createTaskCard(task) {
         const div = document.createElement('div');
-        div.className = `task-card priority-${task.priority || 'medium'}`;
+        div.className = 'task-card priority-' + (task.priority || 'medium');
         div.draggable = true;
         div.dataset.id = task.id;
 
-        const assigneeUser = task.assignedTo ? users.find(u => u.login === task.assignedTo) : null;
+        const assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
         const assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
-        const createdBy = task.createdBy || '—';
         const borderColor = assigneeUser ? assigneeUser.color : '';
         if (borderColor) {
             div.style.borderLeftColor = borderColor;
         }
 
-        div.innerHTML = `
-            ${task.delegated ? '<span class="task-delegate-arrow">↗</span>' : ''}
-            <div class="task-title">${escapeHtml(task.title)}</div>
-            <div class="task-meta">
-                <span>📅 ${new Date(task.createdAt).toLocaleDateString()}</span>
-                <span>👤 ${assigneeName}</span>
-                ${task.dueDate ? `<span>⏳ ${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
-            </div>
-            <div class="task-actions-row1">
-                ${task.status !== 'done' ? `<button class="btn-done" data-action="done">✅ Выполнить</button>` : `<button class="btn-restore" data-action="restore">↩ Вернуть</button>`}
-                ${task.status !== 'done' && currentUser.role === 'admin' ? `<button class="btn-delegate" data-action="delegate">📤 Делегировать</button>` : ''}
-            </div>
-            <div class="task-actions-row2">
-                <button class="btn-open" data-action="open" title="Открыть">⭕</button>
-                <button class="btn-settings" data-action="settings" title="Настройки">⚙️</button>
-                <button class="btn-delete" data-action="delete" title="Удалить">🗑</button>
-            </div>
-        `;
+        div.innerHTML =
+            (task.delegated ? '<span class="task-delegate-arrow">↗</span>' : '') +
+            '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
+            '<div class="task-meta">' +
+                '<span>📅 ' + new Date(task.createdAt).toLocaleDateString() + '</span>' +
+                '<span>👤 ' + escapeHtml(assigneeName) + '</span>' +
+                (task.dueDate ? '<span>⏳ ' + new Date(task.dueDate).toLocaleDateString() + '</span>' : '') +
+            '</div>' +
+            '<div class="task-actions-row1">' +
+                (task.status !== 'done'
+                    ? '<button class="btn-done" data-action="done">✅ Выполнить</button>'
+                    : '<button class="btn-restore" data-action="restore">↩ Вернуть</button>') +
+                (task.status !== 'done' && currentUser.role === 'admin'
+                    ? '<button class="btn-delegate" data-action="delegate">📤 Делегировать</button>'
+                    : '') +
+            '</div>' +
+            '<div class="task-actions-row2">' +
+                '<button class="btn-open" data-action="open" title="Открыть">⭕</button>' +
+                '<button class="btn-settings" data-action="settings" title="Настройки">⚙️</button>' +
+                '<button class="btn-delete" data-action="delete" title="Удалить">🗑</button>' +
+            '</div>';
 
-        div.querySelectorAll('[data-action]').forEach(btn => {
+        div.querySelectorAll('[data-action]').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                const action = this.dataset.action;
+                var action = this.dataset.action;
                 if (action === 'delete') {
                     if (confirm('Удалить задачу?')) {
-                        deleteTask(task.id);
+                        removeTask(task.id);
                     }
                 } else if (action === 'done') {
                     changeStatus(task.id, 'done');
@@ -505,11 +552,9 @@
             });
         });
 
-        // Drag & Drop
         div.addEventListener('dragstart', handleDragStart);
         div.addEventListener('dragend', handleDragEnd);
 
-        // Двойной клик для редактирования
         div.addEventListener('dblclick', function() {
             if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
                 alert('Вы не можете редактировать эту задачу');
@@ -532,10 +577,10 @@
 
     function handleDragEnd(e) {
         this.classList.remove('dragging');
-        document.querySelectorAll('.task-list').forEach(el => el.classList.remove('drag-over'));
+        document.querySelectorAll('.task-list').forEach(function(el) { el.classList.remove('drag-over'); });
     }
 
-    document.querySelectorAll('.task-list').forEach(list => {
+    document.querySelectorAll('.task-list').forEach(function(list) {
         list.addEventListener('dragover', function(e) {
             e.preventDefault();
             this.classList.add('drag-over');
@@ -547,10 +592,10 @@
             e.preventDefault();
             this.classList.remove('drag-over');
             if (!draggedTaskId) return;
-            const column = this.closest('.column');
+            var column = this.closest('.column');
             if (!column) return;
-            const newStatus = column.dataset.status;
-            const task = tasks.find(t => t.id === draggedTaskId);
+            var newStatus = column.dataset.status;
+            var task = tasks.find(function(t) { return t.id === draggedTaskId; });
             if (!task) return;
             if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login && task.assignedTo !== currentUser.login) {
                 alert('Вы не можете изменять эту задачу');
@@ -564,7 +609,7 @@
 
     // ---------- CRUD задач ----------
     function addTask(taskData) {
-        const newTask = {
+        var newTask = {
             id: generateId(),
             title: taskData.title.trim(),
             description: taskData.description || '',
@@ -578,126 +623,107 @@
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        tasks.push(newTask);
-        saveData();
-        renderBoard();
+        saveTask(newTask);
         return newTask;
     }
 
-    function deleteTask(id) {
-        tasks = tasks.filter(t => t.id !== id);
-        saveData();
-        renderBoard();
-    }
-
     function changeStatus(id, newStatus) {
-        const task = tasks.find(t => t.id === id);
+        var task = tasks.find(function(t) { return t.id === id; });
         if (!task) return;
+        var updated = Object.assign({}, task);
         if (newStatus === 'done') {
-            task.previousStatus = task.status;
+            updated.previousStatus = task.status;
         }
-        task.status = newStatus;
-        task.updatedAt = new Date().toISOString();
-        saveData();
-        renderBoard();
+        updated.status = newStatus;
+        updated.updatedAt = new Date().toISOString();
+        saveTask(updated);
     }
 
     function updateTask(id, updates) {
-        const task = tasks.find(t => t.id === id);
+        var task = tasks.find(function(t) { return t.id === id; });
         if (!task) return;
-        Object.assign(task, updates);
-        task.updatedAt = new Date().toISOString();
-        saveData();
-        renderBoard();
+        var updated = Object.assign({}, task, updates);
+        updated.updatedAt = new Date().toISOString();
+        saveTask(updated);
     }
 
     // ---------- Показ деталей задачи ----------
     function showTaskDetails(task) {
-        const assigneeUser = task.assignedTo ? users.find(u => u.login === task.assignedTo) : null;
-        const assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
-        const priorityLabels = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
-        const statusLabels = { urgent: 'Срочно', in_progress: 'В работе', done: 'Выполнено' };
-        const modal = document.createElement('div');
+        var assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
+        var priorityLabels = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
+        var statusLabels = { urgent: 'Срочно', in_progress: 'В работе', done: 'Выполнено' };
+        var modal = document.createElement('div');
         modal.className = 'modal active';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width:450px;">
-                <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
-                <h3>${escapeHtml(task.title)}</h3>
-                <div style="margin-top:1rem;font-size:0.95rem;color:#334155;">
-                    <p><strong>Описание:</strong> ${task.description ? escapeHtml(task.description) : '<em>нет</em>'}</p>
-                    <p><strong>Статус:</strong> ${statusLabels[task.status] || task.status}</p>
-                    <p><strong>Приоритет:</strong> ${priorityLabels[task.priority] || task.priority}</p>
-                    <p><strong>Исполнитель:</strong> ${assigneeName}</p>
-                    <p><strong>Создал:</strong> ${task.createdBy || '—'}</p>
-                    <p><strong>Создано:</strong> ${new Date(task.createdAt).toLocaleString()}</p>
-                    ${task.dueDate ? `<p><strong>Срок:</strong> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
-                    ${task.updatedAt ? `<p><strong>Обновлено:</strong> ${new Date(task.updatedAt).toLocaleString()}</p>` : ''}
-                </div>
-            </div>
-        `;
+        modal.innerHTML =
+            '<div class="modal-content" style="max-width:450px;">' +
+                '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
+                '<h3>' + escapeHtml(task.title) + '</h3>' +
+                '<div style="margin-top:1rem;font-size:0.95rem;color:#334155;">' +
+                    '<p><strong>Описание:</strong> ' + (task.description ? escapeHtml(task.description) : '<em>нет</em>') + '</p>' +
+                    '<p><strong>Статус:</strong> ' + (statusLabels[task.status] || task.status) + '</p>' +
+                    '<p><strong>Приоритет:</strong> ' + (priorityLabels[task.priority] || task.priority) + '</p>' +
+                    '<p><strong>Исполнитель:</strong> ' + escapeHtml(assigneeName) + '</p>' +
+                    '<p><strong>Создал:</strong> ' + escapeHtml(task.createdBy || '—') + '</p>' +
+                    '<p><strong>Создано:</strong> ' + new Date(task.createdAt).toLocaleString() + '</p>' +
+                    (task.dueDate ? '<p><strong>Срок:</strong> ' + new Date(task.dueDate).toLocaleDateString() + '</p>' : '') +
+                    (task.updatedAt ? '<p><strong>Обновлено:</strong> ' + new Date(task.updatedAt).toLocaleString() + '</p>' : '') +
+                '</div>' +
+            '</div>';
         document.body.appendChild(modal);
-        modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+        modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
     // ---------- Делегирование ----------
     function showDelegateModal(taskId) {
-        const task = tasks.find(t => t.id === taskId);
+        var task = tasks.find(function(t) { return t.id === taskId; });
         if (!task) return;
-        const assignees = users.filter(u => u.login !== currentUser.login && u.role === 'employee').map(u => u.login);
+        var assignees = users
+            .filter(function(u) { return u.login !== currentUser.login && u.role === 'employee'; })
+            .map(function(u) { return u.login; });
         if (assignees.length === 0) {
             alert('Нет доступных сотрудников для делегирования');
             return;
         }
-        const modal = document.createElement('div');
+        var modal = document.createElement('div');
         modal.className = 'modal active';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width:400px;">
-                <span class="close-modal" onclick="this.closest('.modal').remove()">&times;</span>
-                <h3>Делегировать задачу</h3>
-                <p><strong>${escapeHtml(task.title)}</strong></p>
-                <div class="form-group">
-                    <label for="delegateSelect">Выберите сотрудника</label>
-                    <select id="delegateSelect">
-                        ${assignees.map(login => `<option value="${login}" ${task.assignedTo === login ? 'selected' : ''}>${login}</option>`).join('')}
-                    </select>
-                </div>
-                <button id="delegateConfirmBtn" class="btn primary">Делегировать</button>
-            </div>
-        `;
+        modal.innerHTML =
+            '<div class="modal-content" style="max-width:400px;">' +
+                '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
+                '<h3>Делегировать задачу</h3>' +
+                '<p><strong>' + escapeHtml(task.title) + '</strong></p>' +
+                '<div class="form-group">' +
+                    '<label for="delegateSelect">Выберите сотрудника</label>' +
+                    '<select id="delegateSelect">' +
+                        assignees.map(function(login) {
+                            return '<option value="' + escapeHtml(login) + '" ' + (task.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(login) + '</option>';
+                        }).join('') +
+                    '</select>' +
+                '</div>' +
+                '<button id="delegateConfirmBtn" class="btn primary">Делегировать</button>' +
+            '</div>';
         document.body.appendChild(modal);
         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
-            const selected = document.getElementById('delegateSelect').value;
-            console.log('Delegate: выбран сотрудник', selected);
-            task.assignedTo = selected;
-            task.delegated = true;
-            task.updatedAt = new Date().toISOString();
-            saveData();
-            renderBoard();
+            var selected = document.getElementById('delegateSelect').value;
+            var updated = Object.assign({}, task, {
+                assignedTo: selected,
+                delegated: true,
+                updatedAt: new Date().toISOString()
+            });
+            saveTask(updated);
             sendEmailNotification(selected, task.title);
             modal.remove();
         });
-        modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+        modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
     }
 
     // ---------- Уведомления по почте ----------
     function sendEmailNotification(toLogin, taskTitle) {
-        console.log('EmailJS: sendEmailNotification вызвана, toLogin=' + toLogin);
-        if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
-            console.warn('EmailJS: не заполнены ключи конфигурации');
-            return;
-        }
-        if (typeof emailjs === 'undefined') {
-            console.warn('EmailJS: библиотека не загружена');
-            return;
-        }
-        const user = users.find(u => u.login === toLogin);
-        const toEmail = user && user.email ? user.email : '';
-        if (!toEmail) {
-            console.warn('EmailJS: у пользователя ' + toLogin + ' не указана почта');
-            return;
-        }
-        console.log('EmailJS: отправка на', toEmail);
+        if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) return;
+        if (typeof emailjs === 'undefined') return;
+        var user = users.find(function(u) { return u.login === toLogin; });
+        var toEmail = user && user.email ? user.email : '';
+        if (!toEmail) return;
         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
             to_email: toEmail,
             to_name: toLogin,
@@ -712,16 +738,18 @@
 
     // ---------- Популяция select исполнителей ----------
     function populateAssigneeSelect() {
-        const select = taskAssignee;
+        var select = taskAssignee;
         if (!select) return;
-        const currentVal = select.value;
+        var currentVal = select.value;
         select.innerHTML = '<option value="">Не назначен</option>';
-        users.filter(u => u.login !== currentUser?.login && u.role === 'employee').forEach(u => {
-            const opt = document.createElement('option');
-            opt.value = u.login;
-            opt.textContent = u.login;
-            select.appendChild(opt);
-        });
+        users
+            .filter(function(u) { return u.login !== (currentUser && currentUser.login) && u.role === 'employee'; })
+            .forEach(function(u) {
+                var opt = document.createElement('option');
+                opt.value = u.login;
+                opt.textContent = u.login;
+                select.appendChild(opt);
+            });
         if (currentVal) select.value = currentVal;
     }
 
@@ -749,39 +777,37 @@
 
     taskForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const id = taskId.value;
-        const title = taskTitle.value.trim();
+        var id = taskId.value;
+        var title = taskTitle.value.trim();
         if (!title) return;
-        const description = taskDesc.value.trim();
-        const priority = taskPriority.value;
-        const dueDate = taskDueDate.value;
-        const assignee = taskAssignee.value;
+        var description = taskDesc.value.trim();
+        var priority = taskPriority.value;
+        var dueDate = taskDueDate.value;
+        var assignee = taskAssignee.value;
 
         if (id) {
-            const task = tasks.find(t => t.id === id);
+            var task = tasks.find(function(t) { return t.id === id; });
             if (task) {
                 if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
                     alert('Вы не можете редактировать эту задачу');
                     return;
                 }
-                task.title = title;
-                task.description = description;
-                task.priority = priority;
-                task.dueDate = dueDate;
-                task.assignedTo = assignee || '';
-                task.updatedAt = new Date().toISOString();
-                saveData();
-                renderBoard();
+                updateTask(id, {
+                    title: title,
+                    description: description,
+                    priority: priority,
+                    dueDate: dueDate,
+                    assignedTo: assignee || ''
+                });
             }
         } else {
-            const newTask = {
+            addTask({
                 title: title,
                 description: description,
                 priority: priority,
                 dueDate: dueDate,
                 assignee: assignee || ''
-            };
-            addTask(newTask);
+            });
         }
         taskModal.classList.remove('active');
     });
@@ -791,12 +817,12 @@
     });
 
     // ---------- Мобильные кнопки ----------
-    const mobileAddBtn = document.getElementById('mobileAddBtn');
-    const mobileManageBtn = document.getElementById('mobileManageBtn');
-    const mobileSettingsBtn = document.getElementById('mobileSettingsBtn');
-    const mobileSettingsDropdown = document.getElementById('mobileSettingsDropdown');
-    const mobileExportBtn = document.getElementById('mobileExportBtn');
-    const mobileImportBtn = document.getElementById('mobileImportBtn');
+    var mobileAddBtn = document.getElementById('mobileAddBtn');
+    var mobileManageBtn = document.getElementById('mobileManageBtn');
+    var mobileSettingsBtn = document.getElementById('mobileSettingsBtn');
+    var mobileSettingsDropdown = document.getElementById('mobileSettingsDropdown');
+    var mobileExportBtn = document.getElementById('mobileExportBtn');
+    var mobileImportBtn = document.getElementById('mobileImportBtn');
 
     if (mobileAddBtn) {
         mobileAddBtn.addEventListener('click', function() { openTaskModal(null); });
@@ -836,30 +862,32 @@
             alert('Библиотека XLSX не загружена. Проверьте интернет-соединение.');
             return;
         }
-        const dataToExport = tasks.map(t => ({
-            'ID': t.id,
-            'Заголовок': t.title,
-            'Описание': t.description || '',
-            'Статус': t.status === 'urgent' ? 'Срочно' : (t.status === 'in_progress' ? 'В работе' : 'Выполнено'),
-            'Создал': t.createdBy || '',
-            'Исполнитель': t.assignedTo || '',
-            'Приоритет': t.priority || 'medium',
-            'Срок': t.dueDate || '',
-            'Создано': t.createdAt ? new Date(t.createdAt).toLocaleString() : '',
-            'Обновлено': t.updatedAt ? new Date(t.updatedAt).toLocaleString() : ''
-        }));
+        var dataToExport = tasks.map(function(t) {
+            return {
+                'ID': t.id,
+                'Заголовок': t.title,
+                'Описание': t.description || '',
+                'Статус': t.status === 'urgent' ? 'Срочно' : (t.status === 'in_progress' ? 'В работе' : 'Выполнено'),
+                'Создал': t.createdBy || '',
+                'Исполнитель': t.assignedTo || '',
+                'Приоритет': t.priority || 'medium',
+                'Срок': t.dueDate || '',
+                'Создано': t.createdAt ? new Date(t.createdAt).toLocaleString() : '',
+                'Обновлено': t.updatedAt ? new Date(t.updatedAt).toLocaleString() : ''
+            };
+        });
         if (dataToExport.length === 0) {
             alert('Нет задач для экспорта');
             return;
         }
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.json_to_sheet(dataToExport);
         ws['!cols'] = [
             {wch:12}, {wch:25}, {wch:30}, {wch:15}, {wch:12},
             {wch:12}, {wch:10}, {wch:12}, {wch:25}, {wch:20}
         ];
         XLSX.utils.book_append_sheet(wb, ws, 'Задачи');
-        XLSX.writeFile(wb, `Задачи_${new Date().toISOString().slice(0,10)}.xlsx`);
+        XLSX.writeFile(wb, 'Задачи_' + new Date().toISOString().slice(0,10) + '.xlsx');
     });
 
     // ---------- Импорт Excel ----------
@@ -872,47 +900,48 @@
     });
 
     fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
+        var file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
+        var reader = new FileReader();
         reader.onload = function(ev) {
             try {
-                const data = new Uint8Array(ev.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet);
-                let added = 0;
-                rows.forEach(row => {
-                    const id = row['ID'] || generateId();
-                    const existing = tasks.find(t => t.id === id);
+                var data = new Uint8Array(ev.target.result);
+                var workbook = XLSX.read(data, { type: 'array' });
+                var sheet = workbook.Sheets[workbook.SheetNames[0]];
+                var rows = XLSX.utils.sheet_to_json(sheet);
+                var added = 0;
+                rows.forEach(function(row) {
+                    var id = row['ID'] || generateId();
+                    var existing = tasks.find(function(t) { return t.id === id; });
                     if (existing) {
-                        existing.title = row['Заголовок'] || existing.title;
-                        existing.description = row['Описание'] || existing.description;
-                        existing.status = row['Статус'] === 'Срочно' ? 'urgent' : (row['Статус'] === 'В работе' ? 'in_progress' : 'done');
-                        existing.assignedTo = row['Исполнитель'] || existing.assignedTo;
-                        existing.priority = row['Приоритет'] || existing.priority;
-                        existing.dueDate = row['Срок'] || existing.dueDate;
-                        existing.updatedAt = new Date().toISOString();
+                        var updated = Object.assign({}, existing, {
+                            title: row['Заголовок'] || existing.title,
+                            description: row['Описание'] || existing.description,
+                            status: row['Статус'] === 'Срочно' ? 'urgent' : (row['Статус'] === 'В работе' ? 'in_progress' : 'done'),
+                            assignedTo: row['Исполнитель'] || existing.assignedTo,
+                            priority: row['Приоритет'] || existing.priority,
+                            dueDate: row['Срок'] || existing.dueDate,
+                            updatedAt: new Date().toISOString()
+                        });
+                        saveTask(updated);
                     } else {
-                        const newTask = {
+                        var newTask = {
                             id: id,
                             title: row['Заголовок'] || 'Без названия',
                             description: row['Описание'] || '',
                             status: row['Статус'] === 'Срочно' ? 'urgent' : (row['Статус'] === 'В работе' ? 'in_progress' : 'done'),
-                            createdBy: row['Создал'] || 'admin',
+                            createdBy: row['Создал'] || currentUser.login,
                             assignedTo: row['Исполнитель'] || '',
                             priority: row['Приоритет'] || 'medium',
                             dueDate: row['Срок'] || '',
                             createdAt: row['Создано'] ? new Date(row['Создано']).toISOString() : new Date().toISOString(),
                             updatedAt: new Date().toISOString()
                         };
-                        tasks.push(newTask);
+                        saveTask(newTask);
                         added++;
                     }
                 });
-                saveData();
-                renderBoard();
-                alert(`Импорт завершён. Добавлено ${added} новых задач, обновлено существующих.`);
+                alert('Импорт завершён. Добавлено ' + added + ' новых задач.');
             } catch(err) {
                 alert('Ошибка при импорте: ' + err.message);
             }
@@ -923,17 +952,33 @@
 
     // ---------- Вспомогательные функции ----------
     function escapeHtml(text) {
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
     // ---------- Запуск ----------
-    // Ждём полной загрузки DOM, чтобы все элементы были доступны
+    // Ждём загрузки Firebase SDK
+    function waitForFirebase(callback) {
+        if (typeof firebase !== 'undefined' && firebase.database) {
+            callback();
+        } else {
+            setTimeout(function() { waitForFirebase(callback); }, 50);
+        }
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() {
+            waitForFirebase(function() {
+                firebase.initializeApp(FIREBASE_CONFIG);
+                init();
+            });
+        });
     } else {
-        init();
+        waitForFirebase(function() {
+            firebase.initializeApp(FIREBASE_CONFIG);
+            init();
+        });
     }
 
 })();
