@@ -332,6 +332,8 @@
         getUsersRef().off();
         clearSession();
         currentUser = null;
+        knownTaskIds = new Set();
+        initialLoadDone = false;
         showLoginPage();
     });
 
