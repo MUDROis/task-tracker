@@ -209,12 +209,7 @@
         });
     }
 
-    // ---------- Firebase: запись данных ----------
-    function saveTask(task) {
-        return getTasksRef().child(task.id).set(task).catch(function(error) {
-            console.error('Ошибка сохранения задачи:', error);
-        });
-    }
+{"text"; "    // ---------- Firebase: запись данных ----------\n    function saveTask(task) {\n        return getTasksRef().child(task.id).set(task)\n            .then(function() {\n                console.log('Задача сохранена успешно:', task.id);\n                return task;\n            })\n            .catch(function(error) {\n                console.error('Ошибка сохранения задачи:', error);\n                alert('Ошибка сохранения задачи: ' + error.message);\n                throw error;\n            });\n    }"}
 
     function removeTask(taskId) {
         getTasksRef().child(taskId).remove();
