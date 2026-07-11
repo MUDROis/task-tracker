@@ -351,31 +351,10 @@
                     '<span><strong>' + escapeHtml(u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
                     '<div class="user-row-actions">' +
                         '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
-                        (!isAdmin ? '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>' : '') +
                     '</div>' +
                 '</div>' +
             '</div>';
         }).join('');
-
-        usersList.querySelectorAll('.btn-delete-user').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var login = this.dataset.login;
-                if (confirm('Удалить пользователя "' + login + '"?')) {
-                    removeUser(login);
-                    // Удаляем задачи пользователя
-                    tasks.forEach(function(t) {
-                        if (t.createdBy === login || t.assignedTo === login) {
-                            removeTask(t.id);
-                        }
-                    });
-                    if (currentUser.login === login) {
-                        clearSession();
-                        currentUser = null;
-                        showLoginPage();
-                    }
-                }
-            });
-        });
 
         usersList.querySelectorAll('.btn-edit-user').forEach(function(btn) {
             btn.addEventListener('click', function() {
