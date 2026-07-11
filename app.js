@@ -151,7 +151,10 @@
     }
 
     // ---------- Firebase: загрузка данных ----------
+    let listenersInitialized = false;
     function initFirebaseListeners() {
+        if (listenersInitialized) return;
+        listenersInitialized = true;
         // Слушаем задачи в реальном времени
         getTasksRef().on('value', function(snapshot) {
             var data = snapshot.val();
@@ -199,7 +202,7 @@
             if (currentUser) {
                 const fresh = users.find(function(u) { return u.login === currentUser.login; });
                 if (fresh) {
-                    currentUser = { login: fresh.login, role: fresh.role };
+                    currentUser = { uid: fresh.uid, login: fresh.login, role: fresh.role, color: fresh.color, email: fresh.email };
                 }
             }
             populateAssigneeSelect();
@@ -363,7 +366,7 @@
                 }
                 saveSession(currentUser);
                 showMainPage();
-                initFirebaseListeners();
+                // initFirebaseListeners уже вызывается в onAuthStateChanged
             })
             .catch(function(error) {
                 console.error('Ошибка:', error.code, error.message);
@@ -389,6 +392,7 @@
             currentUser = null;
             knownTaskIds = new Set();
             initialLoadDone = false;
+            listenersInitialized = false;
             showLoginPage();
         }).catch(function(error) {
             console.error('Ошибка выхода:', error);
