@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "firebase": "^12.16.0"
+  },
+  "scripts": {
+    "generate-config": "node scripts/generate-config.js"
   }
 }
