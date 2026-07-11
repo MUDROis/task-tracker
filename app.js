@@ -242,7 +242,11 @@
                 console.log('ensureAdminUser: admin записан в DB. Войдите: admin / admin123');
             })
             .catch(function(error) {
-                console.log('ensureAdminUser: ошибка —', error.code, error.message);
+                if (error.code === 'auth/email-already-in-use') {
+                    console.log('ensureAdminUser: admin уже существует, пропускаю');
+                } else {
+                    console.log('ensureAdminUser: ошибка —', error.code, error.message);
+                }
             });
     }
 
