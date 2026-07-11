@@ -862,15 +862,21 @@
                     dueDate: dueDate,
                     assignedTo: assignee || ''
                 });
+                if (assignee && assignee !== task.assignedTo) {
+                    sendEmailNotification(assignee, title);
+                }
             }
         } else {
-            addTask({
+            var newTask = addTask({
                 title: title,
                 description: description,
                 priority: priority,
                 dueDate: dueDate,
                 assignee: assignee || ''
             });
+            if (assignee) {
+                sendEmailNotification(assignee, title);
+            }
         }
         taskModal.classList.remove('active');
     });
