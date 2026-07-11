@@ -1,5 +1,5 @@
 // ============================================================
-//  Трекер задач — PWA с Firebase Realtime Database
+//  Трекер задач — PWA с Firebase Realtime Database + Auth
 //  Данные синхронизируются между всеми устройствами в реальном времени
 // ============================================================
 
@@ -12,6 +12,7 @@
     let users = [];
     let firebaseReady = false;
     let db = null;
+    let auth = null;
     let knownTaskIds = new Set();
     let initialLoadDone = false;
 
@@ -149,17 +150,6 @@
         return null;
     }
 
-    // ---------- Хеширование пароля ----------
-    function hashPassword(password) {
-        let hash = 0;
-        for (let i = 0; i < password.length; i++) {
-            const char = password.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return hash.toString(16);
-    }
-
     // ---------- Firebase: загрузка данных ----------
     function initFirebaseListeners() {
         // Слушаем задачи в реальном времени
@@ -235,16 +225,51 @@
 
     // ---------- Автосоздание admin-пользователя ----------
     function ensureAdminUser() {
+        // Проверяем, есть ли уже admin в базе
         getUsersRef().child('admin').once('value').then(function(snapshot) {
-            if (!snapshot.val()) {
-                saveUser({
-                    login: 'admin',
-                    passwordHash: hashPassword('1'),
-                    role: 'admin',
-                    color: '#3b82f6',
-                    email: ''
-                });
-                console.log('Создан пользователь admin (пароль: 1)');
+            const existingUser = snapshot.val();
+            if (!existingUser) {
+                // Пользователя нет — создаём заново
+                auth.createUserWithEmailAndPassword('admin@tasktracker.local', 'admin123')
+                    .then(function(userCredential) {
+                        const uid = userCredential.user.uid;
+                        saveUser({
+                            uid: uid,
+                            login: 'admin',
+                            role: 'admin',
+                            color: '#3b82f6',
+                            email: 'admin@tasktracker.local'
+                        });
+                        console.log('Создан пользователь admin (email: admin@tasktracker.local, пароль: admin123)');
+                    })
+                    .catch(function(error) {
+                        if (error.code === 'auth/email-already-in-use') {
+                            console.log('Пользователь admin уже существует');
+                        } else {
+                            console.error('Ошибка создания admin:', error);
+                        }
+                    });
+            } else if (!existingUser.uid) {
+                // Пользователь есть в базе, но без uid (старая система) — мигрируем
+                auth.createUserWithEmailAndPassword('admin@tasktracker.local', 'admin123')
+                    .then(function(userCredential) {
+                        const uid = userCredential.user.uid;
+                        saveUser({
+                            uid: uid,
+                            login: 'admin',
+                            role: 'admin',
+                            color: existingUser.color || '#3b82f6',
+                            email: existingUser.email || 'admin@tasktracker.local'
+                        });
+                        console.log('Admin мигрирован на Firebase Auth (uid: ' + uid + ')');
+                    })
+                    .catch(function(error) {
+                        if (error.code === 'auth/email-already-in-use') {
+                            console.log('Firebase Auth уже содержит запись для admin. Удалите старого admin из Realtime Database и обновите страницу.');
+                        } else {
+                            console.error('Ошибка миграции admin:', error);
+                        }
+                    });
             }
         });
     }
@@ -253,21 +278,47 @@
     function init() {
         console.log('Инициализация приложения...');
 
+        // Инициализация Firebase Auth
+        auth = firebase.auth();
+        
+        // Слушаем состояние авторизации
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                // Пользователь авторизован
+                console.log('Пользователь авторизован:', user.email);
+                
+                // Ищем пользователя в Realtime Database по uid
+                getUsersRef().orderByChild('uid').equalTo(user.uid).once('value').then(function(snapshot) {
+                    const usersData = snapshot.val();
+                    if (usersData) {
+                        const userId = Object.keys(usersData)[0];
+                        const userData = usersData[userId];
+                        currentUser = {
+                            uid: user.uid,
+                            login: userData.login,
+                            role: userData.role,
+                            email: userData.email
+                        };
+                        saveSession(currentUser);
+                        showMainPage();
+                        initFirebaseListeners();
+                    } else {
+                        // Пользователь в Auth, но нет данных в DB
+                        console.error('Пользователь не найден в базе данных');
+                        auth.signOut();
+                        showLoginPage();
+                    }
+                });
+            } else {
+                // Пользователь не авторизован
+                console.log('Пользователь не авторизован');
+                currentUser = null;
+                showLoginPage();
+            }
+        });
+
         // Создаём admin если его нет
         ensureAdminUser();
-
-        // Проверяем сессию
-        const session = loadSession();
-        if (session && session.login) {
-            currentUser = session;
-            console.log('Сессия восстановлена для', currentUser.login);
-            showMainPage();
-            // Подключаем Firebase listeners
-            initFirebaseListeners();
-        } else {
-            console.log('Сессия не найдена, показываем логин');
-            showLoginPage();
-        }
 
         // Инициализация EmailJS
         if (EMAILJS_PUBLIC_KEY && typeof emailjs !== 'undefined') {
@@ -304,22 +355,42 @@
             return;
         }
 
-        // Проверяем пользователя в Firebase
-        getUsersRef().child(login).once('value').then(function(snapshot) {
-            const user = snapshot.val();
-            if (!user) {
+        // Ищем пользователя по логину в Realtime Database
+        getUsersRef().orderByChild('login').equalTo(login).once('value').then(function(snapshot) {
+            const usersData = snapshot.val();
+            if (!usersData) {
                 loginError.textContent = 'Пользователь не найден';
                 return;
             }
-            if (user.passwordHash !== hashPassword(password)) {
-                loginError.textContent = 'Неверный пароль';
-                return;
-            }
-            currentUser = { login: user.login, role: user.role };
-            saveSession(currentUser);
-            console.log('Вход выполнен:', currentUser.login);
-            showMainPage();
-            initFirebaseListeners();
+            
+            const userId = Object.keys(usersData)[0];
+            const user = usersData[userId];
+            
+            // Вход через Firebase Auth с email
+            const email = user.email || login + '@tasktracker.local';
+            auth.signInWithEmailAndPassword(email, password)
+                .then(function(userCredential) {
+                    currentUser = { 
+                        uid: userCredential.user.uid,
+                        login: user.login, 
+                        role: user.role,
+                        email: user.email
+                    };
+                    saveSession(currentUser);
+                    console.log('Вход выполнен:', currentUser.login);
+                    showMainPage();
+                    initFirebaseListeners();
+                })
+                .catch(function(error) {
+                    console.error('Ошибка авторизации:', error);
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                        loginError.textContent = 'Неверный логин или пароль';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        loginError.textContent = 'Слишком много попыток. Попробуйте позже';
+                    } else {
+                        loginError.textContent = 'Ошибка подключения к серверу';
+                    }
+                });
         }).catch(function(err) {
             console.error('Ошибка Firebase:', err);
             loginError.textContent = 'Ошибка подключения к серверу';
@@ -327,14 +398,19 @@
     });
 
     logoutBtn.addEventListener('click', function() {
-        // Отключаем listeners
-        getTasksRef().off();
-        getUsersRef().off();
-        clearSession();
-        currentUser = null;
-        knownTaskIds = new Set();
-        initialLoadDone = false;
-        showLoginPage();
+        // Выход из Firebase Auth
+        auth.signOut().then(function() {
+            // Отключаем listeners
+            getTasksRef().off();
+            getUsersRef().off();
+            clearSession();
+            currentUser = null;
+            knownTaskIds = new Set();
+            initialLoadDone = false;
+            showLoginPage();
+        }).catch(function(error) {
+            console.error('Ошибка выхода:', error);
+        });
     });
 
     // ---------- Управление пользователями ----------
@@ -438,8 +514,15 @@
                 color: newColor,
                 email: newEmail
             });
-            if (newPasswordVal) {
-                updatedUser.passwordHash = hashPassword(newPasswordVal);
+
+            // Обновляем данные пользователя в Realtime Database
+            saveUser(updatedUser);
+            
+            // Если изменился пароль, обновляем через Firebase Auth
+            if (newPasswordVal && user.uid) {
+                // Примечание: изменение пароля другого пользователя требует Admin SDK
+                // В клиентском приложении это ограничение Firebase
+                alert('Для изменения пароля пользователю ' + newLoginVal + ' используйте Firebase Console');
             }
 
             // Удаляем старую запись, создаём новую (если логин изменился)
@@ -459,7 +542,6 @@
                     saveSession(currentUser);
                 }
             }
-            saveUser(updatedUser);
             modal.remove();
         });
 
@@ -477,16 +559,33 @@
             alert('Пользователь с таким логином уже существует');
             return;
         }
-        saveUser({
-            login: login,
-            passwordHash: hashPassword(password),
-            role: 'employee',
-            color: color,
-            email: email
-        });
-        newLogin.value = '';
-        newPassword.value = '';
-        document.getElementById('newUserEmail').value = '';
+        
+        // Создаем пользователя в Firebase Auth
+        const userEmail = email || login + '@tasktracker.local';
+        auth.createUserWithEmailAndPassword(userEmail, password)
+            .then(function(userCredential) {
+                const uid = userCredential.user.uid;
+                // Сохраняем данные пользователя в Realtime Database
+                saveUser({
+                    uid: uid,
+                    login: login,
+                    role: 'employee',
+                    color: color,
+                    email: email
+                });
+                newLogin.value = '';
+                newPassword.value = '';
+                document.getElementById('newUserEmail').value = '';
+                alert('Пользователь ' + login + ' успешно создан');
+            })
+            .catch(function(error) {
+                console.error('Ошибка создания пользователя:', error);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert('Пользователь с таким email уже существует');
+                } else {
+                    alert('Ошибка создания пользователя: ' + error.message);
+                }
+            });
     });
 
     // Закрытие модальных окон

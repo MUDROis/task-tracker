@@ -5,7 +5,8 @@
 //  2. Добавьте Web-приложение (</> иконка)
 //  3. Скопируйте значения ниже
 //  4. В Database → Realtime Database → создайте БД
-//  5. Установите правила: { "rules": { ".read": true, ".write": true } }
+//  5. В Authentication → Sign-in method → включить Email/Password
+//  6. Импортируйте правила из database.rules.json (БЕЗОПАСНЫЕ ПРАВИЛА)
 // ============================================================
 
 const FIREBASE_CONFIG = {
