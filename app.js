@@ -372,7 +372,6 @@
                 }
             });
     });
-    });
 
     logoutBtn.addEventListener('click', function() {
         // Выход из Firebase Auth
