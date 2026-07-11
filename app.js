@@ -175,7 +175,7 @@
                 var newIds = new Set(newTasks.map(function(t) { return t.id; }));
                 newTasks.forEach(function(t) {
                     if (!knownTaskIds.has(t.id)) {
-                        var isDelegatedToMe = t.assignedTo === currentUser.login;
+                        var isDelegatedToMe = t.assignedTo === currentUser.login && t.delegated;
                         var isMyTask = t.createdBy === currentUser.login;
                         if (isDelegatedToMe && !isMyTask) {
                             playNotificationSound();
