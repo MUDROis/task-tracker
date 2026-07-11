@@ -228,18 +228,20 @@
         auth.createUserWithEmailAndPassword('admin@tasktracker.local', 'admin123')
             .then(function(userCredential) {
                 const uid = userCredential.user.uid;
-                saveUser({
+                return saveUser({
                     uid: uid,
                     login: 'admin',
                     role: 'admin',
                     color: '#3b82f6',
                     email: ''
                 });
-                console.log('Создан пользователь admin (пароль: admin123)');
+            })
+            .then(function() {
+                console.log('Admin создан. Войдите: admin / admin123');
             })
             .catch(function(error) {
                 if (error.code === 'auth/email-already-in-use') {
-                    // Admin уже существует — всё ок
+                    // Admin уже существует — продолжаем
                 } else {
                     console.error('Ошибка создания admin:', error);
                 }
@@ -256,7 +258,6 @@
         // Слушаем состояние авторизации
         auth.onAuthStateChanged(function(user) {
             if (user) {
-                // Пользователь авторизован — загружаем данные из базы
                 const login = user.email.replace('@tasktracker.local', '');
                 getUsersRef().child(login).once('value').then(function(snapshot) {
                     const userData = snapshot.val();
@@ -269,10 +270,11 @@
                             email: userData.email
                         };
                     } else {
+                        // Записи нет в DB — создаём (первый вход admin или новый сотрудник)
                         currentUser = {
                             uid: user.uid,
                             login: login,
-                            role: 'employee',
+                            role: login === 'admin' ? 'admin' : 'employee',
                             color: '#3b82f6',
                             email: ''
                         };

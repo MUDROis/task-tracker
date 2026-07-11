@@ -4,15 +4,14 @@
       "$teamId": {
         "users": {
           "$uid": {
-            ".read": "auth != null && (auth.uid === $uid || root.child('teams/' + $teamId + '/users/' + auth.uid + '/role').val() === 'admin')",
-            ".write": "auth != null && (auth.uid === $uid || root.child('teams/' + $teamId + '/users/' + auth.uid + '/role').val() === 'admin')",
-            ".validate": "newData.hasChildren(['uid', 'login', 'role']) && newData.child('role').val().matches(/^(admin|employee)$/) && newData.child('login').isString() && newData.child('uid').isString()"
+            ".read": "auth != null",
+            ".write": "auth != null"
           }
         },
         "tasks": {
           "$taskId": {
             ".read": "auth != null",
-            ".write": "auth != null && (root.child('teams/' + $teamId + '/users/' + auth.uid + '/role').val() === 'admin' || data.child('createdBy').val() === auth.uid || data.child('assignedTo').val() === auth.uid)",
+            ".write": "auth != null && (root.child('teams/' + $teamId + '/users/' + auth.uid + '/role').val() === 'admin' || data.child('createdBy').val() === auth.uid || data.child('assignedTo').val() === auth.uid || !data.exists())",
             ".validate": "newData.hasChildren(['id', 'title', 'status', 'createdBy']) && newData.child('status').val().matches(/^(urgent|in_progress|done)$/) && newData.child('title').isString() && newData.child('createdBy').isString()"
           }
         }
