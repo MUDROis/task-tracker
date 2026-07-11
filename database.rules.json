@@ -5,14 +5,14 @@
         "users": {
           ".read": "auth != null",
           ".write": "auth != null",
-          "$uid": {
+          "$login": {
             ".validate": "newData.hasChildren(['uid', 'login', 'role']) && newData.child('role').val().matches(/^(admin|employee)$/) && newData.child('login').isString() && newData.child('uid').isString()"
           }
         },
         "tasks": {
           "$taskId": {
             ".read": "auth != null",
-            ".write": "auth != null && (root.child('teams/' + $teamId + '/users/' + auth.uid + '/role').val() === 'admin' || data.child('createdBy').val() === auth.uid || data.child('assignedTo').val() === auth.uid || !data.exists())",
+            ".write": "auth != null",
             ".validate": "newData.hasChildren(['id', 'title', 'status', 'createdBy']) && newData.child('status').val().matches(/^(urgent|in_progress|done)$/) && newData.child('title').isString() && newData.child('createdBy').isString()"
           }
         }

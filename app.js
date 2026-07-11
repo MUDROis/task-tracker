@@ -208,7 +208,9 @@
 
     // ---------- Firebase: запись данных ----------
     function saveTask(task) {
-        getTasksRef().child(task.id).set(task);
+        return getTasksRef().child(task.id).set(task).catch(function(error) {
+            console.error('Ошибка сохранения задачи:', error);
+        });
     }
 
     function removeTask(taskId) {
@@ -216,7 +218,7 @@
     }
 
     function saveUser(user) {
-        getUsersRef().child(user.login).set(user);
+        return getUsersRef().child(user.login).set(user);
     }
 
     function removeUser(login) {
@@ -281,8 +283,6 @@
                             email: ''
                         };
                         saveUser(currentUser);
-                        // Сразу добавляем в массив, чтобы управление видело пользователя
-                        users.push(currentUser);
                     }
                     saveSession(currentUser);
                     showMainPage();
@@ -571,20 +571,24 @@
             alert('Пользователь с таким логином уже существует');
             return;
         }
-        
+        const submitBtn = addUserForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
         // Создаем пользователя в Firebase Auth — всегда login@tasktracker.local
         const authEmail = login + '@tasktracker.local';
         auth.createUserWithEmailAndPassword(authEmail, password)
             .then(function(userCredential) {
                 const uid = userCredential.user.uid;
                 // Сохраняем данные пользователя в Realtime Database
-                saveUser({
+                return saveUser({
                     uid: uid,
                     login: login,
                     role: 'employee',
                     color: color,
                     email: email
                 });
+            })
+            .then(function() {
                 newLogin.value = '';
                 newPassword.value = '';
                 document.getElementById('newUserEmail').value = '';
@@ -597,6 +601,9 @@
                 } else {
                     alert('Ошибка создания пользователя: ' + error.message);
                 }
+            })
+            .finally(function() {
+                if (submitBtn) submitBtn.disabled = false;
             });
     });
 
