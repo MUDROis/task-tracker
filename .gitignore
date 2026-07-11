@@ -1,3 +1,5 @@
 node_modules/
 .mimocode/
 package-lock.json
+.env
+.env.*
