@@ -567,7 +567,9 @@
             '<div class="task-actions-row2">' +
                 '<button class="btn-open" data-action="open" title="Открыть">⭕</button>' +
                 '<button class="btn-settings" data-action="settings" title="Настройки">⚙️</button>' +
-                '<button class="btn-delete" data-action="delete" title="Удалить">🗑</button>' +
+                (currentUser.role === 'admin' || task.createdBy === currentUser.login
+                    ? '<button class="btn-delete" data-action="delete" title="Удалить">🗑</button>'
+                    : '') +
             '</div>';
 
         div.querySelectorAll('[data-action]').forEach(function(btn) {
