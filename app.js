@@ -12,6 +12,47 @@
     let users = [];
     let firebaseReady = false;
     let db = null;
+    let knownTaskIds = new Set();
+    let initialLoadDone = false;
+
+    // ---------- Звуковое уведомление ----------
+    function playNotificationSound() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.4);
+        } catch (e) {}
+    }
+
+    // ---------- Визуальное уведомление ----------
+    function showToast(title, subtitle, type) {
+        type = type || 'new-task';
+        var container = document.getElementById('toastContainer');
+        var toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        var icon = type === 'delegated' ? '📤' : '📋';
+        toast.innerHTML =
+            '<span class="toast-icon">' + icon + '</span>' +
+            '<div class="toast-body">' +
+                '<span class="toast-title">' + escapeHtml(title) + '</span>' +
+                '<span class="toast-subtitle">' + escapeHtml(subtitle) + '</span>' +
+            '</div>';
+        container.appendChild(toast);
+        setTimeout(function() {
+            toast.classList.add('toast-exit');
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 4000);
+    }
 
     // ---------- Конфигурация EmailJS ----------
     const EMAILJS_PUBLIC_KEY = 'lb2TPZ78OFd1qVw_Z';
@@ -123,11 +164,33 @@
     function initFirebaseListeners() {
         // Слушаем задачи в реальном времени
         getTasksRef().on('value', function(snapshot) {
-            const data = snapshot.val();
-            tasks = data ? Object.values(data) : [];
-            tasks.forEach(function(t) {
+            var data = snapshot.val();
+            var newTasks = data ? Object.values(data) : [];
+            newTasks.forEach(function(t) {
                 if (t.status === 'delegated') t.status = 'in_progress';
             });
+
+            // Обнаружение новых задач
+            if (initialLoadDone && currentUser) {
+                var newIds = new Set(newTasks.map(function(t) { return t.id; }));
+                newTasks.forEach(function(t) {
+                    if (!knownTaskIds.has(t.id)) {
+                        var isDelegatedToMe = t.assignedTo === currentUser.login;
+                        var isMyTask = t.createdBy === currentUser.login;
+                        if (isDelegatedToMe && !isMyTask) {
+                            playNotificationSound();
+                            showToast(t.title, 'Делегировано вам ' + (t.createdBy || ''), 'delegated');
+                        } else if (!isMyTask) {
+                            playNotificationSound();
+                            showToast(t.title, 'Новая задача от ' + (t.createdBy || ''), 'new-task');
+                        }
+                    }
+                });
+            }
+
+            tasks = newTasks;
+            knownTaskIds = new Set(tasks.map(function(t) { return t.id; }));
+            initialLoadDone = true;
             renderBoard();
         });
 
