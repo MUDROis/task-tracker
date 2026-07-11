@@ -394,8 +394,20 @@
     // ---------- Управление пользователями ----------
     manageUsersBtn.addEventListener('click', function() {
         if (currentUser.role !== 'admin') return;
-        renderUsersList();
-        usersModal.classList.add('active');
+        // Явно загружаем пользователей перед открытием панели
+        getUsersRef().once('value').then(function(snapshot) {
+            const data = snapshot.val();
+            users = data ? Object.values(data) : [];
+            users = users.map(function(u) {
+                return Object.assign({}, u, {
+                    role: u.role || 'employee',
+                    color: u.color || DEFAULT_COLORS[0],
+                    email: u.email || ''
+                });
+            });
+            renderUsersList();
+            usersModal.classList.add('active');
+        });
     });
 
     function renderUsersList() {
@@ -974,8 +986,19 @@
     if (mobileManageBtn) {
         mobileManageBtn.addEventListener('click', function() {
             if (currentUser.role !== 'admin') return;
-            renderUsersList();
-            usersModal.classList.add('active');
+            getUsersRef().once('value').then(function(snapshot) {
+                const data = snapshot.val();
+                users = data ? Object.values(data) : [];
+                users = users.map(function(u) {
+                    return Object.assign({}, u, {
+                        role: u.role || 'employee',
+                        color: u.color || DEFAULT_COLORS[0],
+                        email: u.email || ''
+                    });
+                });
+                renderUsersList();
+                usersModal.classList.add('active');
+            });
         });
     }
     if (mobileSettingsBtn) {
