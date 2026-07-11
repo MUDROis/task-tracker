@@ -225,53 +225,25 @@
 
     // ---------- Автосоздание admin-пользователя ----------
     function ensureAdminUser() {
-        // Проверяем, есть ли уже admin в базе
-        getUsersRef().child('admin').once('value').then(function(snapshot) {
-            const existingUser = snapshot.val();
-            if (!existingUser) {
-                // Пользователя нет — создаём заново
-                auth.createUserWithEmailAndPassword('admin@tasktracker.local', 'admin123')
-                    .then(function(userCredential) {
-                        const uid = userCredential.user.uid;
-                        saveUser({
-                            uid: uid,
-                            login: 'admin',
-                            role: 'admin',
-                            color: '#3b82f6',
-                            email: 'admin@tasktracker.local'
-                        });
-                        console.log('Создан пользователь admin (email: admin@tasktracker.local, пароль: admin123)');
-                    })
-                    .catch(function(error) {
-                        if (error.code === 'auth/email-already-in-use') {
-                            console.log('Пользователь admin уже существует');
-                        } else {
-                            console.error('Ошибка создания admin:', error);
-                        }
-                    });
-            } else if (!existingUser.uid) {
-                // Пользователь есть в базе, но без uid (старая система) — мигрируем
-                auth.createUserWithEmailAndPassword('admin@tasktracker.local', 'admin123')
-                    .then(function(userCredential) {
-                        const uid = userCredential.user.uid;
-                        saveUser({
-                            uid: uid,
-                            login: 'admin',
-                            role: 'admin',
-                            color: existingUser.color || '#3b82f6',
-                            email: existingUser.email || 'admin@tasktracker.local'
-                        });
-                        console.log('Admin мигрирован на Firebase Auth (uid: ' + uid + ')');
-                    })
-                    .catch(function(error) {
-                        if (error.code === 'auth/email-already-in-use') {
-                            console.log('Firebase Auth уже содержит запись для admin. Удалите старого admin из Realtime Database и обновите страницу.');
-                        } else {
-                            console.error('Ошибка миграции admin:', error);
-                        }
-                    });
-            }
-        });
+        auth.createUserWithEmailAndPassword('admin@tasktracker.local', 'admin123')
+            .then(function(userCredential) {
+                const uid = userCredential.user.uid;
+                saveUser({
+                    uid: uid,
+                    login: 'admin',
+                    role: 'admin',
+                    color: '#3b82f6',
+                    email: ''
+                });
+                console.log('Создан пользователь admin (пароль: admin123)');
+            })
+            .catch(function(error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    // Admin уже существует — всё ок
+                } else {
+                    console.error('Ошибка создания admin:', error);
+                }
+            });
     }
 
     // ---------- Инициализация ----------
@@ -284,34 +256,33 @@
         // Слушаем состояние авторизации
         auth.onAuthStateChanged(function(user) {
             if (user) {
-                // Пользователь авторизован
-                console.log('Пользователь авторизован:', user.email);
-                
-                // Ищем пользователя в Realtime Database по uid
-                getUsersRef().orderByChild('uid').equalTo(user.uid).once('value').then(function(snapshot) {
-                    const usersData = snapshot.val();
-                    if (usersData) {
-                        const userId = Object.keys(usersData)[0];
-                        const userData = usersData[userId];
+                // Пользователь авторизован — загружаем данные из базы
+                const login = user.email.replace('@tasktracker.local', '');
+                getUsersRef().child(login).once('value').then(function(snapshot) {
+                    const userData = snapshot.val();
+                    if (userData) {
                         currentUser = {
                             uid: user.uid,
                             login: userData.login,
                             role: userData.role,
+                            color: userData.color,
                             email: userData.email
                         };
-                        saveSession(currentUser);
-                        showMainPage();
-                        initFirebaseListeners();
                     } else {
-                        // Пользователь в Auth, но нет данных в DB
-                        console.error('Пользователь не найден в базе данных');
-                        auth.signOut();
-                        showLoginPage();
+                        currentUser = {
+                            uid: user.uid,
+                            login: login,
+                            role: 'employee',
+                            color: '#3b82f6',
+                            email: ''
+                        };
+                        saveUser(currentUser);
                     }
+                    saveSession(currentUser);
+                    showMainPage();
+                    initFirebaseListeners();
                 });
             } else {
-                // Пользователь не авторизован
-                console.log('Пользователь не авторизован');
                 currentUser = null;
                 showLoginPage();
             }
@@ -355,46 +326,51 @@
             return;
         }
 
-        // Ищем пользователя по логину в Realtime Database
-        getUsersRef().orderByChild('login').equalTo(login).once('value').then(function(snapshot) {
-            const usersData = snapshot.val();
-            if (!usersData) {
-                loginError.textContent = 'Пользователь не найден';
-                return;
-            }
-            
-            const userId = Object.keys(usersData)[0];
-            const user = usersData[userId];
-            
-            // Вход через Firebase Auth с email
-            const email = user.email || login + '@tasktracker.local';
-            auth.signInWithEmailAndPassword(email, password)
-                .then(function(userCredential) {
-                    currentUser = { 
-                        uid: userCredential.user.uid,
-                        login: user.login, 
-                        role: user.role,
-                        email: user.email
-                    };
+        // Вход через Firebase Auth — email = логин@tasktracker.local
+        const email = login + '@tasktracker.local';
+        auth.signInWithEmailAndPassword(email, password)
+            .then(function(userCredential) {
+                // После успешного входа загружаем данные из Realtime Database
+                return getUsersRef().child(login).once('value').then(function(snapshot) {
+                    const userData = snapshot.val();
+                    if (userData) {
+                        currentUser = {
+                            uid: userCredential.user.uid,
+                            login: userData.login,
+                            role: userData.role,
+                            color: userData.color,
+                            email: userData.email
+                        };
+                    } else {
+                        // Пользователь в Auth, но нет данных в DB — создаём базовую запись
+                        currentUser = {
+                            uid: userCredential.user.uid,
+                            login: login,
+                            role: 'employee',
+                            color: '#3b82f6',
+                            email: ''
+                        };
+                        saveUser(currentUser);
+                    }
                     saveSession(currentUser);
                     console.log('Вход выполнен:', currentUser.login);
                     showMainPage();
                     initFirebaseListeners();
-                })
-                .catch(function(error) {
-                    console.error('Ошибка авторизации:', error);
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                        loginError.textContent = 'Неверный логин или пароль';
-                    } else if (error.code === 'auth/too-many-requests') {
-                        loginError.textContent = 'Слишком много попыток. Попробуйте позже';
-                    } else {
-                        loginError.textContent = 'Ошибка подключения к серверу';
-                    }
                 });
-        }).catch(function(err) {
-            console.error('Ошибка Firebase:', err);
-            loginError.textContent = 'Ошибка подключения к серверу';
-        });
+            })
+            .catch(function(error) {
+                console.error('Ошибка авторизации:', error);
+                if (error.code === 'auth/user-not-found') {
+                    loginError.textContent = 'Пользователь не найден';
+                } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    loginError.textContent = 'Неверный пароль';
+                } else if (error.code === 'auth/too-many-requests') {
+                    loginError.textContent = 'Слишком много попыток. Попробуйте позже';
+                } else {
+                    loginError.textContent = 'Ошибка подключения к серверу';
+                }
+            });
+    });
     });
 
     logoutBtn.addEventListener('click', function() {
@@ -560,9 +536,9 @@
             return;
         }
         
-        // Создаем пользователя в Firebase Auth
-        const userEmail = email || login + '@tasktracker.local';
-        auth.createUserWithEmailAndPassword(userEmail, password)
+        // Создаем пользователя в Firebase Auth — всегда login@tasktracker.local
+        const authEmail = login + '@tasktracker.local';
+        auth.createUserWithEmailAndPassword(authEmail, password)
             .then(function(userCredential) {
                 const uid = userCredential.user.uid;
                 // Сохраняем данные пользователя в Realtime Database
