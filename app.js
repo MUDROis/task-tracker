@@ -774,23 +774,29 @@
                 updatedAt: new Date().toISOString()
             });
             saveTask(updated);
-            sendEmailNotification(selected, task.title);
+            sendEmailNotification(selected, updated);
             modal.remove();
         });
         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
     }
 
     // ---------- Уведомления по почте ----------
-    function sendEmailNotification(toLogin, taskTitle) {
+    var PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
+
+    function sendEmailNotification(toLogin, taskData) {
         if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) return;
         if (typeof emailjs === 'undefined') return;
         var user = users.find(function(u) { return u.login === toLogin; });
         var toEmail = user && user.email ? user.email : '';
         if (!toEmail) return;
+        var dueDateStr = taskData.dueDate ? new Date(taskData.dueDate).toLocaleDateString('ru-RU') : 'не указан';
         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
             to_email: toEmail,
             to_name: toLogin,
-            task_title: taskTitle,
+            task_title: taskData.title || '',
+            task_description: taskData.description || 'нет описания',
+            task_priority: PRIORITY_LABELS[taskData.priority] || taskData.priority || 'Средний',
+            task_due_date: dueDateStr,
             from_name: currentUser.login
         }).then(function(res) {
             console.log('EmailJS: письмо отправлено', res);
@@ -863,7 +869,7 @@
                     assignedTo: assignee || ''
                 });
                 if (assignee && assignee !== task.assignedTo) {
-                    sendEmailNotification(assignee, title);
+                    sendEmailNotification(assignee, { title: title, description: description, priority: priority, dueDate: dueDate });
                 }
             }
         } else {
@@ -875,7 +881,7 @@
                 assignee: assignee || ''
             });
             if (assignee) {
-                sendEmailNotification(assignee, title);
+                sendEmailNotification(assignee, newTask);
             }
         }
         taskModal.classList.remove('active');
