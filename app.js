@@ -172,17 +172,17 @@
 
             // Обнаружение новых задач
             if (initialLoadDone && currentUser) {
-                var newIds = new Set(newTasks.map(function(t) { return t.id; }));
                 newTasks.forEach(function(t) {
                     if (!knownTaskIds.has(t.id)) {
-                        var isDelegatedToMe = t.assignedTo === currentUser.login && t.delegated;
+                        var assignedToMe = t.assignedTo === currentUser.login;
                         var isMyTask = t.createdBy === currentUser.login;
-                        if (isDelegatedToMe && !isMyTask) {
+                        if (assignedToMe && !isMyTask) {
                             playNotificationSound();
-                            showToast(t.title, 'Делегировано вам ' + (t.createdBy || ''), 'delegated');
-                        } else if (!isMyTask) {
-                            playNotificationSound();
-                            showToast(t.title, 'Новая задача от ' + (t.createdBy || ''), 'new-task');
+                            if (t.delegated) {
+                                showToast(t.title, 'Делегировано вам от ' + (t.createdBy || ''), 'delegated');
+                            } else {
+                                showToast(t.title, 'Назначена вам от ' + (t.createdBy || ''), 'new-task');
+                            }
                         }
                     }
                 });
