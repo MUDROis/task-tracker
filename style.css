@@ -15,7 +15,8 @@ body {
 }
 
 #app {
-    max-width: 1400px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
     padding: 1rem;
 }
@@ -178,7 +179,6 @@ body {
 .header-right {
     display: flex;
     align-items: center;
-    margin-left: auto;
 }
 
 .role-badge {
@@ -229,17 +229,12 @@ body {
     background: #f8fafc;
     border-radius: 1rem;
     padding: 1rem;
-    min-height: 300px;
+    min-height: 80px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .column[data-status="urgent"] {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-}
-
-.column[data-status="urgent"] .column-header {
-    border-bottom-color: #fca5a5;
+    background: #f8fafc;
 }
 
 .column-header {
@@ -270,7 +265,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    min-height: 100px;
+    min-height: 50px;
 }
 
 /* ===== TASK CARD ===== */
@@ -410,7 +405,7 @@ body {
 .modal-content {
     background: white;
     border-radius: 1.5rem;
-    max-width: 500px;
+    max-width: 90vw;
     width: 100%;
     padding: 2rem;
     max-height: 90vh;
@@ -523,10 +518,24 @@ body {
     .app-header {
         flex-direction: row;
         align-items: center;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
     }
     .header-left {
         justify-content: flex-start;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .header-left h2 {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+    }
+    .header-right {
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     .login-container {
         margin: 2rem 1rem;

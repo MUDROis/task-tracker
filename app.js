@@ -642,6 +642,13 @@
             const userTasks = getTasksForUser();
             userTasks.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
 
+            // Если задача имеет высокий приоритет, автоматически ставим её в 'urgent'
+            userTasks.forEach(function(t) {
+                if (t.priority === 'high' && t.status !== 'urgent') {
+                    t.status = 'urgent';
+                }
+            });
+
             const columns = ['urgent', 'in_progress', 'done'];
             columns.forEach(function(status) {
                 const list = document.getElementById('list_' + status);
@@ -923,12 +930,10 @@
         if (!select) return;
         var currentVal = select.value;
         select.innerHTML = '<option value="">Не назначен</option>';
-        users
-            .filter(function(u) { return u.login !== (currentUser && currentUser.login) && u.role === 'employee'; })
-            .forEach(function(u) {
+        users.forEach(function(u) {
                 var opt = document.createElement('option');
                 opt.value = u.login;
-                opt.textContent = u.login;
+                opt.textContent = u.login + (u.role === 'admin' ? ' (Руководитель)' : '');
                 select.appendChild(opt);
             });
         if (currentVal) select.value = currentVal;
