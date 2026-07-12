@@ -1040,8 +1040,20 @@
             importBtn.click();
         });
     }
+
+    // ---------- Дропдаун настроек (десктоп) ----------
+    var toolbarSettingsBtn = document.getElementById('toolbarSettingsBtn');
+    var toolbarSettingsDropdown = document.getElementById('toolbarSettingsDropdown');
+    if (toolbarSettingsBtn) {
+        toolbarSettingsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toolbarSettingsDropdown.classList.toggle('active');
+        });
+    }
+
     document.addEventListener('click', function() {
         if (mobileSettingsDropdown) mobileSettingsDropdown.classList.remove('active');
+        if (toolbarSettingsDropdown) toolbarSettingsDropdown.classList.remove('active');
     });
 
     // ---------- Экспорт Excel ----------

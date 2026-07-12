@@ -63,8 +63,13 @@
             <!-- Панель управления -->
             <div class="toolbar">
                 <button id="addTaskBtn" class="btn primary btn-sm">➕ Новая задача</button>
-                <button id="exportBtn" class="btn secondary btn-sm">📤 Excel</button>
-                <button id="importBtn" class="btn secondary btn-sm">📥 Импорт</button>
+                <div class="toolbar-settings-group">
+                    <button id="toolbarSettingsBtn" class="btn secondary btn-sm">⚙️ Настройки</button>
+                    <div id="toolbarSettingsDropdown" class="toolbar-settings-dropdown">
+                        <button id="exportBtn" class="toolbar-dropdown-item">📤 Экспорт Excel</button>
+                        <button id="importBtn" class="toolbar-dropdown-item">📥 Импорт Excel</button>
+                    </div>
+                </div>
                 <input type="file" id="fileInput" accept=".xlsx" style="display:none">
                 <button id="manageUsersBtn" class="btn outline btn-sm" style="display:none;">👥 Управление</button>
             </div>

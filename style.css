@@ -218,6 +218,45 @@ body {
     border-bottom: 1px solid #e2e8f0;
 }
 
+.toolbar-settings-group {
+    position: relative;
+}
+
+.toolbar-settings-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.3rem;
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    min-width: 180px;
+    overflow: hidden;
+    z-index: 200;
+}
+
+.toolbar-settings-dropdown.active {
+    display: block;
+}
+
+.toolbar-dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: none;
+    background: none;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    color: #1e293b;
+    transition: background 0.15s;
+}
+
+.toolbar-dropdown-item:hover {
+    background: #f1f5f9;
+}
+
 /* ===== BOARD ===== */
 .board {
     display: grid;
