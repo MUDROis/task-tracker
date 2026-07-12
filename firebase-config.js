@@ -5,7 +5,7 @@
 // ============================================================
 
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyArHn7Q6IHuok6pCUTzliyHQYpwzXBO9N0",
+    apiKey: "AIzaSyAbWo9RRzb_EklST9sVrN2b3dCo5HJZNew",
     authDomain: "task-trecker-62696.firebaseapp.com",
     databaseURL: "https://task-trecker-62696-default-rtdb.europe-west1.firebasedatabase.app/",
     projectId: "task-trecker-62696",
