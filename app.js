@@ -35,6 +35,94 @@
         } catch (e) {}
     }
 
+    // ---------- Бейдж на иконке PWA ----------
+    var badgeCount = 0;
+    var baseFavicon = null;
+
+    function updateBadge() {
+        // Badge API (Chrome, Edge)
+        if (navigator.setAppBadge) {
+            try {
+                if (badgeCount > 0) {
+                    navigator.setAppBadge(badgeCount);
+                } else {
+                    navigator.clearAppBadge();
+                }
+            } catch (e) {}
+        }
+        // Canvas-favicon фолбэк
+        setFaviconBadge(badgeCount);
+    }
+
+    function setFaviconBadge(count) {
+        try {
+            if (!baseFavicon) {
+                baseFavicon = new Image();
+                baseFavicon.src = 'grifon.png';
+            }
+            var canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            var ctx = canvas.getContext('2d');
+            baseFavicon.onload = function() {
+                ctx.drawImage(baseFavicon, 0, 0, 64, 64);
+                if (count > 0) {
+                    ctx.beginPath();
+                    ctx.arc(48, 16, 14, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 16px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(count > 99 ? '99+' : String(count), 48, 16);
+                }
+                setLinkFavicon(canvas.toDataURL());
+            };
+            if (baseFavicon.complete) {
+                ctx.drawImage(baseFavicon, 0, 0, 64, 64);
+                if (count > 0) {
+                    ctx.beginPath();
+                    ctx.arc(48, 16, 14, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 16px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(count > 99 ? '99+' : String(count), 48, 16);
+                }
+                setLinkFavicon(canvas.toDataURL());
+            }
+        } catch (e) {}
+    }
+
+    function setLinkFavicon(dataUrl) {
+        var link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+        }
+        link.href = dataUrl;
+    }
+
+    function incrementBadge() {
+        badgeCount++;
+        updateBadge();
+    }
+
+    function clearBadge() {
+        badgeCount = 0;
+        updateBadge();
+    }
+
     // ---------- Визуальное уведомление ----------
     function showToast(title, subtitle, type) {
         type = type || 'new-task';
@@ -50,9 +138,12 @@
             '</div>' +
             '<button class="toast-close" title="Закрыть">&times;</button>';
         container.appendChild(toast);
+        incrementBadge();
         toast.querySelector('.toast-close').addEventListener('click', function() {
             toast.classList.add('toast-exit');
             setTimeout(function() { toast.remove(); }, 300);
+            if (badgeCount > 0) badgeCount--;
+            updateBadge();
         });
     }
 
@@ -273,6 +364,11 @@
 
     // Запуск проверки каждую минуту
     setInterval(checkOverdueTasks, 60000);
+
+    // Очистка бейджа при клике на страницу
+    document.addEventListener('click', function() {
+        if (badgeCount > 0) clearBadge();
+    });
 
     // ---------- Firebase: запись данных ----------
     function saveTask(task) {
