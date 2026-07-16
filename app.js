@@ -854,7 +854,7 @@
 
         div.innerHTML =
             (task.delegated
-                ? '<span class="task-delegate-arrow ' + (task.delegatedBy === 'admin' ? 'arrow-admin-delegated' : 'arrow-employee-delegated') + '">' + (task.delegatedBy === 'admin' ? '↗' : '↙') + '</span>'
+                ? '<span class="task-delegate-arrow ' + (task.createdBy === currentUser.login ? 'arrow-delegated' : 'arrow-received') + '">' + (task.createdBy === currentUser.login ? '↗' : '↙') + '</span>'
                 : '') +
             '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
             '<div class="task-meta">' +

@@ -334,13 +334,12 @@ body {
     line-height: 1;
 }
 
-.task-card .task-delegate-arrow.arrow-admin-delegated {
+.task-card .task-delegate-arrow.arrow-delegated {
     color: #3b82f6;
 }
 
-.task-card .task-delegate-arrow.arrow-employee-delegated {
+.task-card .task-delegate-arrow.arrow-received {
     color: #ef4444;
-    transform: rotate(0deg);
 }
 
 .task-card.priority-high {
