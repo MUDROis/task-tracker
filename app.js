@@ -192,20 +192,6 @@
     const newPassword = document.getElementById('newPassword');
 
     // ---------- Color picker interactivity ----------
-    const newUserColorInput = document.getElementById('newUserColor');
-    if (newUserColorInput) {
-        const newUserColorPreview = newUserColorInput.closest('.color-picker-row').querySelector('.color-preview');
-        newUserColorInput.addEventListener('input', function() {
-            newUserColorPreview.style.background = this.value;
-        });
-        document.querySelectorAll('#addUserForm .color-preset-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                newUserColorInput.value = this.dataset.color;
-                newUserColorPreview.style.background = this.dataset.color;
-            });
-        });
-    }
-
     const DEFAULT_COLORS = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
 
     // ---------- Работа с localStorage (сессия) ----------
@@ -652,18 +638,6 @@
                         '<input type="email" id="editEmail" value="' + escapeHtml(user.email || '') + '" placeholder="user@example.com">' +
                     '</div>' +
                     '<div class="form-group">' +
-                        '<label for="editColor">Цвет на доске</label>' +
-                        '<div class="color-picker-row">' +
-                            '<input type="color" id="editColor" value="' + (user.color || '#3b82f6') + '">' +
-                            '<span class="color-preview" style="background:' + (user.color || '#3b82f6') + '"></span>' +
-                            '<div class="color-presets">' +
-                                DEFAULT_COLORS.map(function(c) {
-                                    return '<button type="button" class="color-preset-btn" data-color="' + c + '" style="background:' + c + '"></button>';
-                                }).join('') +
-                            '</div>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="form-group">' +
                         '<label>Аватар (эмодзи)</label>' +
                         '<div class="emoji-picker-row">' +
                             '<span class="emoji-preview" id="editEmojiPreview">' + (user.emoji || '👤') + '</span>' +
@@ -679,18 +653,6 @@
                 '</form>' +
             '</div>';
         document.body.appendChild(modal);
-
-        const colorInput = modal.querySelector('#editColor');
-        const colorPreview = modal.querySelector('.color-preview');
-        colorInput.addEventListener('input', function() {
-            colorPreview.style.background = this.value;
-        });
-        modal.querySelectorAll('.color-preset-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                colorInput.value = this.dataset.color;
-                colorPreview.style.background = this.dataset.color;
-            });
-        });
 
         // Emoji picker
         const emojiInput = modal.querySelector('#editEmoji');
@@ -710,7 +672,6 @@
             const newLoginVal = modal.querySelector('#editLogin').value.trim();
             const newPasswordVal = modal.querySelector('#editPassword').value;
             const newRole = modal.querySelector('#editRole').value;
-            const newColor = colorInput.value;
             const newEmail = modal.querySelector('#editEmail').value.trim();
             const newEmoji = modal.querySelector('#editEmoji').value || '';
 
@@ -727,7 +688,6 @@
             const updatedUser = Object.assign({}, user, {
                 login: newLoginVal,
                 role: newRole,
-                color: newColor,
                 email: newEmail,
                 emoji: newEmoji
             });
@@ -760,6 +720,7 @@
                 }
             }
             modal.remove();
+            renderUsersList();
         });
 
         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
@@ -769,7 +730,6 @@
         e.preventDefault();
         const login = newLogin.value.trim();
         const password = newPassword.value.trim();
-        const color = document.getElementById('newUserColor').value;
         const email = document.getElementById('newUserEmail').value.trim();
         if (!login || !password) return;
         if (users.find(function(u) { return u.login === login; })) {
@@ -789,8 +749,9 @@
                     uid: uid,
                     login: login,
                     role: 'employee',
-                    color: color,
-                    email: email
+                    color: '#3b82f6',
+                    email: email,
+                    emoji: ''
                 });
             })
             .then(function() {
