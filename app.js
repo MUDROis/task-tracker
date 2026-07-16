@@ -841,7 +841,7 @@
         div.dataset.id = task.id;
 
         const assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
-        const assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
+        const assigneeName = task.assignedTo ? formatUserName(task.assignedTo) : 'не назначен';
         const assigneeEmoji = assigneeUser ? (assigneeUser.emoji || '👤') : '👤';
 
         div.innerHTML =
@@ -995,7 +995,7 @@
     // ---------- Показ деталей задачи ----------
     function showTaskDetails(task) {
         var assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
-        var assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
+        var assigneeName = task.assignedTo ? formatUserName(task.assignedTo) : 'не назначен';
         var assigneeEmoji = assigneeUser ? (assigneeUser.emoji || '👤') : '👤';
         var priorityLabels = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
         var statusLabels = { urgent: 'Срочно', in_progress: 'В работе', done: 'Выполнено' };
@@ -1010,7 +1010,7 @@
                     '<p><strong>Статус:</strong> ' + (statusLabels[task.status] || task.status) + '</p>' +
                     '<p><strong>Приоритет:</strong> ' + (priorityLabels[task.priority] || task.priority) + '</p>' +
                     '<p><strong>Исполнитель:</strong> ' + assigneeEmoji + ' ' + escapeHtml(assigneeName) + '</p>' +
-                    '<p><strong>Создал:</strong> ' + escapeHtml(task.createdBy || '—') + '</p>' +
+                    '<p><strong>Создал:</strong> ' + escapeHtml(formatUserName(task.createdBy)) + '</p>' +
                     '<p><strong>Создано:</strong> ' + new Date(task.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' +
                     (task.dueDate ? '<p><strong>Срок:</strong> ' + new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' : '') +
                     (task.delegated ? '<p><strong>Делегировано:</strong> ' + (task.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') + '</p>' : '') +
@@ -1252,8 +1252,8 @@
                 'Заголовок': t.title,
                 'Описание': t.description || '',
                 'Статус': t.status === 'urgent' ? 'Срочно' : (t.status === 'in_progress' ? 'В работе' : 'Выполнено'),
-                'Создал': t.createdBy || '',
-                'Исполнитель': t.assignedTo || '',
+                'Создал': formatUserName(t.createdBy),
+                'Исполнитель': formatUserName(t.assignedTo),
                 'Приоритет': t.priority || 'medium',
                 'Срок': t.dueDate ? new Date(t.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(t.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '',
                 'Делегировано': t.delegated ? (t.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') : '',
@@ -1340,6 +1340,13 @@
         var div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function formatUserName(login) {
+        if (!login) return '—';
+        var u = users.find(function(u) { return u.login === login; });
+        if (u && u.role === 'admin') return 'Руководитель';
+        return login;
     }
 
     // ---------- Запуск ----------
