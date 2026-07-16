@@ -287,6 +287,7 @@
                 }
             }
             populateAssigneeSelect();
+            if (initialLoadDone) renderBoard();
         });
     }
 
