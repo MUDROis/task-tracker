@@ -322,10 +322,10 @@
                 saveTask(patched);
                 updated = true;
             }
-            // Последний день срока: уведомление исполнителю и admin'у
+            // Последний день срока: уведомление исполнителю и admin'у (только для невыполненных)
             var dayMs = 24 * 60 * 60 * 1000;
             var diffMs = due.getTime() - now.getTime();
-            if (diffMs > 0 && diffMs <= dayMs && !overdueNotified.has(t.id)) {
+            if (t.status !== 'done' && diffMs > 0 && diffMs <= dayMs && !overdueNotified.has(t.id)) {
                 overdueNotified.add(t.id);
                 sendDeadlineNotification(t);
             }
