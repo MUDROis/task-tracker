@@ -289,14 +289,15 @@
                 return Object.assign({}, u, {
                     role: u.role || 'employee',
                     color: u.color || DEFAULT_COLORS[users.indexOf(u) % DEFAULT_COLORS.length],
-                    email: u.email || ''
+                    email: u.email || '',
+                    emoji: u.emoji || ''
                 });
             });
             // Если текущий пользователь есть в списке — обновляем его данные
             if (currentUser) {
                 const fresh = users.find(function(u) { return u.login === currentUser.login; });
                 if (fresh) {
-                    currentUser = { uid: fresh.uid, login: fresh.login, role: fresh.role, color: fresh.color, email: fresh.email };
+                    currentUser = { uid: fresh.uid, login: fresh.login, role: fresh.role, color: fresh.color, email: fresh.email, emoji: fresh.emoji };
                 }
             }
             populateAssigneeSelect();
@@ -442,7 +443,8 @@
                             login: userData.login,
                             role: userData.role,
                             color: userData.color,
-                            email: userData.email
+                            email: userData.email,
+                            emoji: userData.emoji || ''
                         };
                     } else {
                         // Записи нет в DB — создаём (первый вход admin или новый сотрудник)
@@ -451,7 +453,8 @@
                             login: login,
                             role: login === 'admin' ? 'admin' : 'employee',
                             color: '#3b82f6',
-                            email: ''
+                            email: '',
+                            emoji: ''
                         };
                         saveUser(currentUser);
                     }
@@ -519,7 +522,8 @@
                         login: userData.login,
                         role: userData.role,
                         color: userData.color,
-                        email: userData.email
+                        email: userData.email,
+                        emoji: userData.emoji || ''
                     };
                 } else {
                     const uid = auth.currentUser.uid;
@@ -528,7 +532,8 @@
                         login: login,
                         role: login === 'admin' ? 'admin' : 'employee',
                         color: '#3b82f6',
-                        email: ''
+                        email: '',
+                        emoji: ''
                     };
                     saveUser(currentUser);
                 }
@@ -581,7 +586,8 @@
                 return Object.assign({}, u, {
                     role: u.role || 'employee',
                     color: u.color || DEFAULT_COLORS[0],
-                    email: u.email || ''
+                    email: u.email || '',
+                    emoji: u.emoji || ''
                 });
             });
             renderUsersList();
@@ -600,7 +606,7 @@
             var isAdmin = u.login === 'admin';
             return '<div class="user-row" data-user="' + escapeHtml(u.login) + '">' +
                 '<div class="user-row-view">' +
-                    '<span class="user-color-dot" style="background:' + (u.color || '#94a3b8') + '"></span>' +
+                    '<span class="user-emoji-avatar">' + (u.emoji || '👤') + '</span>' +
                     '<span><strong>' + escapeHtml(u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
                     '<div class="user-row-actions">' +
                         '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
@@ -657,6 +663,18 @@
                             '</div>' +
                         '</div>' +
                     '</div>' +
+                    '<div class="form-group">' +
+                        '<label>Аватар (эмодзи)</label>' +
+                        '<div class="emoji-picker-row">' +
+                            '<span class="emoji-preview" id="editEmojiPreview">' + (user.emoji || '👤') + '</span>' +
+                            '<input type="text" id="editEmoji" value="' + escapeHtml(user.emoji || '') + '" placeholder="👤" maxlength="4" style="width:60px;text-align:center;">' +
+                            '<div class="emoji-presets">' +
+                                ['👤','👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💼','👨‍💻','👩‍💻','🧑‍💻','👨‍🔧','👩‍🔧','🧑‍🔧','👨‍🏫','👩‍🏫','🧑‍🏫','🦸','🦸‍♀️','🧙','🧙‍♀️','🦊','🐱','🐶','🦁','🐸','🐼'].map(function(e) {
+                                    return '<button type="button" class="emoji-preset-btn" data-emoji="' + e + '">' + e + '</button>';
+                                }).join('') +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
                     '<button type="submit" class="btn primary">Сохранить</button>' +
                 '</form>' +
             '</div>';
@@ -674,6 +692,19 @@
             });
         });
 
+        // Emoji picker
+        const emojiInput = modal.querySelector('#editEmoji');
+        const emojiPreview = modal.querySelector('#editEmojiPreview');
+        emojiInput.addEventListener('input', function() {
+            emojiPreview.textContent = this.value || '👤';
+        });
+        modal.querySelectorAll('.emoji-preset-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                emojiInput.value = this.dataset.emoji;
+                emojiPreview.textContent = this.dataset.emoji;
+            });
+        });
+
         modal.querySelector('#editUserForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const newLoginVal = modal.querySelector('#editLogin').value.trim();
@@ -681,6 +712,7 @@
             const newRole = modal.querySelector('#editRole').value;
             const newColor = colorInput.value;
             const newEmail = modal.querySelector('#editEmail').value.trim();
+            const newEmoji = modal.querySelector('#editEmoji').value || '';
 
             if (!newLoginVal) {
                 alert('Логин не может быть пустым');
@@ -696,7 +728,8 @@
                 login: newLoginVal,
                 role: newRole,
                 color: newColor,
-                email: newEmail
+                email: newEmail,
+                emoji: newEmoji
             });
 
             // Обновляем данные пользователя в Realtime Database
@@ -847,10 +880,7 @@
 
         const assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
         const assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
-        const borderColor = assigneeUser ? assigneeUser.color : '';
-        if (borderColor) {
-            div.style.borderLeftColor = borderColor;
-        }
+        const assigneeEmoji = assigneeUser ? (assigneeUser.emoji || '👤') : '👤';
 
         div.innerHTML =
             (task.delegated
@@ -859,7 +889,7 @@
             '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
             '<div class="task-meta">' +
                 '<span>📅 ' + new Date(task.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + '</span>' +
-                '<span>👤 ' + escapeHtml(assigneeName) + '</span>' +
+                '<span>' + assigneeEmoji + ' ' + escapeHtml(assigneeName) + '</span>' +
                 (task.dueDate ? '<span>⏳ ' + new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</span>' : '') +
             '</div>' +
             '<div class="task-actions-row1">' +
@@ -1002,7 +1032,9 @@
 
     // ---------- Показ деталей задачи ----------
     function showTaskDetails(task) {
+        var assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
         var assigneeName = task.assignedTo ? task.assignedTo : 'не назначен';
+        var assigneeEmoji = assigneeUser ? (assigneeUser.emoji || '👤') : '👤';
         var priorityLabels = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
         var statusLabels = { urgent: 'Срочно', in_progress: 'В работе', done: 'Выполнено' };
         var modal = document.createElement('div');
@@ -1015,7 +1047,7 @@
                     '<p><strong>Описание:</strong> ' + (task.description ? escapeHtml(task.description) : '<em>нет</em>') + '</p>' +
                     '<p><strong>Статус:</strong> ' + (statusLabels[task.status] || task.status) + '</p>' +
                     '<p><strong>Приоритет:</strong> ' + (priorityLabels[task.priority] || task.priority) + '</p>' +
-                    '<p><strong>Исполнитель:</strong> ' + escapeHtml(assigneeName) + '</p>' +
+                    '<p><strong>Исполнитель:</strong> ' + assigneeEmoji + ' ' + escapeHtml(assigneeName) + '</p>' +
                     '<p><strong>Создал:</strong> ' + escapeHtml(task.createdBy || '—') + '</p>' +
                     '<p><strong>Создано:</strong> ' + new Date(task.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' +
                     (task.dueDate ? '<p><strong>Срок:</strong> ' + new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' : '') +

@@ -343,13 +343,13 @@ body {
 }
 
 .task-card.priority-high {
-    border-left-color: #ef4444;
+    border-left-color: #22c55e;
 }
 .task-card.priority-medium {
-    border-left-color: #f59e0b;
+    border-left-color: #3b82f6;
 }
 .task-card.priority-low {
-    border-left-color: #22c55e;
+    border-left-color: #94a3b8;
 }
 
 .task-card .task-title {
@@ -720,6 +720,45 @@ body {
     border-radius: 50%;
     flex-shrink: 0;
     border: 2px solid rgba(0,0,0,0.1);
+}
+.user-emoji-avatar {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    cursor: default;
+    line-height: 1;
+}
+.emoji-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.emoji-preview {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+.emoji-presets {
+    display: flex;
+    gap: 0.2rem;
+    flex-wrap: wrap;
+}
+.emoji-preset-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 0.4rem;
+    border: 2px solid transparent;
+    background: #f1f5f9;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, transform 0.1s;
+    padding: 0;
+}
+.emoji-preset-btn:hover {
+    border-color: #3b82f6;
+    transform: scale(1.15);
 }
 .user-row-view span:not(.user-color-dot) {
     flex: 1;
