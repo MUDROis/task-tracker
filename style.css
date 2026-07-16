@@ -334,6 +334,15 @@ body {
     line-height: 1;
 }
 
+.task-card .task-delegate-arrow.arrow-admin-delegated {
+    color: #3b82f6;
+}
+
+.task-card .task-delegate-arrow.arrow-employee-delegated {
+    color: #ef4444;
+    transform: rotate(0deg);
+}
+
 .task-card.priority-high {
     border-left-color: #ef4444;
 }
@@ -649,6 +658,20 @@ body {
 .toast-subtitle {
     font-size: 0.75rem;
     color: #94a3b8;
+}
+.toast-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+.toast-close:hover {
+    color: #ef4444;
 }
 @keyframes toastIn {
     from { opacity: 0; transform: translateX(40px); }

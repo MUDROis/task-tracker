@@ -47,12 +47,13 @@
             '<div class="toast-body">' +
                 '<span class="toast-title">' + escapeHtml(title) + '</span>' +
                 '<span class="toast-subtitle">' + escapeHtml(subtitle) + '</span>' +
-            '</div>';
+            '</div>' +
+            '<button class="toast-close" title="Закрыть">&times;</button>';
         container.appendChild(toast);
-        setTimeout(function() {
+        toast.querySelector('.toast-close').addEventListener('click', function() {
             toast.classList.add('toast-exit');
             setTimeout(function() { toast.remove(); }, 300);
-        }, 4000);
+        });
     }
 
     // ---------- Конфигурация EmailJS ----------
@@ -89,6 +90,7 @@
     const taskTitle = document.getElementById('taskTitle');
     const taskDesc = document.getElementById('taskDesc');
     const taskPriority = document.getElementById('taskPriority');
+    const taskStatus = document.getElementById('taskStatus');
     const taskDueDate = document.getElementById('taskDueDate');
     const taskAssignee = document.getElementById('taskAssignee');
     const closeModal = document.querySelector('.close-modal');
@@ -185,6 +187,7 @@
             knownTaskIds = new Set(tasks.map(function(t) { return t.id; }));
             initialLoadDone = true;
             renderBoard();
+            checkOverdueTasks();
         });
 
         // Слушаем пользователей в реальном времени
@@ -208,6 +211,68 @@
             populateAssigneeSelect();
         });
     }
+
+    // ---------- Автопереход просроченных задач в "Срочно" ----------
+    var overdueNotified = new Set();
+
+    function checkOverdueTasks() {
+        if (!currentUser) return;
+        var now = new Date();
+        var updated = false;
+        tasks.forEach(function(t) {
+            if (!t.dueDate) return;
+            var due = new Date(t.dueDate);
+            // Просрочена: время вышло и задача в работе
+            if (now > due && t.status === 'in_progress') {
+                var patched = Object.assign({}, t, {
+                    status: 'urgent',
+                    updatedAt: now.toISOString()
+                });
+                saveTask(patched);
+                updated = true;
+            }
+            // Последний день срока: уведомление исполнителю и admin'у
+            var dayMs = 24 * 60 * 60 * 1000;
+            var diffMs = due.getTime() - now.getTime();
+            if (diffMs > 0 && diffMs <= dayMs && !overdueNotified.has(t.id)) {
+                overdueNotified.add(t.id);
+                sendDeadlineNotification(t);
+            }
+        });
+    }
+
+    function sendDeadlineNotification(task) {
+        var dueStr = new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+        // Уведомление исполнителю
+        if (task.assignedTo) {
+            var assignee = users.find(function(u) { return u.login === task.assignedTo; });
+            if (assignee && assignee.email) {
+                sendEmailNotification(task.assignedTo, {
+                    title: task.title,
+                    description: 'Истекает срок задачи: ' + dueStr,
+                    priority: task.priority,
+                    dueDate: task.dueDate
+                });
+            }
+            showToast(task.title, 'Истекает срок! До: ' + dueStr, 'new-task');
+            playNotificationSound();
+        }
+        // Уведомление admin'у
+        if (currentUser.login !== task.assignedTo) {
+            var admin = users.find(function(u) { return u.role === 'admin'; });
+            if (admin && admin.email && admin.login !== currentUser.login) {
+                sendEmailNotification(admin.login, {
+                    title: task.title,
+                    description: 'Истекает срок задачи (исполнитель: ' + (task.assignedTo || 'не назначен') + '): ' + dueStr,
+                    priority: task.priority,
+                    dueDate: task.dueDate
+                });
+            }
+        }
+    }
+
+    // Запуск проверки каждую минуту
+    setInterval(checkOverdueTasks, 60000);
 
     // ---------- Firebase: запись данных ----------
     function saveTask(task) {
@@ -655,6 +720,13 @@
                 const countEl = document.getElementById('count_' + status);
                 if (!list || !countEl) return;
                 const filtered = userTasks.filter(function(t) { return t.status === status; });
+                const priorityOrder = { high: 0, medium: 1, low: 2 };
+                filtered.sort(function(a, b) {
+                    var pa = priorityOrder[a.priority] !== undefined ? priorityOrder[a.priority] : 1;
+                    var pb = priorityOrder[b.priority] !== undefined ? priorityOrder[b.priority] : 1;
+                    if (pa !== pb) return pa - pb;
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                });
                 countEl.textContent = filtered.length;
                 list.innerHTML = '';
                 if (filtered.length === 0) {
@@ -685,25 +757,27 @@
         }
 
         div.innerHTML =
-            (task.delegated ? '<span class="task-delegate-arrow">↗</span>' : '') +
+            (task.delegated
+                ? '<span class="task-delegate-arrow ' + (task.delegatedBy === 'admin' ? 'arrow-admin-delegated' : 'arrow-employee-delegated') + '">' + (task.delegatedBy === 'admin' ? '↗' : '↙') + '</span>'
+                : '') +
             '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
             '<div class="task-meta">' +
-                '<span>📅 ' + new Date(task.createdAt).toLocaleDateString() + '</span>' +
+                '<span>📅 ' + new Date(task.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + '</span>' +
                 '<span>👤 ' + escapeHtml(assigneeName) + '</span>' +
-                (task.dueDate ? '<span>⏳ ' + new Date(task.dueDate).toLocaleDateString() + '</span>' : '') +
+                (task.dueDate ? '<span>⏳ ' + new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</span>' : '') +
             '</div>' +
             '<div class="task-actions-row1">' +
                 (task.status !== 'done'
                     ? '<button class="btn-done" data-action="done">✅ Выполнить</button>'
                     : '<button class="btn-restore" data-action="restore">↩ Вернуть</button>') +
-                (task.status !== 'done' && currentUser.role === 'admin'
+                (task.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === task.createdBy)
                     ? '<button class="btn-delegate" data-action="delegate">📤 Делегировать</button>'
                     : '') +
             '</div>' +
             '<div class="task-actions-row2">' +
                 '<button class="btn-open" data-action="open" title="Открыть">⭕</button>' +
                 '<button class="btn-settings" data-action="settings" title="Настройки">⚙️</button>' +
-                (currentUser.role === 'admin' || task.createdBy === currentUser.login
+                (currentUser.role === 'admin'
                     ? '<button class="btn-delete" data-action="delete" title="Удалить">🗑</button>'
                     : '') +
             '</div>';
@@ -795,9 +869,10 @@
             id: generateId(),
             title: taskData.title.trim(),
             description: taskData.description || '',
-            status: 'in_progress',
+            status: taskData.status || 'in_progress',
             previousStatus: '',
             delegated: false,
+            delegatedBy: '',
             createdBy: currentUser.login,
             assignedTo: taskData.assignee || '',
             priority: taskData.priority || 'medium',
@@ -846,9 +921,10 @@
                     '<p><strong>Приоритет:</strong> ' + (priorityLabels[task.priority] || task.priority) + '</p>' +
                     '<p><strong>Исполнитель:</strong> ' + escapeHtml(assigneeName) + '</p>' +
                     '<p><strong>Создал:</strong> ' + escapeHtml(task.createdBy || '—') + '</p>' +
-                    '<p><strong>Создано:</strong> ' + new Date(task.createdAt).toLocaleString() + '</p>' +
-                    (task.dueDate ? '<p><strong>Срок:</strong> ' + new Date(task.dueDate).toLocaleDateString() + '</p>' : '') +
-                    (task.updatedAt ? '<p><strong>Обновлено:</strong> ' + new Date(task.updatedAt).toLocaleString() + '</p>' : '') +
+                    '<p><strong>Создано:</strong> ' + new Date(task.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' +
+                    (task.dueDate ? '<p><strong>Срок:</strong> ' + new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' : '') +
+                    (task.delegated ? '<p><strong>Делегировано:</strong> ' + (task.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') + '</p>' : '') +
+                    (task.updatedAt ? '<p><strong>Обновлено:</strong> ' + new Date(task.updatedAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.updatedAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' : '') +
                 '</div>' +
             '</div>';
         document.body.appendChild(modal);
@@ -861,7 +937,11 @@
         var task = tasks.find(function(t) { return t.id === taskId; });
         if (!task) return;
         var assignees = users
-            .filter(function(u) { return u.login !== currentUser.login && u.role === 'employee'; })
+            .filter(function(u) {
+                if (u.login === currentUser.login && currentUser.role !== 'admin') return false;
+                if (currentUser.role !== 'admin' && u.role === 'admin') return false;
+                return true;
+            })
             .map(function(u) { return u.login; });
         if (assignees.length === 0) {
             alert('Нет доступных сотрудников для делегирования');
@@ -878,7 +958,9 @@
                     '<label for="delegateSelect">Выберите сотрудника</label>' +
                     '<select id="delegateSelect">' +
                         assignees.map(function(login) {
-                            return '<option value="' + escapeHtml(login) + '" ' + (task.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(login) + '</option>';
+                            var u = users.find(function(usr) { return usr.login === login; });
+                            var label = login + (u && u.role === 'admin' ? ' (Руководитель)' : '');
+                            return '<option value="' + escapeHtml(login) + '" ' + (task.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
                         }).join('') +
                     '</select>' +
                 '</div>' +
@@ -887,9 +969,12 @@
         document.body.appendChild(modal);
         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
             var selected = document.getElementById('delegateSelect').value;
+            var targetUser = users.find(function(u) { return u.login === selected; });
+            var delegatedBy = currentUser.role === 'admin' ? 'admin' : 'employee';
             var updated = Object.assign({}, task, {
                 assignedTo: selected,
                 delegated: true,
+                delegatedBy: delegatedBy,
                 updatedAt: new Date().toISOString()
             });
             saveTask(updated);
@@ -946,6 +1031,7 @@
             taskId.value = taskData.id;
             taskTitle.value = taskData.title;
             taskDesc.value = taskData.description || '';
+            taskStatus.value = taskData.status || 'in_progress';
             taskPriority.value = taskData.priority || 'medium';
             taskDueDate.value = taskData.dueDate || '';
             taskAssignee.value = taskData.assignedTo || '';
@@ -954,6 +1040,7 @@
             taskId.value = '';
             taskTitle.value = '';
             taskDesc.value = '';
+            taskStatus.value = 'in_progress';
             taskPriority.value = 'medium';
             taskDueDate.value = '';
             taskAssignee.value = '';
@@ -967,6 +1054,7 @@
         var title = taskTitle.value.trim();
         if (!title) return;
         var description = taskDesc.value.trim();
+        var status = taskStatus.value;
         var priority = taskPriority.value;
         var dueDate = taskDueDate.value;
         var assignee = taskAssignee.value;
@@ -978,13 +1066,18 @@
                     alert('Вы не можете редактировать эту задачу');
                     return;
                 }
-                updateTask(id, {
+                var updates = {
                     title: title,
                     description: description,
                     priority: priority,
                     dueDate: dueDate,
                     assignedTo: assignee || ''
-                });
+                };
+                if (status !== task.status) {
+                    updates.previousStatus = task.status;
+                    updates.status = status;
+                }
+                updateTask(id, updates);
                 if (assignee && assignee !== task.assignedTo) {
                     sendEmailNotification(assignee, { title: title, description: description, priority: priority, dueDate: dueDate });
                 }
@@ -993,6 +1086,7 @@
             var newTask = addTask({
                 title: title,
                 description: description,
+                status: status,
                 priority: priority,
                 dueDate: dueDate,
                 assignee: assignee || ''
@@ -1071,9 +1165,10 @@
                 'Создал': t.createdBy || '',
                 'Исполнитель': t.assignedTo || '',
                 'Приоритет': t.priority || 'medium',
-                'Срок': t.dueDate || '',
-                'Создано': t.createdAt ? new Date(t.createdAt).toLocaleString() : '',
-                'Обновлено': t.updatedAt ? new Date(t.updatedAt).toLocaleString() : ''
+                'Срок': t.dueDate ? new Date(t.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(t.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '',
+                'Делегировано': t.delegated ? (t.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') : '',
+                'Создано': t.createdAt ? new Date(t.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(t.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '',
+                'Обновлено': t.updatedAt ? new Date(t.updatedAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(t.updatedAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : ''
             };
         });
         if (dataToExport.length === 0) {

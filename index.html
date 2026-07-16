@@ -129,6 +129,14 @@
                         <textarea id="taskDesc" rows="3"></textarea>
                     </div>
                     <div class="form-group">
+                        <label for="taskStatus">Статус</label>
+                        <select id="taskStatus">
+                            <option value="urgent">Срочные</option>
+                            <option value="in_progress" selected>В работе</option>
+                            <option value="done">Выполнено</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="taskPriority">Приоритет</label>
                         <select id="taskPriority">
                             <option value="low">Низкий</option>
@@ -138,7 +146,7 @@
                     </div>
                     <div class="form-group">
                         <label for="taskDueDate">Срок выполнения</label>
-                        <input type="date" id="taskDueDate">
+                        <input type="datetime-local" id="taskDueDate" step="900">
                     </div>
                     <div class="form-group">
                         <label for="taskAssignee">Исполнитель (делегировать)</label>
