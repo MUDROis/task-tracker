@@ -9,6 +9,7 @@
     // ---------- Глобальные переменные ----------
     let currentUser = null;
     let tasks = [];
+    let reports = [];
     let users = [];
     let firebaseReady = false;
     let db = null;
@@ -159,6 +160,9 @@
     function getUsersRef() {
         return firebase.database().ref('teams/' + TEAM_ID + '/users');
     }
+    function getReportsRef() {
+        return firebase.database().ref('teams/' + TEAM_ID + '/reports');
+    }
 
     // ---------- DOM-элементы ----------
     const loginPage = document.getElementById('loginPage');
@@ -289,6 +293,24 @@
             populateAssigneeSelect();
             if (initialLoadDone) renderBoard();
         });
+
+        // Слушаем отчёты в реальном времени
+        getReportsRef().on('value', function(snapshot) {
+            var data = snapshot.val();
+            reports = data ? Object.values(data) : [];
+            reports = reports.map(function(r) {
+                return Object.assign({}, r, {
+                    status: r.status || 'active',
+                    title: r.title || '',
+                    description: r.description || '',
+                    period: r.period || '',
+                    reportNumber: r.reportNumber || 0,
+                    dueDate: r.dueDate || '',
+                    createdBy: r.createdBy || ''
+                });
+            });
+            if (initialLoadDone) renderBoard();
+        });
     }
 
     // ---------- Автопереход просроченных задач в "Срочно" ----------
@@ -374,6 +396,32 @@
 
     function removeTask(taskId) {
         getTasksRef().child(taskId).remove();
+    }
+
+    function saveReport(report) {
+        return getReportsRef().child(report.id).set(report)
+            .then(function() {
+                console.log('Отчёт сохранён:', report.id);
+                return report;
+            })
+            .catch(function(error) {
+                console.error('Ошибка сохранения отчёта:', error);
+                alert('Ошибка сохранения отчёта: ' + error.message);
+                throw error;
+            });
+    }
+
+    function removeReport(reportId) {
+        getReportsRef().child(reportId).remove();
+    }
+
+    function changeReportStatus(id, newStatus) {
+        var report = reports.find(function(r) { return r.id === id; });
+        if (!report) return;
+        saveReport(Object.assign({}, report, {
+            status: newStatus,
+            updatedAt: new Date().toISOString()
+        }));
     }
 
     function saveUser(user) {
@@ -548,8 +596,10 @@
             // Отключаем listeners
             getTasksRef().off();
             getUsersRef().off();
+            getReportsRef().off();
             clearSession();
             currentUser = null;
+            reports = [];
             knownTaskIds = new Set();
             initialLoadDone = false;
             listenersInitialized = false;
