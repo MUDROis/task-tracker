@@ -717,10 +717,10 @@
                 '</div>' +
             '</div>' +
             '<div class="archive-row-actions">' +
-                '<button class="btn-archived" data-action="open" title="Открыть">⭕ Открыть</button>' +
-                '<button class="btn-archived" data-action="restore" title="Вернуть на доску">↩ Вернуть</button>' +
+                '<button class="btn-archived" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i> Открыть</button>' +
+                '<button class="btn-archived" data-action="restore" title="Вернуть на доску"><i class="fa-solid fa-rotate-left"></i> Вернуть</button>' +
                 (currentUser.role === 'admin'
-                    ? '<button class="btn-archived" data-action="delete" title="Удалить">🗑 Удалить</button>'
+                    ? '<button class="btn-archived" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i> Удалить</button>'
                     : '') +
             '</div>';
         div.querySelectorAll('[data-action]').forEach(function(btn) {
@@ -758,10 +758,10 @@
                 '</div>' +
             '</div>' +
             '<div class="archive-row-actions">' +
-                '<button class="btn-archived" data-action="open" title="Открыть">⭕ Открыть</button>' +
-                '<button class="btn-archived" data-action="restore" title="Вернуть на доску">↩ Вернуть</button>' +
+                '<button class="btn-archived" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i> Открыть</button>' +
+                '<button class="btn-archived" data-action="restore" title="Вернуть на доску"><i class="fa-solid fa-rotate-left"></i> Вернуть</button>' +
                 (currentUser.role === 'admin'
-                    ? '<button class="btn-archived" data-action="delete" title="Удалить">🗑 Удалить</button>'
+                    ? '<button class="btn-archived" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i> Удалить</button>'
                     : '') +
             '</div>';
         div.querySelectorAll('[data-action]').forEach(function(btn) {
@@ -1820,14 +1820,14 @@
                 '<span>👤 ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
             '</div>' +
             '<div class="task-actions-row1">' +
-                '<button class="btn-done" data-action="done">✅ В архив</button>' +
+                '<button class="btn-done" data-action="done"><i class="fa-solid fa-box-archive"></i> В архив</button>' +
             '</div>' +
             '<div class="task-actions-row2">' +
                 (currentUser.role === 'admin'
-                    ? '<button class="btn-delete" data-action="delete" title="Удалить">🗑</button>'
+                    ? '<button class="btn-delete" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i></button>'
                     : '') +
-                '<button class="btn-settings" data-action="settings" title="Изменить">⚙️</button>' +
-                '<button class="btn-open" data-action="open" title="Открыть">⭕</button>' +
+                '<button class="btn-settings" data-action="settings" title="Изменить"><i class="fa-solid fa-gear"></i></button>' +
+                '<button class="btn-open" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i></button>' +
             '</div>';
 
         div.querySelectorAll('[data-action]').forEach(function(btn) {
