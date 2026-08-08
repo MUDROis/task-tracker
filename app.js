@@ -1508,6 +1508,81 @@
 
     function renderReports() {}
 
+    function isMyReport(report) {
+        if (currentUser.role === 'admin') return true;
+        return report.createdBy === currentUser.login;
+    }
+
+    function createReportCard(report) {
+        const div = document.createElement('div');
+        div.className = 'task-card report-card priority-medium';
+        div.dataset.id = report.id;
+
+        var periodLabel = formatPeriod(report.period);
+        var numberLabel = report.reportNumber
+            ? '№' + report.reportNumber + (periodLabel ? ' за ' + periodLabel : '')
+            : 'Отчёт';
+
+        div.innerHTML =
+            '<div class="task-title">' + escapeHtml(report.title || 'Без названия') + '</div>' +
+            '<div class="task-meta">' +
+                '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
+                (report.dueDate ? '<span>⏳ ' + formatDateTime(report.dueDate) + '</span>' : '') +
+                '<span>👤 ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
+            '</div>' +
+            '<div class="task-actions-row1">' +
+                '<button class="btn-done" data-action="done">✅ В архив</button>' +
+            '</div>' +
+            '<div class="task-actions-row2">' +
+                (currentUser.role === 'admin'
+                    ? '<button class="btn-delete" data-action="delete" title="Удалить">🗑</button>'
+                    : '') +
+                '<button class="btn-settings" data-action="settings" title="Изменить">⚙️</button>' +
+                '<button class="btn-open" data-action="open" title="Открыть">⭕</button>' +
+            '</div>';
+
+        div.querySelectorAll('[data-action]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var action = this.dataset.action;
+                var x = e.clientX;
+                var y = e.clientY;
+                if (action === 'delete') {
+                    if (confirm('Удалить отчёт?')) {
+                        removeReport(report.id);
+                    }
+                } else if (action === 'done') {
+                    changeReportStatus(report.id, 'done');
+                } else if (action === 'open') {
+                    showReportDetails(report, x, y);
+                } else if (action === 'settings') {
+                    openReportModal(report, x, y);
+                }
+            });
+        });
+
+        return div;
+    }
+
+    function renderReports() {
+        const list = document.getElementById('list_reports');
+        const countEl = document.getElementById('count_reports');
+        if (!list || !countEl) return;
+        const visible = reports.filter(function(r) {
+            return r.status === 'active' && isMyReport(r);
+        });
+        visible.sort(sortByDueDate);
+        countEl.textContent = visible.length;
+        list.innerHTML = '';
+        if (visible.length === 0) {
+            list.innerHTML = '<p style="color:#94a3b8;font-size:0.9rem;text-align:center;padding:1rem 0;">Нет отчётов</p>';
+            return;
+        }
+        visible.forEach(function(r) {
+            list.appendChild(createReportCard(r));
+        });
+    }
+
     // ---------- Запуск ----------
     // Ждём загрузки Firebase SDK
     function waitForFirebase(callback) {
