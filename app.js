@@ -610,7 +610,7 @@
     });
 
     // ---------- Управление пользователями ----------
-    function openManagePanel() {
+    function openManagePanel(x, y) {
         console.log('openManagePanel: currentUser =', currentUser);
         if (!currentUser || currentUser.role !== 'admin') {
             console.log('openManagePanel: нет доступа, role =', currentUser && currentUser.role);
@@ -629,6 +629,7 @@
             });
             renderUsersList();
             usersModal.classList.add('active');
+            positionModalAtPoint(usersModal, x, y);
         }).catch(function(err) {
             console.error('Ошибка загрузки пользователей:', err);
             alert('Не удалось загрузить список пользователей');
@@ -636,7 +637,9 @@
     }
 
     console.log('manageUsersBtn =', manageUsersBtn);
-    manageUsersBtn.addEventListener('click', openManagePanel);
+    manageUsersBtn.addEventListener('click', function(e) {
+        openManagePanel(e.clientX, e.clientY);
+    });
 
     var archiveTab = 'tasks';
     var archiveModal = document.getElementById('archiveModal');
@@ -881,13 +884,13 @@
         }).join('');
 
         usersList.querySelectorAll('.btn-edit-user').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                openEditUserModal(this.dataset.login);
+            btn.addEventListener('click', function(e) {
+                openEditUserModal(this.dataset.login, e.clientX, e.clientY);
             });
         });
     }
 
-    function openEditUserModal(login) {
+    function openEditUserModal(login, x, y) {
         const user = users.find(function(u) { return u.login === login; });
         if (!user) return;
         const modal = document.createElement('div');
@@ -932,6 +935,7 @@
                 '</form>' +
             '</div>';
         document.body.appendChild(modal);
+        positionModalAtPoint(modal, x, y);
 
         // Emoji picker
         const emojiInput = modal.querySelector('#editEmoji');
@@ -1147,6 +1151,8 @@
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 var action = this.dataset.action;
+                var x = e.clientX;
+                var y = e.clientY;
                 if (action === 'delete') {
                     if (confirm('Удалить задачу?')) {
                         removeTask(task.id);
@@ -1156,15 +1162,15 @@
                 } else if (action === 'restore') {
                     changeStatus(task.id, task.previousStatus || 'in_progress');
                 } else if (action === 'delegate') {
-                    showDelegateModal(task.id);
+                    showDelegateModal(task.id, x, y);
                 } else if (action === 'open') {
-                    showTaskDetails(task);
+                    showTaskDetails(task, x, y);
                 } else if (action === 'settings') {
                     if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
                         alert('Вы не можете редактировать эту задачу');
                         return;
                     }
-                    openTaskModal(task);
+                    openTaskModal(task, x, y);
                 }
             });
         });
@@ -1172,12 +1178,12 @@
         div.addEventListener('dragstart', handleDragStart);
         div.addEventListener('dragend', handleDragEnd);
 
-        div.addEventListener('dblclick', function() {
+        div.addEventListener('dblclick', function(e) {
             if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
                 alert('Вы не можете редактировать эту задачу');
                 return;
             }
-            openTaskModal(task);
+            openTaskModal(task, e.clientX, e.clientY);
         });
 
         return div;
@@ -1266,7 +1272,7 @@
     }
 
     // ---------- Показ деталей задачи ----------
-    function showTaskDetails(task) {
+    function showTaskDetails(task, x, y) {
         var assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
         var assigneeName = task.assignedTo ? formatUserName(task.assignedTo) : 'не назначен';
         var assigneeEmoji = assigneeUser ? (assigneeUser.emoji || '👤') : '👤';
@@ -1291,6 +1297,7 @@
                 '</div>' +
             '</div>';
         document.body.appendChild(modal);
+        positionModalAtPoint(modal, x, y);
         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
@@ -1321,7 +1328,7 @@
     }
 
     // ---------- Делегирование ----------
-    function showDelegateModal(taskId) {
+    function showDelegateModal(taskId, x, y) {
         var task = tasks.find(function(t) { return t.id === taskId; });
         if (!task) return;
         var assignees = users
@@ -1355,6 +1362,7 @@
                 '<button id="delegateConfirmBtn" class="btn primary">Делегировать</button>' +
             '</div>';
         document.body.appendChild(modal);
+        positionModalAtPoint(modal, x, y);
         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
             var selected = document.getElementById('delegateSelect').value;
             var targetUser = users.find(function(u) { return u.login === selected; });
@@ -1413,7 +1421,7 @@
     }
 
     // ---------- Модальное окно задачи ----------
-    function openTaskModal(taskData) {
+    function openTaskModal(taskData, x, y) {
         if (taskData) {
             modalTitle.textContent = 'Редактировать задачу';
             taskId.value = taskData.id;
@@ -1434,6 +1442,7 @@
             taskAssignee.value = '';
         }
         taskModal.classList.add('active');
+        positionModalAtPoint(taskModal, x, y);
     }
 
     function openReportModal(reportData, x, y) {
@@ -1557,8 +1566,8 @@
         taskModal.classList.remove('active');
     });
 
-    addTaskBtn.addEventListener('click', function() {
-        openTaskModal(null);
+    addTaskBtn.addEventListener('click', function(e) {
+        openTaskModal(null, e.clientX, e.clientY);
     });
 
     var addReportBtn = document.getElementById('addReportBtn');
@@ -1577,10 +1586,14 @@
     var mobileImportBtn = document.getElementById('mobileImportBtn');
 
     if (mobileAddBtn) {
-        mobileAddBtn.addEventListener('click', function() { openTaskModal(null); });
+        mobileAddBtn.addEventListener('click', function(e) {
+            openTaskModal(null, e.clientX, e.clientY);
+        });
     }
     if (mobileManageBtn) {
-        mobileManageBtn.addEventListener('click', openManagePanel);
+        mobileManageBtn.addEventListener('click', function(e) {
+            openManagePanel(e.clientX, e.clientY);
+        });
     }
     if (mobileSettingsBtn) {
         mobileSettingsBtn.addEventListener('click', function(e) {
@@ -1716,6 +1729,29 @@
         var div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function positionModalAtPoint(modal, x, y) {
+        if (typeof x !== 'number' || typeof y !== 'number') return;
+        var finePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+        if (!finePointer) return;
+        var content = modal.querySelector('.modal-content');
+        if (!content) return;
+        content.style.position = 'fixed';
+        content.style.margin = '0';
+        content.style.maxHeight = '90vh';
+        content.style.overflowY = 'auto';
+        var w = content.offsetWidth;
+        var h = content.offsetHeight;
+        var pad = 8;
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
+        var left = Math.min(x + pad, vw - w - pad);
+        var top = Math.min(y + pad, vh - h - pad);
+        if (left < pad) left = pad;
+        if (top < pad) top = pad;
+        content.style.left = left + 'px';
+        content.style.top = top + 'px';
     }
 
     function formatUserName(login) {
