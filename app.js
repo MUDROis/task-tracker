@@ -194,8 +194,9 @@
     const reportId = document.getElementById('reportId');
     const reportTitle = document.getElementById('reportTitle');
     const reportDesc = document.getElementById('reportDesc');
-    const reportPeriod = document.getElementById('reportPeriod');
+    const reportPriority = document.getElementById('reportPriority');
     const reportDueDate = document.getElementById('reportDueDate');
+    const reportAssignee = document.getElementById('reportAssignee');
     const closeModal = document.querySelector('.close-modal');
     const usersModal = document.getElementById('usersModal');
     const usersList = document.getElementById('usersList');
@@ -1461,15 +1462,17 @@
             reportId.value = reportData.id;
             reportTitle.value = reportData.title || '';
             reportDesc.value = reportData.description || '';
-            reportPeriod.value = reportData.period || '';
+            reportPriority.value = reportData.priority || 'medium';
             reportDueDate.value = reportData.dueDate || '';
+            reportAssignee.value = reportData.assignedTo || '';
         } else {
             reportModalTitle.textContent = 'Новый отчёт';
             reportId.value = '';
             reportTitle.value = '';
             reportDesc.value = '';
-            reportPeriod.value = '';
+            reportPriority.value = 'medium';
             reportDueDate.value = '';
+            reportAssignee.value = '';
         }
         reportModal.classList.add('active');
         positionModalAtPoint(reportModal, x, y);
@@ -1481,16 +1484,18 @@
         var title = reportTitle.value.trim();
         if (!title) return;
         var desc = reportDesc.value.trim();
-        var period = reportPeriod.value;
+        var priority = reportPriority.value;
         var dueDate = reportDueDate.value;
+        var assignee = reportAssignee.value;
         if (id) {
             var rep = reports.find(function(r) { return r.id === id; });
             if (!rep) return;
             saveReport(Object.assign({}, rep, {
                 title: title,
                 description: desc,
-                period: period,
+                priority: priority,
                 dueDate: dueDate,
+                assignedTo: assignee || '',
                 updatedAt: new Date().toISOString()
             }));
         } else {
@@ -1498,9 +1503,10 @@
                 id: generateId(),
                 title: title,
                 description: desc,
-                period: period,
-                reportNumber: computeReportNumber(period),
+                priority: priority,
+                reportNumber: computeReportNumber(),
                 dueDate: dueDate,
+                assignedTo: assignee || '',
                 createdBy: currentUser.login,
                 status: 'active',
                 createdAt: new Date().toISOString(),
@@ -1762,10 +1768,10 @@
         return m.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
     }
 
-    function computeReportNumber(period) {
+    function computeReportNumber() {
         var max = 0;
         reports.forEach(function(r) {
-            if (r.period === period && r.reportNumber > max) max = r.reportNumber;
+            if (r.reportNumber > max) max = r.reportNumber;
         });
         return max + 1;
     }
