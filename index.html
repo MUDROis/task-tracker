@@ -72,12 +72,14 @@
                 </div>
                 <input type="file" id="fileInput" accept=".xlsx" style="display:none">
                 <button id="manageUsersBtn" class="btn outline btn-sm" style="display:none;">👥 Управление</button>
+                <button id="archiveBtn" class="btn outline btn-sm">🗂 Архив</button>
             </div>
 
             <!-- Мобильная нижняя панель -->
             <div class="mobile-bar">
                 <button id="mobileManageBtn" class="mobile-bar-btn" title="Управление">👥</button>
                 <button id="mobileAddBtn" class="mobile-bar-btn mobile-bar-btn-main" title="Новая задача">➕</button>
+                <button id="mobileArchiveBtn" class="mobile-bar-btn" title="Архив">🗂</button>
                 <div class="mobile-bar-btn-group">
                     <button id="mobileSettingsBtn" class="mobile-bar-btn" title="Настройки">⚙️</button>
                     <div id="mobileSettingsDropdown" class="mobile-settings-dropdown">
@@ -103,12 +105,15 @@
                     </div>
                     <div class="task-list" id="list_in_progress"></div>
                 </div>
-                <div class="column" data-status="done">
+                <div class="column" data-status="reports">
                     <div class="column-header">
-                        <h3>✅ Выполнено</h3>
-                        <span class="count" id="count_done">0</span>
+                        <h3>📄 Отчёты</h3>
+                        <div class="column-header-actions">
+                            <button id="addReportBtn" class="column-add-btn" title="Новый отчёт">➕</button>
+                            <span class="count" id="count_reports">0</span>
+                        </div>
                     </div>
-                    <div class="task-list" id="list_done"></div>
+                    <div class="task-list" id="list_reports"></div>
                 </div>
             </div>
         </div>
@@ -133,7 +138,6 @@
                         <select id="taskStatus">
                             <option value="urgent">Срочные</option>
                             <option value="in_progress" selected>В работе</option>
-                            <option value="done">Выполнено</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -182,6 +186,23 @@
                     </div>
                     <button type="submit" class="btn primary">Добавить</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Модальное окно архива -->
+        <div id="archiveModal" class="modal">
+            <div class="modal-content archive-content">
+                <span class="close-modal">&times;</span>
+                <h3>🗂 Архив</h3>
+                <div class="archive-toolbar">
+                    <div class="archive-tabs">
+                        <button class="archive-tab active" data-tab="tasks">Задачи</button>
+                        <button class="archive-tab" data-tab="reports">Отчёты</button>
+                    </div>
+                    <input type="text" id="archiveSearch" placeholder="Поиск…">
+                    <button id="archiveExportBtn" class="btn secondary btn-sm">📤 Выгрузить Excel</button>
+                </div>
+                <div id="archiveList" class="archive-list"></div>
             </div>
         </div>
     </div>

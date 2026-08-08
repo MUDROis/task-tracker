@@ -300,6 +300,31 @@ body {
     color: #475569;
 }
 
+.column-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.column-add-btn {
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 0.5rem;
+    background: #dbeafe;
+    color: #1e40af;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.column-add-btn:hover {
+    background: #bfdbfe;
+}
+
 .task-list {
     display: flex;
     flex-direction: column;
@@ -801,4 +826,99 @@ body {
 .color-preset-btn:hover {
     border-color: #1e293b;
     transform: scale(1.15);
+}
+
+/* ===== ARCHIVE ===== */
+.archive-content {
+    max-width: 640px !important;
+}
+.archive-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.archive-tabs {
+    display: flex;
+    gap: 0.25rem;
+}
+.archive-tab {
+    padding: 0.4rem 1rem;
+    border: 1px solid #e2e8f0;
+    background: #f1f5f9;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.archive-tab:hover {
+    background: #e2e8f0;
+}
+.archive-tab.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+}
+#archiveSearch {
+    flex: 1;
+    min-width: 160px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.6rem;
+    font-size: 0.9rem;
+}
+#archiveSearch:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+}
+.archive-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 55vh;
+    overflow-y: auto;
+}
+.archive-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.75rem;
+}
+.archive-row-main {
+    min-width: 0;
+}
+.archive-row-actions {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.btn-archived {
+    background: #cbd5e1;
+    color: #475569;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.btn-archived:hover {
+    background: #94a3b8;
+    color: #1e293b;
+}
+.archive-empty {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1rem 0;
 }
