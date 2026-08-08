@@ -188,6 +188,14 @@
     const taskStatus = document.getElementById('taskStatus');
     const taskDueDate = document.getElementById('taskDueDate');
     const taskAssignee = document.getElementById('taskAssignee');
+    const reportModal = document.getElementById('reportModal');
+    const reportModalTitle = document.getElementById('reportModalTitle');
+    const reportForm = document.getElementById('reportForm');
+    const reportId = document.getElementById('reportId');
+    const reportTitle = document.getElementById('reportTitle');
+    const reportDesc = document.getElementById('reportDesc');
+    const reportPeriod = document.getElementById('reportPeriod');
+    const reportDueDate = document.getElementById('reportDueDate');
     const closeModal = document.querySelector('.close-modal');
     const usersModal = document.getElementById('usersModal');
     const usersList = document.getElementById('usersList');
@@ -1448,75 +1456,59 @@
     }
 
     function openReportModal(reportData, x, y) {
-        var editing = !!reportData;
-        var modal = document.createElement('div');
-        modal.className = 'modal active';
-        modal.innerHTML =
-            '<div class="modal-content report-modal" style="max-width:420px;">' +
-                '<span class="close-modal">&times;</span>' +
-                '<h3>' + (editing ? 'Редактировать отчёт' : 'Новый отчёт') + '</h3>' +
-                '<form id="reportForm">' +
-                    '<input type="hidden" id="reportId" value="' + (editing ? escapeHtml(reportData.id) : '') + '">' +
-                    '<div class="form-group">' +
-                        '<label for="reportTitle">Название *</label>' +
-                        '<input type="text" id="reportTitle" value="' + (editing ? escapeHtml(reportData.title || '') : '') + '" required>' +
-                    '</div>' +
-                    '<div class="form-group">' +
-                        '<label for="reportDesc">Описание</label>' +
-                        '<textarea id="reportDesc" rows="3">' + (editing ? escapeHtml(reportData.description || '') : '') + '</textarea>' +
-                    '</div>' +
-                    '<div class="form-group">' +
-                        '<label for="reportPeriod">Месяц</label>' +
-                        '<input type="month" id="reportPeriod" value="' + (editing ? (reportData.period || '') : '') + '" required>' +
-                    '</div>' +
-                    '<div class="form-group">' +
-                        '<label for="reportDueDate">Срок сдачи</label>' +
-                        '<input type="datetime-local" id="reportDueDate" step="900" value="' + (editing ? (reportData.dueDate || '') : '') + '">' +
-                    '</div>' +
-                    '<button type="submit" class="btn primary">Сохранить</button>' +
-                '</form>' +
-            '</div>';
-        document.body.appendChild(modal);
-        if (positionModalAtPoint) positionModalAtPoint(modal, x, y);
-
-        modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
-        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
-
-        modal.querySelector('#reportForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            var id = modal.querySelector('#reportId').value;
-            var title = modal.querySelector('#reportTitle').value.trim();
-            var desc = modal.querySelector('#reportDesc').value.trim();
-            var period = modal.querySelector('#reportPeriod').value;
-            var dueDate = modal.querySelector('#reportDueDate').value;
-            if (!title) return;
-            if (id) {
-                var rep = reports.find(function(r) { return r.id === id; });
-                if (!rep) return;
-                saveReport(Object.assign({}, rep, {
-                    title: title,
-                    description: desc,
-                    period: period,
-                    dueDate: dueDate,
-                    updatedAt: new Date().toISOString()
-                }));
-            } else {
-                saveReport({
-                    id: generateId(),
-                    title: title,
-                    description: desc,
-                    period: period,
-                    reportNumber: computeReportNumber(period),
-                    dueDate: dueDate,
-                    createdBy: currentUser.login,
-                    status: 'active',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                });
-            }
-            modal.remove();
-        });
+        if (reportData) {
+            reportModalTitle.textContent = 'Редактировать отчёт';
+            reportId.value = reportData.id;
+            reportTitle.value = reportData.title || '';
+            reportDesc.value = reportData.description || '';
+            reportPeriod.value = reportData.period || '';
+            reportDueDate.value = reportData.dueDate || '';
+        } else {
+            reportModalTitle.textContent = 'Новый отчёт';
+            reportId.value = '';
+            reportTitle.value = '';
+            reportDesc.value = '';
+            reportPeriod.value = '';
+            reportDueDate.value = '';
+        }
+        reportModal.classList.add('active');
+        positionModalAtPoint(reportModal, x, y);
     }
+
+    reportForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = reportId.value;
+        var title = reportTitle.value.trim();
+        if (!title) return;
+        var desc = reportDesc.value.trim();
+        var period = reportPeriod.value;
+        var dueDate = reportDueDate.value;
+        if (id) {
+            var rep = reports.find(function(r) { return r.id === id; });
+            if (!rep) return;
+            saveReport(Object.assign({}, rep, {
+                title: title,
+                description: desc,
+                period: period,
+                dueDate: dueDate,
+                updatedAt: new Date().toISOString()
+            }));
+        } else {
+            saveReport({
+                id: generateId(),
+                title: title,
+                description: desc,
+                period: period,
+                reportNumber: computeReportNumber(period),
+                dueDate: dueDate,
+                createdBy: currentUser.login,
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+        }
+        reportModal.classList.remove('active');
+    });
 
     taskForm.addEventListener('submit', function(e) {
         e.preventDefault();
