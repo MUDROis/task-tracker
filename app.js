@@ -312,7 +312,6 @@
                     status: r.status || 'active',
                     title: r.title || '',
                     description: r.description || '',
-                    period: r.period || '',
                     reportNumber: r.reportNumber || 0,
                     dueDate: r.dueDate || '',
                     createdBy: r.createdBy || ''
@@ -755,7 +754,7 @@
         var numberLabel = report.reportNumber
             ? '№' + report.reportNumber
             : 'Отчёт';
-        var assigneeLabel = report.assignedTo ? '👤 ' + formatUserName(report.assignedTo) : '';
+        var assigneeLabel = report.assignedTo ? '👤 ' + escapeHtml(formatUserName(report.assignedTo)) : '';
         var div = document.createElement('div');
         div.className = 'archive-row';
         div.innerHTML =
@@ -1807,7 +1806,7 @@
         var numberLabel = report.reportNumber
             ? '№' + report.reportNumber
             : 'Отчёт';
-        var assigneeLabel = report.assignedTo ? '👤 ' + formatUserName(report.assignedTo) : '';
+        var assigneeLabel = report.assignedTo ? '👤 ' + escapeHtml(formatUserName(report.assignedTo)) : '';
 
         div.innerHTML =
             '<div class="task-title">' + escapeHtml(report.title || 'Без названия') + '</div>' +
