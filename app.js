@@ -1203,7 +1203,9 @@
         document.querySelectorAll('.task-list').forEach(function(el) { el.classList.remove('drag-over'); });
     }
 
-    document.querySelectorAll('.task-list').forEach(function(list) {
+    ['list_urgent', 'list_in_progress'].forEach(function(listId) {
+        var list = document.getElementById(listId);
+        if (!list) return;
         list.addEventListener('dragover', function(e) {
             e.preventDefault();
             this.classList.add('drag-over');
@@ -1794,8 +1796,6 @@
         if (isNaN(d.getTime())) return '';
         return d.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
     }
-
-    function renderReports() {}
 
     function isMyReport(report) {
         if (currentUser.role === 'admin') return true;
