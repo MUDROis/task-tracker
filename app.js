@@ -698,7 +698,7 @@
             if (search) {
                 archivedReports = archivedReports.filter(function(r) {
                     var numberLabel = r.reportNumber
-                        ? '№' + r.reportNumber + ' за ' + formatPeriod(r.period)
+                        ? '№' + r.reportNumber
                         : '';
                     var hay = (r.title || '').toLowerCase() + ' ' + numberLabel.toLowerCase();
                     return hay.indexOf(search) !== -1;
@@ -752,10 +752,10 @@
     }
 
     function createArchiveReportRow(report) {
-        var periodLabel = formatPeriod(report.period);
         var numberLabel = report.reportNumber
-            ? '№' + report.reportNumber + (periodLabel ? ' за ' + periodLabel : '')
+            ? '№' + report.reportNumber
             : 'Отчёт';
+        var assigneeLabel = report.assignedTo ? '👤 ' + formatUserName(report.assignedTo) : '';
         var div = document.createElement('div');
         div.className = 'archive-row';
         div.innerHTML =
@@ -764,6 +764,7 @@
                 '<div class="task-meta">' +
                     '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
                     (report.dueDate ? '<span>⏳ ' + formatDateTime(report.dueDate) + '</span>' : '') +
+                    (assigneeLabel ? '<span>' + assigneeLabel + '</span>' : '') +
                 '</div>' +
             '</div>' +
             '<div class="archive-row-actions">' +
@@ -864,7 +865,7 @@
                 'Описание': r.description || '',
                 'Срок': r.dueDate ? formatDateTime(r.dueDate) : '',
                 'Создал': formatUserName(r.createdBy),
-                'Исполнитель': r.period ? formatPeriod(r.period) : ''
+                'Исполнитель': r.assignedTo ? formatUserName(r.assignedTo) : ''
             });
         });
         if (rows.length === 0) {
@@ -1314,9 +1315,8 @@
     }
 
     function showReportDetails(report, x, y) {
-        var periodLabel = formatPeriod(report.period);
         var numberLabel = report.reportNumber
-            ? '№' + report.reportNumber + (periodLabel ? ' за ' + periodLabel : '')
+            ? '№' + report.reportNumber
             : 'Отчёт';
         var modal = document.createElement('div');
         modal.className = 'modal active';
@@ -1327,7 +1327,9 @@
                 '<div style="margin-top:1rem;font-size:0.95rem;color:#334155;">' +
                     '<p><strong>Номер:</strong> ' + escapeHtml(numberLabel) + '</p>' +
                     '<p><strong>Описание:</strong> ' + (report.description ? escapeHtml(report.description) : '<em>нет</em>') + '</p>' +
+                    '<p><strong>Приоритет:</strong> ' + escapeHtml(PRIORITY_LABELS[report.priority] || 'Средний') + '</p>' +
                     (report.dueDate ? '<p><strong>Срок сдачи:</strong> ' + formatDateTime(report.dueDate) + '</p>' : '') +
+                    '<p><strong>Исполнитель:</strong> ' + (report.assignedTo ? escapeHtml(formatUserName(report.assignedTo)) : '<em>не назначен</em>') + '</p>' +
                     '<p><strong>Автор:</strong> ' + escapeHtml(formatUserName(report.createdBy)) + '</p>' +
                     '<p><strong>Создан:</strong> ' + formatDateTime(report.createdAt) + '</p>' +
                 '</div>' +
@@ -1418,16 +1420,20 @@
 
     // ---------- Популяция select исполнителей ----------
     function populateAssigneeSelect() {
-        var select = taskAssignee;
+        populateSelect(taskAssignee);
+        populateSelect(reportAssignee);
+    }
+
+    function populateSelect(select) {
         if (!select) return;
         var currentVal = select.value;
         select.innerHTML = '<option value="">Не назначен</option>';
         users.forEach(function(u) {
-                var opt = document.createElement('option');
-                opt.value = u.login;
-                opt.textContent = u.login + (u.role === 'admin' ? ' (Руководитель)' : '');
-                select.appendChild(opt);
-            });
+            var opt = document.createElement('option');
+            opt.value = u.login;
+            opt.textContent = u.login + (u.role === 'admin' ? ' (Руководитель)' : '');
+            select.appendChild(opt);
+        });
         if (currentVal) select.value = currentVal;
     }
 
@@ -1761,13 +1767,6 @@
         return login;
     }
 
-    function formatPeriod(period) {
-        if (!period) return '';
-        var m = new Date(period + '-01T00:00:00');
-        if (isNaN(m.getTime())) return period;
-        return m.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
-    }
-
     function computeReportNumber() {
         var max = 0;
         reports.forEach(function(r) {
@@ -1802,19 +1801,20 @@
 
     function createReportCard(report) {
         const div = document.createElement('div');
-        div.className = 'task-card report-card priority-medium';
+        div.className = 'task-card report-card priority-' + (report.priority || 'medium');
         div.dataset.id = report.id;
 
-        var periodLabel = formatPeriod(report.period);
         var numberLabel = report.reportNumber
-            ? '№' + report.reportNumber + (periodLabel ? ' за ' + periodLabel : '')
+            ? '№' + report.reportNumber
             : 'Отчёт';
+        var assigneeLabel = report.assignedTo ? '👤 ' + formatUserName(report.assignedTo) : '';
 
         div.innerHTML =
             '<div class="task-title">' + escapeHtml(report.title || 'Без названия') + '</div>' +
             '<div class="task-meta">' +
                 '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
                 (report.dueDate ? '<span>⏳ ' + formatDateTime(report.dueDate) + '</span>' : '') +
+                (assigneeLabel ? '<span>' + assigneeLabel + '</span>' : '') +
                 '<span>👤 ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
             '</div>' +
             '<div class="task-actions-row1">' +
