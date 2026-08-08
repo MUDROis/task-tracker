@@ -1067,6 +1067,31 @@
         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
+    function showReportDetails(report, x, y) {
+        var periodLabel = formatPeriod(report.period);
+        var numberLabel = report.reportNumber
+            ? '№' + report.reportNumber + (periodLabel ? ' за ' + periodLabel : '')
+            : 'Отчёт';
+        var modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML =
+            '<div class="modal-content" style="max-width:450px;">' +
+                '<span class="close-modal">&times;</span>' +
+                '<h3>' + escapeHtml(report.title) + '</h3>' +
+                '<div style="margin-top:1rem;font-size:0.95rem;color:#334155;">' +
+                    '<p><strong>Номер:</strong> ' + escapeHtml(numberLabel) + '</p>' +
+                    '<p><strong>Описание:</strong> ' + (report.description ? escapeHtml(report.description) : '<em>нет</em>') + '</p>' +
+                    (report.dueDate ? '<p><strong>Срок сдачи:</strong> ' + formatDateTime(report.dueDate) + '</p>' : '') +
+                    '<p><strong>Автор:</strong> ' + escapeHtml(formatUserName(report.createdBy)) + '</p>' +
+                    '<p><strong>Создан:</strong> ' + formatDateTime(report.createdAt) + '</p>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        if (positionModalAtPoint) positionModalAtPoint(modal, x, y);
+        modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+    }
+
     // ---------- Делегирование ----------
     function showDelegateModal(taskId) {
         var task = tasks.find(function(t) { return t.id === taskId; });
