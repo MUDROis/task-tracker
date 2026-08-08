@@ -164,6 +164,34 @@
             </div>
         </div>
 
+        <!-- Модальное окно создания/редактирования отчёта -->
+        <div id="reportModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3 id="reportModalTitle">Новый отчёт</h3>
+                <form id="reportForm">
+                    <input type="hidden" id="reportId">
+                    <div class="form-group">
+                        <label for="reportTitle">Название *</label>
+                        <input type="text" id="reportTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reportDesc">Описание</label>
+                        <textarea id="reportDesc" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="reportPeriod">Месяц</label>
+                        <input type="month" id="reportPeriod" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reportDueDate">Срок сдачи</label>
+                        <input type="datetime-local" id="reportDueDate" step="900">
+                    </div>
+                    <button type="submit" class="btn primary">Сохранить</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Модальное окно управления пользователями -->
         <div id="usersModal" class="modal">
             <div class="modal-content">
