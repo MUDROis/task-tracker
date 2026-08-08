@@ -9,6 +9,10 @@
         "tasks": {
           ".read": "auth != null",
           ".write": "auth != null"
+        },
+        "reports": {
+          ".read": "auth != null",
+          ".write": "auth != null"
         }
       }
     }
