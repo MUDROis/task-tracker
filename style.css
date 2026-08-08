@@ -931,3 +931,6 @@ body {
 .archive-row .btn-archived i {
     color: #64748b;
 }
+.report-modal {
+    max-width: 420px;
+}
