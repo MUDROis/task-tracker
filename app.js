@@ -1183,6 +1183,77 @@
         taskModal.classList.add('active');
     }
 
+    function openReportModal(reportData, x, y) {
+        var editing = !!reportData;
+        var modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML =
+            '<div class="modal-content report-modal" style="max-width:420px;">' +
+                '<span class="close-modal">&times;</span>' +
+                '<h3>' + (editing ? 'Редактировать отчёт' : 'Новый отчёт') + '</h3>' +
+                '<form id="reportForm">' +
+                    '<input type="hidden" id="reportId" value="' + (editing ? escapeHtml(reportData.id) : '') + '">' +
+                    '<div class="form-group">' +
+                        '<label for="reportTitle">Название *</label>' +
+                        '<input type="text" id="reportTitle" value="' + (editing ? escapeHtml(reportData.title || '') : '') + '" required>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label for="reportDesc">Описание</label>' +
+                        '<textarea id="reportDesc" rows="3">' + (editing ? escapeHtml(reportData.description || '') : '') + '</textarea>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label for="reportPeriod">Месяц</label>' +
+                        '<input type="month" id="reportPeriod" value="' + (editing ? (reportData.period || '') : '') + '" required>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label for="reportDueDate">Срок сдачи</label>' +
+                        '<input type="datetime-local" id="reportDueDate" step="900" value="' + (editing ? (reportData.dueDate || '') : '') + '">' +
+                    '</div>' +
+                    '<button type="submit" class="btn primary">Сохранить</button>' +
+                '</form>' +
+            '</div>';
+        document.body.appendChild(modal);
+        if (positionModalAtPoint) positionModalAtPoint(modal, x, y);
+
+        modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+
+        modal.querySelector('#reportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var id = modal.querySelector('#reportId').value;
+            var title = modal.querySelector('#reportTitle').value.trim();
+            var desc = modal.querySelector('#reportDesc').value.trim();
+            var period = modal.querySelector('#reportPeriod').value;
+            var dueDate = modal.querySelector('#reportDueDate').value;
+            if (!title) return;
+            if (id) {
+                var rep = reports.find(function(r) { return r.id === id; });
+                if (!rep) return;
+                saveReport(Object.assign({}, rep, {
+                    title: title,
+                    description: desc,
+                    period: period,
+                    dueDate: dueDate,
+                    updatedAt: new Date().toISOString()
+                }));
+            } else {
+                saveReport({
+                    id: generateId(),
+                    title: title,
+                    description: desc,
+                    period: period,
+                    reportNumber: computeReportNumber(period),
+                    dueDate: dueDate,
+                    createdBy: currentUser.login,
+                    status: 'active',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            }
+            modal.remove();
+        });
+    }
+
     taskForm.addEventListener('submit', function(e) {
         e.preventDefault();
         var id = taskId.value;
@@ -1236,6 +1307,13 @@
     addTaskBtn.addEventListener('click', function() {
         openTaskModal(null);
     });
+
+    var addReportBtn = document.getElementById('addReportBtn');
+    if (addReportBtn) {
+        addReportBtn.addEventListener('click', function(e) {
+            openReportModal(null, e.clientX, e.clientY);
+        });
+    }
 
     // ---------- Мобильные кнопки ----------
     var mobileAddBtn = document.getElementById('mobileAddBtn');
@@ -1392,6 +1470,21 @@
         var u = users.find(function(u) { return u.login === login; });
         if (u && u.role === 'admin') return 'Руководитель';
         return login;
+    }
+
+    function formatPeriod(period) {
+        if (!period) return '';
+        var m = new Date(period + '-01T00:00:00');
+        if (isNaN(m.getTime())) return period;
+        return m.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+    }
+
+    function computeReportNumber(period) {
+        var max = 0;
+        reports.forEach(function(r) {
+            if (r.period === period && r.reportNumber > max) max = r.reportNumber;
+        });
+        return max + 1;
     }
 
     function sortByDueDate(a, b) {
