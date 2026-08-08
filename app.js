@@ -1133,18 +1133,18 @@
             '</div>' +
             '<div class="task-actions-row1">' +
                 (task.status !== 'done'
-                    ? '<button class="btn-done" data-action="done">✅ Выполнить</button>'
-                    : '<button class="btn-restore" data-action="restore">↩ Вернуть</button>') +
+                    ? '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> Выполнить</button>'
+                    : '<button class="btn-restore" data-action="restore"><i class="fa-solid fa-rotate-left"></i> Вернуть</button>') +
                 (task.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === task.createdBy)
-                    ? '<button class="btn-delegate" data-action="delegate">📤 Делегировать</button>'
+                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> Делегировать</button>'
                     : '') +
             '</div>' +
             '<div class="task-actions-row2">' +
                 (currentUser.role === 'admin'
-                    ? '<button class="btn-delete" data-action="delete" title="Удалить">🗑</button>'
+                    ? '<button class="btn-delete" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i></button>'
                     : '') +
-                '<button class="btn-settings" data-action="settings" title="Настройки">⚙️</button>' +
-                '<button class="btn-open" data-action="open" title="Открыть">⭕</button>' +
+                '<button class="btn-settings" data-action="settings" title="Настройки"><i class="fa-solid fa-gear"></i></button>' +
+                '<button class="btn-open" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i></button>' +
             '</div>';
 
         div.querySelectorAll('[data-action]').forEach(function(btn) {
