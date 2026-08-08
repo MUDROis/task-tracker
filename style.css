@@ -922,3 +922,12 @@ body {
     text-align: center;
     padding: 1rem 0;
 }
+.task-card .btn-done i,
+.task-card .btn-delegate i,
+.task-card .btn-restore i,
+.task-card .btn-delete i,
+.task-card .btn-settings i,
+.task-card .btn-open i,
+.archive-row .btn-archived i {
+    color: #64748b;
+}
