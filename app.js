@@ -850,24 +850,18 @@
 
             // Если задача имеет высокий приоритет, автоматически ставим её в 'urgent'
             userTasks.forEach(function(t) {
-                if (t.priority === 'high' && t.status !== 'urgent') {
+                if (t.priority === 'high' && t.status !== 'urgent' && t.status !== 'done') {
                     t.status = 'urgent';
                 }
             });
 
-            const columns = ['urgent', 'in_progress', 'done'];
+            const columns = ['urgent', 'in_progress'];
             columns.forEach(function(status) {
                 const list = document.getElementById('list_' + status);
                 const countEl = document.getElementById('count_' + status);
                 if (!list || !countEl) return;
                 const filtered = userTasks.filter(function(t) { return t.status === status; });
-                const priorityOrder = { high: 0, medium: 1, low: 2 };
-                filtered.sort(function(a, b) {
-                    var pa = priorityOrder[a.priority] !== undefined ? priorityOrder[a.priority] : 1;
-                    var pb = priorityOrder[b.priority] !== undefined ? priorityOrder[b.priority] : 1;
-                    if (pa !== pb) return pa - pb;
-                    return new Date(b.createdAt) - new Date(a.createdAt);
-                });
+                filtered.sort(sortByDueDate);
                 countEl.textContent = filtered.length;
                 list.innerHTML = '';
                 if (filtered.length === 0) {
@@ -878,6 +872,7 @@
                     list.appendChild(createTaskCard(task));
                 });
             });
+            renderReports();
             populateAssigneeSelect();
         } catch (e) {
             console.error('Ошибка при рендеринге доски:', e);
@@ -1398,6 +1393,27 @@
         if (u && u.role === 'admin') return 'Руководитель';
         return login;
     }
+
+    function sortByDueDate(a, b) {
+        var aDue = a.dueDate ? new Date(a.dueDate).getTime() : null;
+        var bDue = b.dueDate ? new Date(b.dueDate).getTime() : null;
+        if (aDue === null && bDue === null) {
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        }
+        if (aDue === null) return 1;
+        if (bDue === null) return -1;
+        if (aDue !== bDue) return aDue - bDue;
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    }
+
+    function formatDateTime(dateStr) {
+        if (!dateStr) return '';
+        var d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+    }
+
+    function renderReports() {}
 
     // ---------- Запуск ----------
     // Ждём загрузки Firebase SDK
