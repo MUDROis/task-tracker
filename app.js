@@ -638,6 +638,234 @@
     console.log('manageUsersBtn =', manageUsersBtn);
     manageUsersBtn.addEventListener('click', openManagePanel);
 
+    var archiveTab = 'tasks';
+    var archiveModal = document.getElementById('archiveModal');
+
+    function openArchive(x, y) {
+        if (!archiveModal) return;
+        archiveTab = 'tasks';
+        var search = document.getElementById('archiveSearch');
+        if (search) search.value = '';
+        archiveModal.querySelectorAll('.archive-tab').forEach(function(t) {
+            t.classList.toggle('active', t.dataset.tab === 'tasks');
+        });
+        archiveModal.classList.add('active');
+        if (positionModalAtPoint) positionModalAtPoint(archiveModal, x, y);
+        renderArchive();
+    }
+
+    function renderArchive() {
+        var list = document.getElementById('archiveList');
+        if (!list) return;
+        var search = (document.getElementById('archiveSearch').value || '').trim().toLowerCase();
+        list.innerHTML = '';
+        if (archiveTab === 'tasks') {
+            var archivedTasks = tasks.filter(function(t) {
+                if (t.status !== 'done') return false;
+                if (currentUser.role === 'admin') return true;
+                return t.createdBy === currentUser.login || t.assignedTo === currentUser.login;
+            });
+            if (search) {
+                archivedTasks = archivedTasks.filter(function(t) {
+                    return (t.title || '').toLowerCase().indexOf(search) !== -1;
+                });
+            }
+            if (archivedTasks.length === 0) {
+                list.innerHTML = '<p class="archive-empty">Нет архивированных задач</p>';
+                return;
+            }
+            archivedTasks.forEach(function(t) {
+                list.appendChild(createArchiveTaskRow(t));
+            });
+        } else {
+            var archivedReports = reports.filter(function(r) {
+                if (r.status !== 'done') return false;
+                if (currentUser.role === 'admin') return true;
+                return r.createdBy === currentUser.login;
+            });
+            if (search) {
+                archivedReports = archivedReports.filter(function(r) {
+                    var numberLabel = r.reportNumber
+                        ? '№' + r.reportNumber + ' за ' + formatPeriod(r.period)
+                        : '';
+                    var hay = (r.title || '').toLowerCase() + ' ' + numberLabel.toLowerCase();
+                    return hay.indexOf(search) !== -1;
+                });
+            }
+            if (archivedReports.length === 0) {
+                list.innerHTML = '<p class="archive-empty">Нет архивированных отчётов</p>';
+                return;
+            }
+            archivedReports.forEach(function(r) {
+                list.appendChild(createArchiveReportRow(r));
+            });
+        }
+    }
+
+    function createArchiveTaskRow(task) {
+        var div = document.createElement('div');
+        div.className = 'archive-row';
+        div.innerHTML =
+            '<div class="archive-row-main">' +
+                '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
+                '<div class="task-meta">' +
+                    (task.dueDate ? '<span>⏳ ' + formatDateTime(task.dueDate) + '</span>' : '') +
+                    '<span>👤 ' + escapeHtml(formatUserName(task.assignedTo)) + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="archive-row-actions">' +
+                '<button class="btn-archived" data-action="open" title="Открыть">⭕ Открыть</button>' +
+                '<button class="btn-archived" data-action="restore" title="Вернуть на доску">↩ Вернуть</button>' +
+                (currentUser.role === 'admin'
+                    ? '<button class="btn-archived" data-action="delete" title="Удалить">🗑 Удалить</button>'
+                    : '') +
+            '</div>';
+        div.querySelectorAll('[data-action]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                var action = this.dataset.action;
+                var x = e.clientX;
+                var y = e.clientY;
+                if (action === 'open') {
+                    showTaskDetails(task, x, y);
+                } else if (action === 'restore') {
+                    changeStatus(task.id, task.previousStatus || 'in_progress');
+                } else if (action === 'delete') {
+                    if (confirm('Удалить задачу?')) {
+                        removeTask(task.id);
+                    }
+                }
+            });
+        });
+        return div;
+    }
+
+    function createArchiveReportRow(report) {
+        var periodLabel = formatPeriod(report.period);
+        var numberLabel = report.reportNumber
+            ? '№' + report.reportNumber + (periodLabel ? ' за ' + periodLabel : '')
+            : 'Отчёт';
+        var div = document.createElement('div');
+        div.className = 'archive-row';
+        div.innerHTML =
+            '<div class="archive-row-main">' +
+                '<div class="task-title">' + escapeHtml(report.title) + '</div>' +
+                '<div class="task-meta">' +
+                    '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
+                    (report.dueDate ? '<span>⏳ ' + formatDateTime(report.dueDate) + '</span>' : '') +
+                '</div>' +
+            '</div>' +
+            '<div class="archive-row-actions">' +
+                '<button class="btn-archived" data-action="open" title="Открыть">⭕ Открыть</button>' +
+                '<button class="btn-archived" data-action="restore" title="Вернуть на доску">↩ Вернуть</button>' +
+                (currentUser.role === 'admin'
+                    ? '<button class="btn-archived" data-action="delete" title="Удалить">🗑 Удалить</button>'
+                    : '') +
+            '</div>';
+        div.querySelectorAll('[data-action]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                var action = this.dataset.action;
+                var x = e.clientX;
+                var y = e.clientY;
+                if (action === 'open') {
+                    showReportDetails(report, x, y);
+                } else if (action === 'restore') {
+                    changeReportStatus(report.id, 'active');
+                } else if (action === 'delete') {
+                    if (confirm('Удалить отчёт?')) {
+                        removeReport(report.id);
+                    }
+                }
+            });
+        });
+        return div;
+    }
+
+    var archiveBtn = document.getElementById('archiveBtn');
+    if (archiveBtn) {
+        archiveBtn.addEventListener('click', function(e) {
+            openArchive(e.clientX, e.clientY);
+        });
+    }
+    var mobileArchiveBtn = document.getElementById('mobileArchiveBtn');
+    if (mobileArchiveBtn) {
+        mobileArchiveBtn.addEventListener('click', function(e) {
+            openArchive(e.clientX, e.clientY);
+        });
+    }
+
+    if (archiveModal) {
+        archiveModal.querySelectorAll('.archive-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                archiveTab = this.dataset.tab;
+                archiveModal.querySelectorAll('.archive-tab').forEach(function(t) {
+                    t.classList.toggle('active', t === tab);
+                });
+                renderArchive();
+            });
+        });
+        var archiveSearch = document.getElementById('archiveSearch');
+        if (archiveSearch) {
+            archiveSearch.addEventListener('input', renderArchive);
+        }
+        var archiveExportBtn = document.getElementById('archiveExportBtn');
+        if (archiveExportBtn) {
+            archiveExportBtn.addEventListener('click', exportArchiveExcel);
+        }
+        var archiveClose = archiveModal.querySelector('.close-modal');
+        if (archiveClose) {
+            archiveClose.addEventListener('click', function() {
+                archiveModal.classList.remove('active');
+            });
+        }
+    }
+
+    function exportArchiveExcel() {
+        if (typeof XLSX === 'undefined') {
+            alert('Библиотека XLSX не загружена. Проверьте интернет-соединение.');
+            return;
+        }
+        var rows = [];
+        var archivedTasks = tasks.filter(function(t) {
+            if (t.status !== 'done') return false;
+            if (currentUser.role === 'admin') return true;
+            return t.createdBy === currentUser.login || t.assignedTo === currentUser.login;
+        });
+        archivedTasks.forEach(function(t) {
+            rows.push({
+                'Тип': 'Задача',
+                'Заголовок': t.title,
+                'Описание': t.description || '',
+                'Срок': t.dueDate ? formatDateTime(t.dueDate) : '',
+                'Создал': formatUserName(t.createdBy),
+                'Исполнитель': formatUserName(t.assignedTo)
+            });
+        });
+        var archivedReports = reports.filter(function(r) {
+            if (r.status !== 'done') return false;
+            if (currentUser.role === 'admin') return true;
+            return r.createdBy === currentUser.login;
+        });
+        archivedReports.forEach(function(r) {
+            rows.push({
+                'Тип': 'Отчёт',
+                'Заголовок': r.title,
+                'Описание': r.description || '',
+                'Срок': r.dueDate ? formatDateTime(r.dueDate) : '',
+                'Создал': formatUserName(r.createdBy),
+                'Исполнитель': r.period ? formatPeriod(r.period) : ''
+            });
+        });
+        if (rows.length === 0) {
+            alert('Нет элементов в архиве для выгрузки');
+            return;
+        }
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.json_to_sheet(rows);
+        ws['!cols'] = [{wch:8},{wch:30},{wch:40},{wch:15},{wch:12},{wch:15}];
+        XLSX.utils.book_append_sheet(wb, ws, 'Архив');
+        XLSX.writeFile(wb, 'Архив_' + new Date().toISOString().slice(0,10) + '.xlsx');
+    }
+
     function renderUsersList() {
         usersList.innerHTML = users.map(function(u) {
             var isAdmin = u.login === 'admin';
