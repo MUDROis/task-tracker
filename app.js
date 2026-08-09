@@ -580,20 +580,11 @@
                         email: userData.email,
                         emoji: userData.emoji || ''
                     };
-                } else {
-                    const uid = auth.currentUser.uid;
-                    currentUser = {
-                        uid: uid,
-                        login: login,
-                        role: login === 'admin' ? 'admin' : 'employee',
-                        color: '#3b82f6',
-                        email: '',
-                        emoji: ''
-                    };
-                    saveUser(currentUser);
+                    saveSession(currentUser);
+                    showMainPage();
                 }
-                saveSession(currentUser);
-                showMainPage();
+                // Записи нет в БД — создание записи для admin и блокировка удалённых
+                // обрабатываются в onAuthStateChanged (единый источник истины).
                 // initFirebaseListeners уже вызывается в onAuthStateChanged
             })
             .catch(function(error) {
