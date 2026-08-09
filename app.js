@@ -17,6 +17,7 @@
     let knownTaskIds = new Set();
     let initialLoadDone = false;
     var blockedMessage = null;
+    let currentItemMode = 'task'; // 'task' | 'report' — режим модалки добавления
 
     // ---------- Звуковое уведомление ----------
     function playNotificationSound() {
@@ -1329,6 +1330,42 @@
         saveTask(updated);
     }
 
+    function taskToReport(task) {
+        return saveReport({
+            id: generateId(),
+            title: task.title,
+            description: task.description || '',
+            priority: task.priority || 'medium',
+            reportNumber: computeReportNumber(),
+            dueDate: task.dueDate || '',
+            assignedTo: task.assignedTo || '',
+            delegated: !!task.delegated,
+            delegatedBy: task.delegatedBy || '',
+            createdBy: task.createdBy,
+            status: 'active',
+            createdAt: task.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+    }
+
+    function reportToTask(report, status) {
+        return saveTask({
+            id: generateId(),
+            title: report.title,
+            description: report.description || '',
+            status: status,
+            previousStatus: '',
+            delegated: !!report.delegated,
+            delegatedBy: report.delegatedBy || '',
+            createdBy: report.createdBy,
+            assignedTo: report.assignedTo || '',
+            priority: report.priority || 'medium',
+            dueDate: report.dueDate || '',
+            createdAt: report.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+    }
+
     // ---------- Показ деталей задачи ----------
     function showTaskDetails(task, x, y) {
         var assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
@@ -1538,10 +1575,33 @@
         var priority = reportPriority.value;
         var dueDate = reportDueDate.value;
         var assignee = reportAssignee.value;
+        var reportStatus = document.getElementById('reportStatus').value;
+
+        if (reportStatus === 'urgent' || reportStatus === 'in_progress') {
+            if (id) {
+                var rep = reports.find(function(r) { return r.id === id; });
+                if (rep) {
+                    reportToTask(rep, reportStatus).then(function() { removeReport(rep.id); });
+                }
+            } else {
+                reportToTask({
+                    title: title,
+                    description: desc,
+                    priority: priority,
+                    dueDate: dueDate,
+                    assignedTo: assignee || '',
+                    createdBy: currentUser.login,
+                    createdAt: new Date().toISOString()
+                }, reportStatus);
+            }
+            reportModal.classList.remove('active');
+            return;
+        }
+
         if (id) {
-            var rep = reports.find(function(r) { return r.id === id; });
-            if (!rep) return;
-            saveReport(Object.assign({}, rep, {
+            var rep2 = reports.find(function(r) { return r.id === id; });
+            if (!rep2) return;
+            saveReport(Object.assign({}, rep2, {
                 title: title,
                 description: desc,
                 priority: priority,
@@ -1578,11 +1638,34 @@
         var dueDate = taskDueDate.value;
         var assignee = taskAssignee.value;
 
+        if (currentItemMode === 'report') {
+            saveReport({
+                id: generateId(),
+                title: title,
+                description: description,
+                priority: priority,
+                reportNumber: computeReportNumber(),
+                dueDate: dueDate,
+                assignedTo: assignee || '',
+                createdBy: currentUser.login,
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+            taskModal.classList.remove('active');
+            return;
+        }
+
         if (id) {
             var task = tasks.find(function(t) { return t.id === id; });
             if (task) {
                 if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
                     alert('Вы не можете редактировать эту задачу');
+                    return;
+                }
+                if (status === 'reports') {
+                    taskToReport(task).then(function() { removeTask(task.id); });
+                    taskModal.classList.remove('active');
                     return;
                 }
                 var updates = {
@@ -1602,16 +1685,32 @@
                 }
             }
         } else {
-            var newTask = addTask({
-                title: title,
-                description: description,
-                status: status,
-                priority: priority,
-                dueDate: dueDate,
-                assignee: assignee || ''
-            });
-            if (assignee) {
-                sendEmailNotification(assignee, newTask);
+            if (status === 'reports') {
+                saveReport({
+                    id: generateId(),
+                    title: title,
+                    description: description,
+                    priority: priority,
+                    reportNumber: computeReportNumber(),
+                    dueDate: dueDate,
+                    assignedTo: assignee || '',
+                    createdBy: currentUser.login,
+                    status: 'active',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            } else {
+                var newTask = addTask({
+                    title: title,
+                    description: description,
+                    status: status,
+                    priority: priority,
+                    dueDate: dueDate,
+                    assignee: assignee || ''
+                });
+                if (assignee) {
+                    sendEmailNotification(assignee, newTask);
+                }
             }
         }
         taskModal.classList.remove('active');
