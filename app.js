@@ -427,10 +427,15 @@
     function changeReportStatus(id, newStatus) {
         var report = reports.find(function(r) { return r.id === id; });
         if (!report) return;
-        saveReport(Object.assign({}, report, {
+        var updated = Object.assign({}, report, {
             status: newStatus,
             updatedAt: new Date().toISOString()
-        }));
+        });
+        if (newStatus === 'done') {
+            updated.completedAt = new Date().toISOString();
+            updated.completedLate = DeadlineHelpers.isCompletedLate(updated.completedAt, report.dueDate);
+        }
+        saveReport(updated);
     }
 
     function saveUser(user) {
@@ -718,7 +723,7 @@
 
     function createArchiveTaskRow(task) {
         var div = document.createElement('div');
-        div.className = 'archive-row';
+        div.className = 'archive-row archive-row-done ' + DeadlineHelpers.doneStripClass(task.completedAt, task.dueDate, task.completedLate);
         div.innerHTML =
             '<div class="archive-row-main">' +
                 '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
@@ -759,7 +764,7 @@
             : 'Отчёт';
         var assigneeLabel = report.assignedTo ? '👤 ' + escapeHtml(formatUserName(report.assignedTo)) : '';
         var div = document.createElement('div');
-        div.className = 'archive-row';
+        div.className = 'archive-row archive-row-done ' + DeadlineHelpers.doneStripClass(report.completedAt, report.dueDate, report.completedLate);
         div.innerHTML =
             '<div class="archive-row-main">' +
                 '<div class="task-title">' + escapeHtml(report.title) + '</div>' +
@@ -1161,7 +1166,8 @@
 
     function createTaskCard(task) {
         const div = document.createElement('div');
-        div.className = 'task-card priority-' + (task.priority || 'medium');
+        var stripClass = DeadlineHelpers.deadlineStripClass(DeadlineHelpers.calendarDaysUntil(task.dueDate));
+        div.className = 'task-card priority-' + (task.priority || 'medium') + ' ' + stripClass;
         div.draggable = true;
         div.dataset.id = task.id;
 
@@ -1307,6 +1313,8 @@
         var updated = Object.assign({}, task);
         if (newStatus === 'done') {
             updated.previousStatus = task.status;
+            updated.completedAt = new Date().toISOString();
+            updated.completedLate = DeadlineHelpers.isCompletedLate(updated.completedAt, task.dueDate);
         }
         updated.status = newStatus;
         updated.updatedAt = new Date().toISOString();
@@ -1838,7 +1846,8 @@
 
     function createReportCard(report) {
         const div = document.createElement('div');
-        div.className = 'task-card report-card priority-' + (report.priority || 'medium');
+        var stripClass = DeadlineHelpers.deadlineStripClass(DeadlineHelpers.calendarDaysUntil(report.dueDate));
+        div.className = 'task-card report-card priority-' + (report.priority || 'medium') + ' ' + stripClass;
         div.dataset.id = report.id;
 
         var numberLabel = report.reportNumber
