@@ -1171,7 +1171,7 @@
                 } else if (action === 'restore') {
                     changeStatus(task.id, task.previousStatus || 'in_progress');
                 } else if (action === 'delegate') {
-                    showDelegateModal(task.id, x, y);
+                    showDelegateModal(task, saveTask, 'задачу', x, y);
                 } else if (action === 'open') {
                     showTaskDetails(task, x, y);
                 } else if (action === 'settings') {
@@ -1340,9 +1340,8 @@
     }
 
     // ---------- Делегирование ----------
-    function showDelegateModal(taskId, x, y) {
-        var task = tasks.find(function(t) { return t.id === taskId; });
-        if (!task) return;
+    function showDelegateModal(item, saveFn, kind, x, y) {
+        if (!item) return;
         var assignees = users
             .filter(function(u) {
                 if (u.login === currentUser.login && currentUser.role !== 'admin') return false;
@@ -1359,15 +1358,15 @@
         modal.innerHTML =
             '<div class="modal-content" style="max-width:400px;">' +
                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
-                '<h3>Делегировать задачу</h3>' +
-                '<p><strong>' + escapeHtml(task.title) + '</strong></p>' +
+                '<h3>Делегировать ' + kind + '</h3>' +
+                '<p><strong>' + escapeHtml(item.title) + '</strong></p>' +
                 '<div class="form-group">' +
                     '<label for="delegateSelect">Выберите сотрудника</label>' +
                     '<select id="delegateSelect">' +
                         assignees.map(function(login) {
                             var u = users.find(function(usr) { return usr.login === login; });
                             var label = login + (u && u.role === 'admin' ? ' (Руководитель)' : '');
-                            return '<option value="' + escapeHtml(login) + '" ' + (task.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
+                            return '<option value="' + escapeHtml(login) + '" ' + (item.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
                         }).join('') +
                     '</select>' +
                 '</div>' +
@@ -1377,15 +1376,14 @@
         positionModalAtPoint(modal, x, y);
         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
             var selected = document.getElementById('delegateSelect').value;
-            var targetUser = users.find(function(u) { return u.login === selected; });
             var delegatedBy = currentUser.role === 'admin' ? 'admin' : 'employee';
-            var updated = Object.assign({}, task, {
+            var updated = Object.assign({}, item, {
                 assignedTo: selected,
                 delegated: true,
                 delegatedBy: delegatedBy,
                 updatedAt: new Date().toISOString()
             });
-            saveTask(updated);
+            saveFn(updated);
             sendEmailNotification(selected, updated);
             modal.remove();
         });
