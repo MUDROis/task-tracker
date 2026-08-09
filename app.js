@@ -16,6 +16,7 @@
     let auth = null;
     let knownTaskIds = new Set();
     let initialLoadDone = false;
+    var blockedMessage = null;
 
     // ---------- Звуковое уведомление ----------
     function playNotificationSound() {
@@ -489,25 +490,36 @@
                             email: userData.email,
                             emoji: userData.emoji || ''
                         };
-                    } else {
-                        // Записи нет в DB — создаём (первый вход admin или новый сотрудник)
+                        saveSession(currentUser);
+                        showMainPage();
+                        initFirebaseListeners();
+                    } else if (login === 'admin') {
+                        // Первый вход admin — создаём запись в БД
                         currentUser = {
                             uid: user.uid,
                             login: login,
-                            role: login === 'admin' ? 'admin' : 'employee',
+                            role: 'admin',
                             color: '#3b82f6',
                             email: '',
                             emoji: ''
                         };
                         saveUser(currentUser);
+                        saveSession(currentUser);
+                        showMainPage();
+                        initFirebaseListeners();
+                    } else {
+                        // Записи нет в БД — аккаунт удалён администратором
+                        blockedMessage = 'Ваш аккаунт удалён администратором';
+                        auth.signOut();
                     }
-                    saveSession(currentUser);
-                    showMainPage();
-                    initFirebaseListeners();
                 });
             } else {
                 currentUser = null;
                 showLoginPage();
+                if (blockedMessage) {
+                    loginError.textContent = blockedMessage;
+                    blockedMessage = null;
+                }
             }
         });
 
@@ -692,7 +704,7 @@
             var archivedReports = reports.filter(function(r) {
                 if (r.status !== 'done') return false;
                 if (currentUser.role === 'admin') return true;
-                return r.createdBy === currentUser.login;
+                return r.createdBy === currentUser.login || r.assignedTo === currentUser.login;
             });
             if (search) {
                 archivedReports = archivedReports.filter(function(r) {
@@ -855,7 +867,7 @@
         var archivedReports = reports.filter(function(r) {
             if (r.status !== 'done') return false;
             if (currentUser.role === 'admin') return true;
-            return r.createdBy === currentUser.login;
+            return r.createdBy === currentUser.login || r.assignedTo === currentUser.login;
         });
         archivedReports.forEach(function(r) {
             rows.push({
@@ -887,7 +899,9 @@
                     '<span><strong>' + escapeHtml(u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
                     '<div class="user-row-actions">' +
                         '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
-                        '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>' +
+                        (u.login !== 'admin' && u.login !== currentUser.login
+                            ? '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>'
+                            : '') +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -929,11 +943,8 @@
                 saveReport(Object.assign({}, r, { assignedTo: '', updatedAt: new Date().toISOString() }));
             }
         });
-        getUsersRef().once('value').then(function(snapshot) {
-            const data = snapshot.val();
-            users = data ? Object.values(data) : [];
-            renderUsersList();
-        });
+        users = users.filter(function(u) { return u.login !== login; });
+        renderUsersList();
     }
 
     function openEditUserModal(login, x, y) {
@@ -1396,7 +1407,7 @@
         modal.innerHTML =
             '<div class="modal-content" style="max-width:400px;">' +
                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
-                '<h3>Делегировать ' + kind + '</h3>' +
+                '<h3>Делегировать ' + escapeHtml(kind) + '</h3>' +
                 '<p><strong>' + escapeHtml(item.title) + '</strong></p>' +
                 '<div class="form-group">' +
                     '<label for="delegateSelect">Выберите сотрудника</label>' +
@@ -1831,7 +1842,7 @@
 
     function isMyReport(report) {
         if (currentUser.role === 'admin') return true;
-        return report.createdBy === currentUser.login;
+        return report.createdBy === currentUser.login || report.assignedTo === currentUser.login;
     }
 
     function createReportCard(report) {
