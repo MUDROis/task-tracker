@@ -1329,6 +1329,7 @@
                     '<p><strong>Приоритет:</strong> ' + escapeHtml(PRIORITY_LABELS[report.priority] || 'Средний') + '</p>' +
                     (report.dueDate ? '<p><strong>Срок сдачи:</strong> ' + formatDateTime(report.dueDate) + '</p>' : '') +
                     '<p><strong>Исполнитель:</strong> ' + (report.assignedTo ? escapeHtml(formatUserName(report.assignedTo)) : '<em>не назначен</em>') + '</p>' +
+                    (report.delegated ? '<p><strong>Делегировано:</strong> ' + (report.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') + '</p>' : '') +
                     '<p><strong>Автор:</strong> ' + escapeHtml(formatUserName(report.createdBy)) + '</p>' +
                     '<p><strong>Создан:</strong> ' + formatDateTime(report.createdAt) + '</p>' +
                 '</div>' +
