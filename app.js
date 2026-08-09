@@ -1807,6 +1807,9 @@
         var assigneeLabel = report.assignedTo ? '👤 ' + escapeHtml(formatUserName(report.assignedTo)) : '';
 
         div.innerHTML =
+            (report.delegated
+                ? '<span class="task-delegate-arrow ' + (report.assignedTo === currentUser.login ? 'arrow-received' : 'arrow-delegated') + '">' + (report.assignedTo === currentUser.login ? '↙' : '↗') + '</span>'
+                : '') +
             '<div class="task-title">' + escapeHtml(report.title || 'Без названия') + '</div>' +
             '<div class="task-meta">' +
                 '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
@@ -1815,7 +1818,10 @@
                 '<span>👤 ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
             '</div>' +
             '<div class="task-actions-row1">' +
-                '<button class="btn-done" data-action="done"><i class="fa-solid fa-box-archive"></i> В архив</button>' +
+                '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> Выполнить</button>' +
+                (report.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === report.createdBy)
+                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> Делегировать</button>'
+                    : '') +
             '</div>' +
             '<div class="task-actions-row2">' +
                 (currentUser.role === 'admin'
@@ -1837,6 +1843,8 @@
                     }
                 } else if (action === 'done') {
                     changeReportStatus(report.id, 'done');
+                } else if (action === 'delegate') {
+                    showDelegateModal(report, saveReport, 'отчёт', x, y);
                 } else if (action === 'open') {
                     showReportDetails(report, x, y);
                 } else if (action === 'settings') {
