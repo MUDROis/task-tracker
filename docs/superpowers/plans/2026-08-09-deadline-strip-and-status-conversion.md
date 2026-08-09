@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Без новых npm-зависимостей и без сборки. Тесты — `node --test tests/` (Node ≥ 18, у нас v26).
+- Без новых npm-зависимостей и без сборки. Тесты — `node --test "tests/*.test.js"` (Node ≥ 18, у нас v26).
 - Стиль кода как в `app.js`: IIFE, `var`, конкатенация строк, русские подписи.
 - Полоска карточки окрашивается ТОЛЬКО по сроку; приоритет полоску не красит.
 - Значения статусов: `urgent`, `in_progress`, `reports`, `done`.
@@ -88,7 +88,7 @@ test('doneStripClass: бордовая при просрочке, зелёная
 
 - [ ] **Step 2: Запустить тест и убедиться, что он падает**
 
-Run: `node --test tests/`
+Run: `node --test "tests/*.test.js"`
 Expected: FAIL — `Error: Cannot find module '../js/helpers.js'`
 
 - [ ] **Step 3: Создать `js/helpers.js`**
@@ -155,7 +155,7 @@ Expected: FAIL — `Error: Cannot find module '../js/helpers.js'`
 
 - [ ] **Step 4: Запустить тест и убедиться, что он проходит**
 
-Run: `node --test tests/`
+Run: `node --test "tests/*.test.js"`
 Expected: 5 тестов PASS
 
 - [ ] **Step 5: Commit**
@@ -488,7 +488,7 @@ git commit -m "feat: deadline strip and archive-done styles"
 Run: `node --check app.js`
 Expected: нет вывода (файл синтаксически корректен).
 
-Run: `node --test tests/`
+Run: `node --test "tests/*.test.js"`
 Expected: 5 тестов PASS.
 
 - [ ] **Step 8: Commit**
@@ -902,7 +902,7 @@ git commit -m "feat: task-to-report and report-to-task conversion"
 Run: `node --check app.js`
 Expected: нет вывода.
 
-Run: `node --test tests/`
+Run: `node --test "tests/*.test.js"`
 Expected: 5 тестов PASS.
 
 - [ ] **Step 7: Commit**

@@ -8,19 +8,19 @@ function daysFromNow(n) {
     return d.toISOString();
 }
 
-test('calendarDaysUntil: СЃС‡РёС‚Р°РµС‚ РєР°Р»РµРЅРґР°СЂРЅС‹Рµ РґРЅРё', function() {
+test('calendarDaysUntil: считает календарные дни', function() {
     assert.strictEqual(H.calendarDaysUntil(daysFromNow(6)), 6);
     assert.strictEqual(H.calendarDaysUntil(daysFromNow(3)), 3);
     assert.strictEqual(H.calendarDaysUntil(daysFromNow(0)), 0);
     assert.strictEqual(H.calendarDaysUntil(daysFromNow(-2)), -2);
 });
 
-test('calendarDaysUntil: null РґР»СЏ РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РµР№/РЅРµРІРµСЂРЅРѕР№ РґР°С‚С‹', function() {
+test('calendarDaysUntil: null для отсутствующей/неверной даты', function() {
     assert.strictEqual(H.calendarDaysUntil(''), null);
     assert.strictEqual(H.calendarDaysUntil('not-a-date'), null);
 });
 
-test('deadlineStripClass: РґРёР°РїР°Р·РѕРЅС‹ РґРЅРµР№', function() {
+test('deadlineStripClass: диапазоны дней', function() {
     assert.strictEqual(H.deadlineStripClass(6), 'strip-ok');
     assert.strictEqual(H.deadlineStripClass(5), 'strip-warn');
     assert.strictEqual(H.deadlineStripClass(4), 'strip-warn');
@@ -32,14 +32,14 @@ test('deadlineStripClass: РґРёР°РїР°Р·РѕРЅС‹ РґРЅРµР�
     assert.strictEqual(H.deadlineStripClass(null), 'strip-none');
 });
 
-test('isCompletedLate: СЃСЂР°РІРЅРµРЅРёРµ С‚РѕС‡РЅРѕРіРѕ РІСЂРµРјРµРЅРё РІС‹РїРѕР»РЅРµРЅРёСЏ Рё СЃСЂРѕРєР°', function() {
+test('isCompletedLate: сравнение точного времени выполнения и срока', function() {
     assert.strictEqual(H.isCompletedLate(daysFromNow(2), daysFromNow(3)), false);
     assert.strictEqual(H.isCompletedLate(daysFromNow(3), daysFromNow(2)), true);
     assert.strictEqual(H.isCompletedLate('', daysFromNow(2)), false);
     assert.strictEqual(H.isCompletedLate(daysFromNow(2), ''), false);
 });
 
-test('doneStripClass: Р±РѕСЂРґРѕРІР°СЏ РїСЂРё РїСЂРѕСЃСЂРѕС‡РєРµ, Р·РµР»С‘РЅР°СЏ РІ СЃСЂРѕРє, С‚РµРєСѓС‰Р°СЏ СЃСЂРѕС‡РЅРѕСЃС‚СЊ Р±РµР· РѕС‚РјРµС‚РєРё', function() {
+test('doneStripClass: бордовая при просрочке, зелёная в срок, текущая срочность без отметки', function() {
     assert.strictEqual(H.doneStripClass(daysFromNow(2), daysFromNow(3), true), 'strip-overdue');
     assert.strictEqual(H.doneStripClass(daysFromNow(2), daysFromNow(3), false), 'strip-ok');
     assert.strictEqual(H.doneStripClass('', daysFromNow(10), undefined), 'strip-ok');

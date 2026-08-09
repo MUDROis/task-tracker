@@ -1,5 +1,5 @@
-// Р§РёСЃС‚С‹Рµ С„СѓРЅРєС†РёРё СЂР°СЃС‡С‘С‚Р° РїРѕР»РѕСЃРєРё СЃСЂРѕРєР° Рё РѕС‚РјРµС‚РєРё РїСЂРѕСЃСЂРѕС‡РєРё.
-// Р’ Р±СЂР°СѓР·РµСЂРµ РґРѕСЃС‚СѓРїРЅС‹ РєР°Рє window.DeadlineHelpers, РІ Node вЂ” С‡РµСЂРµР· require().
+// Чистые функции расчёта полоски срока и отметки просрочки.
+// В браузере доступны как window.DeadlineHelpers, в Node — через require().
 (function (root, factory) {
     'use strict';
     if (typeof module === 'object' && module.exports) {
