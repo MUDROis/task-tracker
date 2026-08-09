@@ -1,9 +1,10 @@
-const CACHE_NAME = 'task-tracker-v4';
+const CACHE_NAME = 'task-tracker-v5';
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './app.js',
+    './js/helpers.js',
     './firebase-config.js',
     './manifest.json',
     './grifon.png',

@@ -1,0 +1,49 @@
+﻿=== git log ===
+ecfe368 fix: route login provisioning through onAuthStateChanged only
+=== git diff --stat ===
+ app.js | 17 ++++-------------
+ 1 file changed, 4 insertions(+), 13 deletions(-)
+=== git diff -U10 ===
+diff --git a/app.js b/app.js
+index f47dd40..55fa509 100644
+--- a/app.js
++++ b/app.js
+@@ -573,34 +573,25 @@
+                 console.log('Данные из DB:', userData);
+                 if (userData) {
+                     currentUser = {
+                         uid: userData.uid,
+                         login: userData.login,
+                         role: userData.role,
+                         color: userData.color,
+                         email: userData.email,
+                         emoji: userData.emoji || ''
+                     };
+-                } else {
+-                    const uid = auth.currentUser.uid;
+-                    currentUser = {
+-                        uid: uid,
+-                        login: login,
+-                        role: login === 'admin' ? 'admin' : 'employee',
+-                        color: '#3b82f6',
+-                        email: '',
+-                        emoji: ''
+-                    };
+-                    saveUser(currentUser);
++                    saveSession(currentUser);
++                    showMainPage();
+                 }
+-                saveSession(currentUser);
+-                showMainPage();
++                // Записи нет в БД — создание записи для admin и блокировка удалённых
++                // обрабатываются в onAuthStateChanged (единый источник истины).
+                 // initFirebaseListeners уже вызывается в onAuthStateChanged
+             })
+             .catch(function(error) {
+                 console.error('Ошибка:', error.code, error.message);
+                 if (error.code === 'auth/user-not-found') {
+                     loginError.textContent = 'Пользователь не найден';
+                 } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                     loginError.textContent = 'Неверный пароль';
+                 } else if (error.code === 'auth/too-many-requests') {
+                     loginError.textContent = 'Слишком много попыток. Попробуйте позже';

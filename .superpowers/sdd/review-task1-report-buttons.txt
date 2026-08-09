@@ -1,0 +1,107 @@
+﻿=== git log ===
+eb00c27 feat: generalize showDelegateModal for tasks and reports
+=== git diff --stat ===
+ app.js | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
+=== git diff -U10 ===
+diff --git a/app.js b/app.js
+index 287d5e8..c4bfc5e 100644
+--- a/app.js
++++ b/app.js
+@@ -1164,21 +1164,21 @@
+                 var y = e.clientY;
+                 if (action === 'delete') {
+                     if (confirm('╨г╨┤╨░╨╗╨╕╤В╤М ╨╖╨░╨┤╨░╤З╤Г?')) {
+                         removeTask(task.id);
+                     }
+                 } else if (action === 'done') {
+                     changeStatus(task.id, 'done');
+                 } else if (action === 'restore') {
+                     changeStatus(task.id, task.previousStatus || 'in_progress');
+                 } else if (action === 'delegate') {
+-                    showDelegateModal(task.id, x, y);
++                    showDelegateModal(task, saveTask, '╨╖╨░╨┤╨░╤З╤Г', x, y);
+                 } else if (action === 'open') {
+                     showTaskDetails(task, x, y);
+                 } else if (action === 'settings') {
+                     if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
+                         alert('╨Т╤Л ╨╜╨╡ ╨╝╨╛╨╢╨╡╤В╨╡ ╤А╨╡╨┤╨░╨║╤В╨╕╤А╨╛╨▓╨░╤В╤М ╤Н╤В╤Г ╨╖╨░╨┤╨░╤З╤Г');
+                         return;
+                     }
+                     openTaskModal(task, x, y);
+                 }
+             });
+@@ -1333,66 +1333,64 @@
+                     '<p><strong>╨б╨╛╨╖╨┤╨░╨╜:</strong> ' + formatDateTime(report.createdAt) + '</p>' +
+                 '</div>' +
+             '</div>';
+         document.body.appendChild(modal);
+         if (positionModalAtPoint) positionModalAtPoint(modal, x, y);
+         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
+         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+     }
+ 
+     // ---------- ╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ----------
+-    function showDelegateModal(taskId, x, y) {
+-        var task = tasks.find(function(t) { return t.id === taskId; });
+-        if (!task) return;
++    function showDelegateModal(item, saveFn, kind, x, y) {
++        if (!item) return;
+         var assignees = users
+             .filter(function(u) {
+                 if (u.login === currentUser.login && currentUser.role !== 'admin') return false;
+                 if (currentUser.role !== 'admin' && u.role === 'admin') return false;
+                 return true;
+             })
+             .map(function(u) { return u.login; });
+         if (assignees.length === 0) {
+             alert('╨Э╨╡╤В ╨┤╨╛╤Б╤В╤Г╨┐╨╜╤Л╤Е ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║╨╛╨▓ ╨┤╨╗╤П ╨┤╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╨╜╨╕╤П');
+             return;
+         }
+         var modal = document.createElement('div');
+         modal.className = 'modal active';
+         modal.innerHTML =
+             '<div class="modal-content" style="max-width:400px;">' +
+                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
+-                '<h3>╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М ╨╖╨░╨┤╨░╤З╤Г</h3>' +
+-                '<p><strong>' + escapeHtml(task.title) + '</strong></p>' +
++                '<h3>╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М ' + kind + '</h3>' +
++                '<p><strong>' + escapeHtml(item.title) + '</strong></p>' +
+                 '<div class="form-group">' +
+                     '<label for="delegateSelect">╨Т╤Л╨▒╨╡╤А╨╕╤В╨╡ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║╨░</label>' +
+                     '<select id="delegateSelect">' +
+                         assignees.map(function(login) {
+                             var u = users.find(function(usr) { return usr.login === login; });
+                             var label = login + (u && u.role === 'admin' ? ' (╨а╤Г╨║╨╛╨▓╨╛╨┤╨╕╤В╨╡╨╗╤М)' : '');
+-                            return '<option value="' + escapeHtml(login) + '" ' + (task.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
++                            return '<option value="' + escapeHtml(login) + '" ' + (item.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
+                         }).join('') +
+                     '</select>' +
+                 '</div>' +
+                 '<button id="delegateConfirmBtn" class="btn primary">╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М</button>' +
+             '</div>';
+         document.body.appendChild(modal);
+         positionModalAtPoint(modal, x, y);
+         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
+             var selected = document.getElementById('delegateSelect').value;
+-            var targetUser = users.find(function(u) { return u.login === selected; });
+             var delegatedBy = currentUser.role === 'admin' ? 'admin' : 'employee';
+-            var updated = Object.assign({}, task, {
++            var updated = Object.assign({}, item, {
+                 assignedTo: selected,
+                 delegated: true,
+                 delegatedBy: delegatedBy,
+                 updatedAt: new Date().toISOString()
+             });
+-            saveTask(updated);
++            saveFn(updated);
+             sendEmailNotification(selected, updated);
+             modal.remove();
+         });
+         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
+     }
+ 
+     // ---------- ╨г╨▓╨╡╨┤╨╛╨╝╨╗╨╡╨╜╨╕╤П ╨┐╨╛ ╨┐╨╛╤З╤В╨╡ ----------
+     var PRIORITY_LABELS = { low: '╨Э╨╕╨╖╨║╨╕╨╣', medium: '╨б╤А╨╡╨┤╨╜╨╕╨╣', high: '╨Т╤Л╤Б╨╛╨║╨╕╨╣' };
+ 
+     function sendEmailNotification(toLogin, taskData) {

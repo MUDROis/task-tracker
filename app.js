@@ -1571,6 +1571,7 @@
             var btn = e.target.closest('.item-type-btn');
             if (!btn) return;
             currentItemMode = btn.dataset.type;
+            if (currentItemMode === 'report') taskId.value = '';
             itemTypeToggle.querySelectorAll('.item-type-btn').forEach(function(b) {
                 b.classList.toggle('active', b === btn);
             });
@@ -1620,7 +1621,14 @@
             if (id) {
                 var rep = reports.find(function(r) { return r.id === id; });
                 if (rep) {
-                    reportToTask(rep, reportStatus).then(function() { removeReport(rep.id); });
+                    var convertedReport = Object.assign({}, rep, {
+                        title: title,
+                        description: desc,
+                        priority: priority,
+                        dueDate: dueDate,
+                        assignedTo: assignee || ''
+                    });
+                    reportToTask(convertedReport, reportStatus).then(function() { removeReport(rep.id); });
                 }
             } else {
                 reportToTask({
@@ -1703,7 +1711,14 @@
                     return;
                 }
                 if (status === 'reports') {
-                    taskToReport(task).then(function() { removeTask(task.id); });
+                    var convertedTask = Object.assign({}, task, {
+                        title: title,
+                        description: description,
+                        priority: priority,
+                        dueDate: dueDate,
+                        assignedTo: assignee || ''
+                    });
+                    taskToReport(convertedTask).then(function() { removeTask(task.id); });
                     taskModal.classList.remove('active');
                     return;
                 }

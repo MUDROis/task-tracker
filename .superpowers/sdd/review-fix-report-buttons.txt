@@ -1,0 +1,234 @@
+﻿=== git log ===
+aa84a3e fix: block re-login of deleted users, show delegated reports to assignee
+=== git diff --stat ===
+ app.js | 43 +++++++++++++++++++++++++++----------------
+ 1 file changed, 27 insertions(+), 16 deletions(-)
+=== git diff -U10 ===
+diff --git a/app.js b/app.js
+index 55a089c..f47dd40 100644
+--- a/app.js
++++ b/app.js
+@@ -9,20 +9,21 @@
+     // ---------- Глобальные переменные ----------
+     let currentUser = null;
+     let tasks = [];
+     let reports = [];
+     let users = [];
+     let firebaseReady = false;
+     let db = null;
+     let auth = null;
+     let knownTaskIds = new Set();
+     let initialLoadDone = false;
++    var blockedMessage = null;
+ 
+     // ---------- Звуковое уведомление ----------
+     function playNotificationSound() {
+         try {
+             var ctx = new (window.AudioContext || window.webkitAudioContext)();
+             var osc = ctx.createOscillator();
+             var gain = ctx.createGain();
+             osc.connect(gain);
+             gain.connect(ctx.destination);
+             osc.type = 'sine';
+@@ -482,39 +483,50 @@
+                     const userData = snapshot.val();
+                     if (userData) {
+                         currentUser = {
+                             uid: user.uid,
+                             login: userData.login,
+                             role: userData.role,
+                             color: userData.color,
+                             email: userData.email,
+                             emoji: userData.emoji || ''
+                         };
+-                    } else {
+-                        // Записи нет в DB — создаём (первый вход admin или новый сотрудник)
++                        saveSession(currentUser);
++                        showMainPage();
++                        initFirebaseListeners();
++                    } else if (login === 'admin') {
++                        // Первый вход admin — создаём запись в БД
+                         currentUser = {
+                             uid: user.uid,
+                             login: login,
+-                            role: login === 'admin' ? 'admin' : 'employee',
++                            role: 'admin',
+                             color: '#3b82f6',
+                             email: '',
+                             emoji: ''
+                         };
+                         saveUser(currentUser);
++                        saveSession(currentUser);
++                        showMainPage();
++                        initFirebaseListeners();
++                    } else {
++                        // Записи нет в БД — аккаунт удалён администратором
++                        blockedMessage = 'Ваш аккаунт удалён администратором';
++                        auth.signOut();
+                     }
+-                    saveSession(currentUser);
+-                    showMainPage();
+-                    initFirebaseListeners();
+                 });
+             } else {
+                 currentUser = null;
+                 showLoginPage();
++                if (blockedMessage) {
++                    loginError.textContent = blockedMessage;
++                    blockedMessage = null;
++                }
+             }
+         });
+ 
+         // Создаём admin если его нет
+         ensureAdminUser();
+ 
+         // Инициализация EmailJS
+         if (EMAILJS_PUBLIC_KEY && typeof emailjs !== 'undefined') {
+             try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch (e) {}
+         }
+@@ -685,21 +697,21 @@
+                 list.innerHTML = '<p class="archive-empty">Нет архивированных задач</p>';
+                 return;
+             }
+             archivedTasks.forEach(function(t) {
+                 list.appendChild(createArchiveTaskRow(t));
+             });
+         } else {
+             var archivedReports = reports.filter(function(r) {
+                 if (r.status !== 'done') return false;
+                 if (currentUser.role === 'admin') return true;
+-                return r.createdBy === currentUser.login;
++                return r.createdBy === currentUser.login || r.assignedTo === currentUser.login;
+             });
+             if (search) {
+                 archivedReports = archivedReports.filter(function(r) {
+                     var numberLabel = r.reportNumber
+                         ? '№' + r.reportNumber
+                         : '';
+                     var hay = (r.title || '').toLowerCase() + ' ' + numberLabel.toLowerCase();
+                     return hay.indexOf(search) !== -1;
+                 });
+             }
+@@ -848,21 +860,21 @@
+                 'Заголовок': t.title,
+                 'Описание': t.description || '',
+                 'Срок': t.dueDate ? formatDateTime(t.dueDate) : '',
+                 'Создал': formatUserName(t.createdBy),
+                 'Исполнитель': formatUserName(t.assignedTo)
+             });
+         });
+         var archivedReports = reports.filter(function(r) {
+             if (r.status !== 'done') return false;
+             if (currentUser.role === 'admin') return true;
+-            return r.createdBy === currentUser.login;
++            return r.createdBy === currentUser.login || r.assignedTo === currentUser.login;
+         });
+         archivedReports.forEach(function(r) {
+             rows.push({
+                 'Тип': 'Отчёт',
+                 'Заголовок': r.title,
+                 'Описание': r.description || '',
+                 'Срок': r.dueDate ? formatDateTime(r.dueDate) : '',
+                 'Создал': formatUserName(r.createdBy),
+                 'Исполнитель': r.assignedTo ? formatUserName(r.assignedTo) : ''
+             });
+@@ -880,21 +892,23 @@
+ 
+     function renderUsersList() {
+         usersList.innerHTML = users.map(function(u) {
+             var isAdmin = u.login === 'admin';
+             return '<div class="user-row" data-user="' + escapeHtml(u.login) + '">' +
+                 '<div class="user-row-view">' +
+                     '<span class="user-emoji-avatar">' + (u.emoji || '👤') + '</span>' +
+                     '<span><strong>' + escapeHtml(u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
+                     '<div class="user-row-actions">' +
+                         '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
+-                        '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>' +
++                        (u.login !== 'admin' && u.login !== currentUser.login
++                            ? '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>'
++                            : '') +
+                     '</div>' +
+                 '</div>' +
+             '</div>';
+         }).join('');
+ 
+         usersList.querySelectorAll('.btn-edit-user').forEach(function(btn) {
+             btn.addEventListener('click', function(e) {
+                 openEditUserModal(this.dataset.login, e.clientX, e.clientY);
+             });
+         });
+@@ -922,25 +936,22 @@
+         tasks.forEach(function(t) {
+             if (t.assignedTo === login) {
+                 saveTask(Object.assign({}, t, { assignedTo: '', updatedAt: new Date().toISOString() }));
+             }
+         });
+         reports.forEach(function(r) {
+             if (r.assignedTo === login) {
+                 saveReport(Object.assign({}, r, { assignedTo: '', updatedAt: new Date().toISOString() }));
+             }
+         });
+-        getUsersRef().once('value').then(function(snapshot) {
+-            const data = snapshot.val();
+-            users = data ? Object.values(data) : [];
+-            renderUsersList();
+-        });
++        users = users.filter(function(u) { return u.login !== login; });
++        renderUsersList();
+     }
+ 
+     function openEditUserModal(login, x, y) {
+         const user = users.find(function(u) { return u.login === login; });
+         if (!user) return;
+         const modal = document.createElement('div');
+         modal.className = 'modal active';
+         modal.innerHTML =
+             '<div class="modal-content" style="max-width:400px;">' +
+                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
+@@ -1389,21 +1400,21 @@
+             .map(function(u) { return u.login; });
+         if (assignees.length === 0) {
+             alert('Нет доступных сотрудников для делегирования');
+             return;
+         }
+         var modal = document.createElement('div');
+         modal.className = 'modal active';
+         modal.innerHTML =
+             '<div class="modal-content" style="max-width:400px;">' +
+                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
+-                '<h3>Делегировать ' + kind + '</h3>' +
++                '<h3>Делегировать ' + escapeHtml(kind) + '</h3>' +
+                 '<p><strong>' + escapeHtml(item.title) + '</strong></p>' +
+                 '<div class="form-group">' +
+                     '<label for="delegateSelect">Выберите сотрудника</label>' +
+                     '<select id="delegateSelect">' +
+                         assignees.map(function(login) {
+                             var u = users.find(function(usr) { return usr.login === login; });
+                             var label = login + (u && u.role === 'admin' ? ' (Руководитель)' : '');
+                             return '<option value="' + escapeHtml(login) + '" ' + (item.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
+                         }).join('') +
+                     '</select>' +
+@@ -1824,21 +1835,21 @@
+ 
+     function formatDateTime(dateStr) {
+         if (!dateStr) return '';
+         var d = new Date(dateStr);
+         if (isNaN(d.getTime())) return '';
+         return d.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+     }
+ 
+     function isMyReport(report) {
+         if (currentUser.role === 'admin') return true;
+-        return report.createdBy === currentUser.login;
++        return report.createdBy === currentUser.login || report.assignedTo === currentUser.login;
+     }
+ 
+     function createReportCard(report) {
+         const div = document.createElement('div');
+         div.className = 'task-card report-card priority-' + (report.priority || 'medium');
+         div.dataset.id = report.id;
+ 
+         var numberLabel = report.reportNumber
+             ? '№' + report.reportNumber
+             : 'Отчёт';

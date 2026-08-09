@@ -1,0 +1,70 @@
+﻿=== git log ===
+186fce0 feat: add done/delegate buttons and delegation arrow to report card
+=== git diff --stat ===
+ app.js | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+=== git diff -U10 ===
+diff --git a/app.js b/app.js
+index c4bfc5e..906a8b3 100644
+--- a/app.js
++++ b/app.js
+@@ -1800,29 +1800,35 @@
+         const div = document.createElement('div');
+         div.className = 'task-card report-card priority-' + (report.priority || 'medium');
+         div.dataset.id = report.id;
+ 
+         var numberLabel = report.reportNumber
+             ? 'тДЦ' + report.reportNumber
+             : '╨Ю╤В╤З╤С╤В';
+         var assigneeLabel = report.assignedTo ? 'ЁЯСд ' + escapeHtml(formatUserName(report.assignedTo)) : '';
+ 
+         div.innerHTML =
++            (report.delegated
++                ? '<span class="task-delegate-arrow ' + (report.assignedTo === currentUser.login ? 'arrow-received' : 'arrow-delegated') + '">' + (report.assignedTo === currentUser.login ? 'тЖЩ' : 'тЖЧ') + '</span>'
++                : '') +
+             '<div class="task-title">' + escapeHtml(report.title || '╨С╨╡╨╖ ╨╜╨░╨╖╨▓╨░╨╜╨╕╤П') + '</div>' +
+             '<div class="task-meta">' +
+                 '<span>ЁЯУД ' + escapeHtml(numberLabel) + '</span>' +
+                 (report.dueDate ? '<span>тП│ ' + formatDateTime(report.dueDate) + '</span>' : '') +
+                 (assigneeLabel ? '<span>' + assigneeLabel + '</span>' : '') +
+                 '<span>ЁЯСд ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
+             '</div>' +
+             '<div class="task-actions-row1">' +
+-                '<button class="btn-done" data-action="done"><i class="fa-solid fa-box-archive"></i> ╨Т ╨░╤А╤Е╨╕╨▓</button>' +
++                '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> ╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М</button>' +
++                (report.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === report.createdBy)
++                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> ╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М</button>'
++                    : '') +
+             '</div>' +
+             '<div class="task-actions-row2">' +
+                 (currentUser.role === 'admin'
+                     ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i></button>'
+                     : '') +
+                 '<button class="btn-settings" data-action="settings" title="╨Ш╨╖╨╝╨╡╨╜╨╕╤В╤М"><i class="fa-solid fa-gear"></i></button>' +
+                 '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i></button>' +
+             '</div>';
+ 
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
+@@ -1830,20 +1836,22 @@
+                 e.stopPropagation();
+                 var action = this.dataset.action;
+                 var x = e.clientX;
+                 var y = e.clientY;
+                 if (action === 'delete') {
+                     if (confirm('╨г╨┤╨░╨╗╨╕╤В╤М ╨╛╤В╤З╤С╤В?')) {
+                         removeReport(report.id);
+                     }
+                 } else if (action === 'done') {
+                     changeReportStatus(report.id, 'done');
++                } else if (action === 'delegate') {
++                    showDelegateModal(report, saveReport, '╨╛╤В╤З╤С╤В', x, y);
+                 } else if (action === 'open') {
+                     showReportDetails(report, x, y);
+                 } else if (action === 'settings') {
+                     openReportModal(report, x, y);
+                 }
+             });
+         });
+ 
+         return div;
+     }

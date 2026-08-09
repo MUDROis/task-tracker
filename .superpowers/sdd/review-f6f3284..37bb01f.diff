@@ -1,0 +1,367 @@
+﻿diff --git a/app.js b/app.js
+index 59e103c..b775a90 100644
+--- a/app.js
++++ b/app.js
+@@ -717,10 +717,10 @@
+                 '</div>' +
+             '</div>' +
+             '<div class="archive-row-actions">' +
+-                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
+-                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г">тЖй ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
++                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i> ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
++                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г"><i class="fa-solid fa-rotate-left"></i> ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
+                 (currentUser.role === 'admin'
+-                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
++                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i> ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
+                     : '') +
+             '</div>';
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
+@@ -758,10 +758,10 @@
+                 '</div>' +
+             '</div>' +
+             '<div class="archive-row-actions">' +
+-                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
+-                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г">тЖй ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
++                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i> ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
++                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г"><i class="fa-solid fa-rotate-left"></i> ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
+                 (currentUser.role === 'admin'
+-                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
++                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i> ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
+                     : '') +
+             '</div>';
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
+@@ -1133,18 +1133,18 @@
+             '</div>' +
+             '<div class="task-actions-row1">' +
+                 (task.status !== 'done'
+-                    ? '<button class="btn-done" data-action="done">тЬЕ ╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М</button>'
+-                    : '<button class="btn-restore" data-action="restore">тЖй ╨Т╨╡╤А╨╜╤Г╤В╤М</button>') +
++                    ? '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> ╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М</button>'
++                    : '<button class="btn-restore" data-action="restore"><i class="fa-solid fa-rotate-left"></i> ╨Т╨╡╤А╨╜╤Г╤В╤М</button>') +
+                 (task.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === task.createdBy)
+-                    ? '<button class="btn-delegate" data-action="delegate">ЁЯУд ╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М</button>'
++                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> ╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М</button>'
+                     : '') +
+             '</div>' +
+             '<div class="task-actions-row2">' +
+                 (currentUser.role === 'admin'
+-                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС</button>'
++                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i></button>'
+                     : '') +
+-                '<button class="btn-settings" data-action="settings" title="╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨╕">тЪЩя╕П</button>' +
+-                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ</button>' +
++                '<button class="btn-settings" data-action="settings" title="╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨╕"><i class="fa-solid fa-gear"></i></button>' +
++                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i></button>' +
+             '</div>';
+ 
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
+@@ -1820,14 +1820,14 @@
+                 '<span>ЁЯСд ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
+             '</div>' +
+             '<div class="task-actions-row1">' +
+-                '<button class="btn-done" data-action="done">тЬЕ ╨Т ╨░╤А╤Е╨╕╨▓</button>' +
++                '<button class="btn-done" data-action="done"><i class="fa-solid fa-box-archive"></i> ╨Т ╨░╤А╤Е╨╕╨▓</button>' +
+             '</div>' +
+             '<div class="task-actions-row2">' +
+                 (currentUser.role === 'admin'
+-                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС</button>'
++                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i></button>'
+                     : '') +
+-                '<button class="btn-settings" data-action="settings" title="╨Ш╨╖╨╝╨╡╨╜╨╕╤В╤М">тЪЩя╕П</button>' +
+-                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ</button>' +
++                '<button class="btn-settings" data-action="settings" title="╨Ш╨╖╨╝╨╡╨╜╨╕╤В╤М"><i class="fa-solid fa-gear"></i></button>' +
++                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i></button>' +
+             '</div>';
+ 
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
+diff --git a/docs/superpowers/plans/2026-08-09-fontawesome-card-icons.md b/docs/superpowers/plans/2026-08-09-fontawesome-card-icons.md
+new file mode 100644
+index 0000000..bf633c8
+--- /dev/null
++++ b/docs/superpowers/plans/2026-08-09-fontawesome-card-icons.md
+@@ -0,0 +1,256 @@
++# Font Awesome-╨╕╨║╨╛╨╜╨║╨╕ ╨╜╨░ ╨║╨░╤А╤В╨╛╤З╨║╨░╤Е ╨╖╨░╨┤╨░╤З ╨╕ ╨╛╤В╤З╤С╤В╨╛╨▓ тАФ Implementation Plan
++
++> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
++
++**Goal:** ╨Ч╨░╨╝╨╡╨╜╨╕╤В╤М ╤Н╨╝╨╛╨┤╨╖╨╕-╨╖╨╜╨░╤З╨║╨╕ ╨▓ ╨║╨╜╨╛╨┐╨║╨░╤Е ╨║╨░╤А╤В╨╛╤З╨╡╨║ ╨╖╨░╨┤╨░╤З/╨╛╤В╤З╤С╤В╨╛╨▓ ╨╕ ╤Б╤В╤А╨╛╨║ ╨░╤А╤Е╨╕╨▓╨░ ╨╜╨░ ╨╕╨║╨╛╨╜╨║╨╕ Font Awesome ╨▓ ╤Б╨╡╤А╨╛╨╝ ╤Ж╨▓╨╡╤В╨╡ (#64748b), ╨╜╨╡ ╨╝╨╡╨╜╤П╤П ╤Б╨░╨╝╨╕ ╨║╨╜╨╛╨┐╨║╨╕.
++
++**Architecture:** ╨Я╨╛╨┤╨║╨╗╤О╤З╨░╨╡╤В╤Б╤П Font Awesome 6 ╤З╨╡╤А╨╡╨╖ CDN ╨▓ `index.html`. ╨Т `app.js` ╤Н╨╝╨╛╨┤╨╖╨╕ ╨▓╨╜╤Г╤В╤А╨╕ ╨║╨╜╨╛╨┐╨╛╨║ ╨║╨░╤А╤В╨╛╤З╨╡╨║ (`createTaskCard`, `createReportCard`, `createArchiveTaskRow`, `createArchiveReportRow`) ╨╖╨░╨╝╨╡╨╜╤П╤О╤В╤Б╤П ╨╜╨░ `<i class="fa-solid ..."></i>`. ╨Т `style.css` ╨┤╨╛╨▒╨░╨▓╨╗╤П╨╡╤В╤Б╤П ╨┐╤А╨░╨▓╨╕╨╗╨╛, ╨║╤А╨░╤Б╤П╤Й╨╡╨╡ ╤Н╤В╨╕ ╨╕╨║╨╛╨╜╨║╨╕ ╨▓ ╤Б╨╡╤А╤Л╨╣ ╤Ж╨▓╨╡╤В.
++
++**Tech Stack:** vanilla JS (IIFE), HTML/CSS, Font Awesome 6 CDN. ╨в╨╡╤Б╤В╨╛╨▓╨╛╨│╨╛ ╤Д╤А╨╡╨╣╨╝╨▓╨╛╤А╨║╨░ ╨╜╨╡╤В тАФ ╨┐╤А╨╛╨▓╨╡╤А╨║╨░ ╨▓╤А╤Г╤З╨╜╤Г╤О ╤З╨╡╤А╨╡╨╖ `index.html`, ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤Б ╤З╨╡╤А╨╡╨╖ `node --check app.js`.
++
++## Global Constraints
++
++- ╨Ш╨║╨╛╨╜╨║╨╕ Font Awesome, ╤Ж╨▓╨╡╤В `#64748b` (slate-500).
++- ╨Ъ╨╜╨╛╨┐╨║╨╕ (╤Д╨╛╨╜, ╨╛╨▒╨▓╨╛╨┤╨║╨░, ╤В╨╡╨║╤Б╤В) ╨Э╨Х ╨╝╨╡╨╜╤П╤О╤В╤Б╤П.
++- ╨Ь╨╡╨╜╤П╤О╤В╤Б╤П ╤В╨╛╨╗╤М╨║╨╛ ╨║╨╜╨╛╨┐╨║╨╕ ╨║╨░╤А╤В╨╛╤З╨╡╨║ ╨╖╨░╨┤╨░╤З, ╨║╨░╤А╤В╨╛╤З╨╡╨║ ╨╛╤В╤З╤С╤В╨╛╨▓ ╨╕ ╤Б╤В╤А╨╛╨║ ╨░╤А╤Е╨╕╨▓╨░. ╨Я╨░╨╜╨╡╨╗╤М ╨╕╨╜╤Б╤В╤А╤Г╨╝╨╡╨╜╤В╨╛╨▓, ╨╝╨╛╨▒╨╕╨╗╤М╨╜╨░╤П ╨┐╨░╨╜╨╡╨╗╤М, ╨╖╨░╨│╨╛╨╗╨╛╨▓╨║╨╕ ╨║╨╛╨╗╨╛╨╜╨╛╨║ ╨╜╨╡ ╨╖╨░╤В╤А╨░╨│╨╕╨▓╨░╤О╤В╤Б╤П.
++- ╨н╨╝╨╛╨┤╨╖╨╕ ╨▓ ╨╛╤Б╤В╨░╨╗╤М╨╜╤Л╤Е ╨╝╨╡╤Б╤В╨░╤Е (╨╖╨░╨│╨╛╨╗╨╛╨▓╨║╨╕, task-meta, ╤Б╤З╤С╤В╤З╨╕╨║╨╕) ╨╜╨╡ ╤В╤А╨╛╨│╨░╤О╤В╤Б╤П.
++- CDN: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css`
++- ╨Ъ╨╛╨╝╨╝╨╕╤В╤Л ╨┐╤А╤П╨╝╨╛ ╨▓ `main` (╤Б╨╛╨│╨╗╨░╤Б╨╛╨▓╨░╨╜╨╛ ╤А╨░╨╜╨╡╨╡).
++
++---
++
++### Task 1: ╨Я╨╛╨┤╨║╨╗╤О╤З╨╡╨╜╨╕╨╡ Font Awesome CDN
++
++**Files:**
++- Modify: `index.html` (╨┐╨╛╤Б╨╗╨╡ ╤Б╤В╤А╨╛╨║╨╕ 10 `<link rel="stylesheet" href="style.css">`)
++
++**Interfaces:**
++- Consumes: ╨╜╨╕╤З╨╡╨│╨╛.
++- Produces: ╨┐╨╛╨┤╨║╨╗╤О╤З╤С╨╜╨╜╤Л╨╣ Font Awesome тАФ `<i class="fa-solid ..."></i>` ╤А╨░╨▒╨╛╤В╨░╨╡╤В ╨▓ `app.js` ╨╕ ╤Б╤В╨╕╨╗╨╕╨╖╤Г╨╡╤В╤Б╤П ╨▓ `style.css`.
++
++- [ ] **Step 1: ╨Ф╨╛╨▒╨░╨▓╨╕╤В╤М CDN ╨▓ `<head>`**
++
++╨Т `index.html` ╨┐╨╛╤Б╨╗╨╡ ╤Б╤В╤А╨╛╨║╨╕ ╤Б `<link rel="stylesheet" href="style.css">` ╨┤╨╛╨▒╨░╨▓╤М╤В╨╡:
++
++```html
++    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
++```
++
++- [ ] **Step 2: ╨Я╤А╨╛╨▓╨╡╤А╨║╨░**
++
++╨Ю╤В╨║╤А╨╛╨╣╤В╨╡ `index.html` ╨▓ ╨▒╤А╨░╤Г╨╖╨╡╤А╨╡ (╨▓╨║╨╗╨░╨┤╨║╨░ DevTools тЖТ Network): ╨┤╨╛╨╗╨╢╨╡╨╜ ╨╖╨░╨│╤А╤Г╨╖╨╕╤В╤М╤Б╤П `all.min.css` ╤Б╨╛ ╤Б╤В╨░╤В╤Г╤Б╨╛╨╝ 200. ╨Я╤А╨╕ ╨╛╤В╤Б╤Г╤В╤Б╤В╨▓╨╕╨╕ ╨╕╨╜╤В╨╡╤А╨╜╨╡╤В╨░ ╨╕╨║╨╛╨╜╨║╨╕ ╨╛╤В╨╛╨▒╤А╨░╨╢╨░╤О╤В╤Б╤П ╨║╨░╨║ ╨┐╤Г╤Б╤В╤Л╨╡ ╨║╨▓╨░╨┤╤А╨░╤В╤Л тАФ ╤Н╤В╨╛ ╨┤╨╛╨┐╤Г╤Б╤В╨╕╨╝╨╛ ╨╛╤Д╨╗╨░╨╣╨╜.
++
++- [ ] **Step 3: Commit**
++
++```bash
++git add index.html
++git commit -m "feat: add font awesome CDN"
++```
++
++---
++
++### Task 2: ╨Ч╨░╨╝╨╡╨╜╨░ ╨╖╨╜╨░╤З╨║╨╛╨▓ ╨▓ ╨║╨░╤А╤В╨╛╤З╨║╨░╤Е ╨╖╨░╨┤╨░╤З
++
++**Files:**
++- Modify: `app.js` (╤Д╤Г╨╜╨║╤Ж╨╕╤П `createTaskCard`, ╤Б╤В╤А╨╛╨║╨╕ ~1134тАУ1148)
++
++**Interfaces:**
++- Consumes: ╤Б╤Г╤Й╨╡╤Б╤В╨▓╤Г╤О╤Й╨░╤П ╤А╨░╨╖╨╝╨╡╤В╨║╨░ ╨║╨╜╨╛╨┐╨╛╨║ `btn-done`, `btn-restore`, `btn-delegate`, `btn-delete`, `btn-settings`, `btn-open`.
++- Produces: ╨║╨╜╨╛╨┐╨║╨╕ ╤Б `<i class="fa-solid ..."></i>` ╨▓╨╝╨╡╤Б╤В╨╛ ╤Н╨╝╨╛╨┤╨╖╨╕; ╤Б╤В╨╕╨╗╨╕╨╖╨░╤Ж╨╕╤П ╨▓ Task 4.
++
++- [ ] **Step 1: ╨Ч╨░╨╝╨╡╨╜╨╕╤В╤М ╤Н╨╝╨╛╨┤╨╖╨╕ ╨╜╨░ ╨╕╨║╨╛╨╜╨║╨╕ ╨▓ `createTaskCard`**
++
++╨Т `app.js` ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ `createTaskCard` (╤Б╤В╤А╨╛╨║╨╕ ~1134тАУ1148) ╨╖╨░╨╝╨╡╨╜╨╕╤В╨╡ ╨▒╨╗╨╛╨║ ╨┐╨╛╤Б╤В╤А╨╛╨╡╨╜╨╕╤П ╨║╨╜╨╛╨┐╨╛╨║ ╨╜╨░:
++
++```js
++            '<div class="task-actions-row1">' +
++                (task.status !== 'done'
++                    ? '<button class="btn-done" data-action="done">тЬЕ ╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М</button>'
++                    : '<button class="btn-restore" data-action="restore">тЖй ╨Т╨╡╤А╨╜╤Г╤В╤М</button>') +
++                (task.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === task.createdBy)
++                    ? '<button class="btn-delegate" data-action="delegate">ЁЯУд ╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М</button>'
++                    : '') +
++            '</div>' +
++            '<div class="task-actions-row2">' +
++                (currentUser.role === 'admin'
++                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС</button>'
++                    : '') +
++                '<button class="btn-settings" data-action="settings" title="╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨╕">тЪЩя╕П</button>' +
++                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ</button>' +
++            '</div>';
++```
++
++╨╜╨░:
++
++```js
++            '<div class="task-actions-row1">' +
++                (task.status !== 'done'
++                    ? '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> ╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М</button>'
++                    : '<button class="btn-restore" data-action="restore"><i class="fa-solid fa-rotate-left"></i> ╨Т╨╡╤А╨╜╤Г╤В╤М</button>') +
++                (task.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === task.createdBy)
++                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> ╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М</button>'
++                    : '') +
++            '</div>' +
++            '<div class="task-actions-row2">' +
++                (currentUser.role === 'admin'
++                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i></button>'
++                    : '') +
++                '<button class="btn-settings" data-action="settings" title="╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨╕"><i class="fa-solid fa-gear"></i></button>' +
++                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i></button>' +
++            '</div>';
++```
++
++- [ ] **Step 2: ╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤Б╨░**
++
++Run: `node --check app.js`
++Expected: ╨▒╨╡╨╖ ╨╛╤И╨╕╨▒╨╛╨║ (╨║╤А╨╛╨╝╨╡ ╨▓╨╛╨╖╨╝╨╛╨╢╨╜╨╛╨│╨╛ ╨┐╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡╨╜╨╕╤П LF/CRLF).
++
++- [ ] **Step 3: ╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨▓╤А╤Г╤З╨╜╤Г╤О**
++
++╨Ю╤В╨║╤А╨╛╨╣╤В╨╡ `index.html`, ╨▓╨╛╨╣╨┤╨╕╤В╨╡ admin/admin. ╨Э╨░ ╨║╨░╤А╤В╨╛╤З╨║╨░╤Е ╨╖╨░╨┤╨░╤З: ╨║╨╜╨╛╨┐╨║╨╕ ┬л╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М┬╗, ┬л╨Т╨╡╤А╨╜╤Г╤В╤М┬╗, ┬л╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М┬╗, ┬лЁЯЧС┬╗, ┬лтЪЩя╕П┬╗, ┬лтнХ┬╗ ╨╛╤В╨╛╨▒╤А╨░╨╢╨░╤О╤В ╨╕╨║╨╛╨╜╨║╨╕ Font Awesome, ╤В╨╡╨║╤Б╤В ╨║╨╜╨╛╨┐╨╛╨║ ╤Б╨╛╤Е╤А╨░╨╜╤С╨╜.
++
++- [ ] **Step 4: Commit**
++
++```bash
++git add app.js
++git commit -m "feat: replace task card button emojis with fontawesome icons"
++```
++
++---
++
++### Task 3: ╨Ч╨░╨╝╨╡╨╜╨░ ╨╖╨╜╨░╤З╨║╨╛╨▓ ╨▓ ╨║╨░╤А╤В╨╛╤З╨║╨░╤Е ╨╛╤В╤З╤С╤В╨╛╨▓ ╨╕ ╤Б╤В╤А╨╛╨║╨░╤Е ╨░╤А╤Е╨╕╨▓╨░
++
++**Files:**
++- Modify: `app.js` (╤Д╤Г╨╜╨║╤Ж╨╕╨╕ `createReportCard` ╤Б╤В╤А╨╛╨║╨╕ ~1823тАУ1830, `createArchiveTaskRow` ╤Б╤В╤А╨╛╨║╨╕ ~720тАУ723, `createArchiveReportRow` ╤Б╤В╤А╨╛╨║╨╕ ~761тАУ764)
++
++**Interfaces:**
++- Consumes: ╤А╨░╨╖╨╝╨╡╤В╨║╨░ ╨║╨╜╨╛╨┐╨╛╨║ ╨╛╤В╤З╤С╤В╨╛╨▓ ╨╕ ╨░╤А╤Е╨╕╨▓╨░ ╨╕╨╖ Task 5тАУ7 ╨┐╤А╨╡╨┤╤Л╨┤╤Г╤Й╨╡╨│╨╛ ╨┐╨╗╨░╨╜╨░.
++- Produces: `<i class="fa-solid ..."></i>` ╨▓ ╨║╨╜╨╛╨┐╨║╨░╤Е; ╤Б╤В╨╕╨╗╨╕╨╖╨░╤Ж╨╕╤П ╨▓ Task 4.
++
++- [ ] **Step 1: ╨Ч╨░╨╝╨╡╨╜╨╕╤В╤М ╤Н╨╝╨╛╨┤╨╖╨╕ ╨▓ `createReportCard`**
++
++╨Т `app.js` ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ `createReportCard` (╤Б╤В╤А╨╛╨║╨╕ ~1823тАУ1830) ╨╖╨░╨╝╨╡╨╜╨╕╤В╨╡:
++
++```js
++            '<div class="task-actions-row1">' +
++                '<button class="btn-done" data-action="done">тЬЕ ╨Т ╨░╤А╤Е╨╕╨▓</button>' +
++            '</div>' +
++            '<div class="task-actions-row2">' +
++                (currentUser.role === 'admin'
++                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС</button>'
++                    : '') +
++                '<button class="btn-settings" data-action="settings" title="╨Ш╨╖╨╝╨╡╨╜╨╕╤В╤М">тЪЩя╕П</button>' +
++                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ</button>' +
++            '</div>';
++```
++
++╨╜╨░:
++
++```js
++            '<div class="task-actions-row1">' +
++                '<button class="btn-done" data-action="done"><i class="fa-solid fa-box-archive"></i> ╨Т ╨░╤А╤Е╨╕╨▓</button>' +
++            '</div>' +
++            '<div class="task-actions-row2">' +
++                (currentUser.role === 'admin'
++                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i></button>'
++                    : '') +
++                '<button class="btn-settings" data-action="settings" title="╨Ш╨╖╨╝╨╡╨╜╨╕╤В╤М"><i class="fa-solid fa-gear"></i></button>' +
++                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i></button>' +
++            '</div>';
++```
++
++- [ ] **Step 2: ╨Ч╨░╨╝╨╡╨╜╨╕╤В╤М ╤Н╨╝╨╛╨┤╨╖╨╕ ╨▓ `createArchiveTaskRow`**
++
++╨Т `app.js` ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ `createArchiveTaskRow` (╤Б╤В╤А╨╛╨║╨╕ ~720тАУ723) ╨╖╨░╨╝╨╡╨╜╨╕╤В╨╡:
++
++```js
++                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
++                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г">тЖй ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
++                (currentUser.role === 'admin'
++                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
++                    : '') +
++```
++
++╨╜╨░:
++
++```js
++                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i> ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
++                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г"><i class="fa-solid fa-rotate-left"></i> ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
++                (currentUser.role === 'admin'
++                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i> ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
++                    : '') +
++```
++
++- [ ] **Step 3: ╨Ч╨░╨╝╨╡╨╜╨╕╤В╤М ╤Н╨╝╨╛╨┤╨╖╨╕ ╨▓ `createArchiveReportRow`**
++
++╨Т `app.js` ╨▓ ╤Д╤Г╨╜╨║╤Ж╨╕╨╕ `createArchiveReportRow` (╤Б╤В╤А╨╛╨║╨╕ ~761тАУ764) ╨╖╨░╨╝╨╡╨╜╨╕╤В╨╡ ╤В╨╛╤В ╨╢╨╡ ╨▒╨╗╨╛╨║ (╨╕╨┤╨╡╨╜╤В╨╕╤З╨╡╨╜ ╤И╨░╨│╤Г 2) ╨╜╨░ ╤В╨╛╤В ╨╢╨╡ ╨║╨╛╨┤ ╨╕╨╖ ╤И╨░╨│╨░ 2.
++
++- [ ] **Step 4: ╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Б╨╕╨╜╤В╨░╨║╤Б╨╕╤Б╨░**
++
++Run: `node --check app.js`
++Expected: ╨▒╨╡╨╖ ╨╛╤И╨╕╨▒╨╛╨║.
++
++- [ ] **Step 5: ╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨▓╤А╤Г╤З╨╜╤Г╤О**
++
++╨б╨╛╨╖╨┤╨░╨╣╤В╨╡ ╨╛╤В╤З╤С╤В (тЮХ ╨▓ ╨║╨╛╨╗╨╛╨╜╨║╨╡ ┬л╨Ю╤В╤З╤С╤В╤Л┬╗), ╨╛╤В╨┐╤А╨░╨▓╤М╤В╨╡ ╨╡╨│╨╛ ╨▓ ╨░╤А╤Е╨╕╨▓ (┬лтЬЕ ╨Т ╨░╤А╤Е╨╕╨▓┬╗). ╨Ю╤В╨║╤А╨╛╨╣╤В╨╡ ┬лЁЯЧВ ╨Р╤А╤Е╨╕╨▓┬╗: ╨▓╨╛ ╨▓╨║╨╗╨░╨┤╨║╨░╤Е ┬л╨Ч╨░╨┤╨░╤З╨╕┬╗ ╨╕ ┬л╨Ю╤В╤З╤С╤В╤Л┬╗ ╨║╨╜╨╛╨┐╨║╨╕ ┬л╨Ю╤В╨║╤А╤Л╤В╤М┬╗, ┬л╨Т╨╡╤А╨╜╤Г╤В╤М┬╗, ┬л╨г╨┤╨░╨╗╨╕╤В╤М┬╗ ╨┐╨╛╨║╨░╨╖╤Л╨▓╨░╤О╤В ╨╕╨║╨╛╨╜╨║╨╕ Font Awesome. ╨Т╨╡╤А╨╜╨╕╤В╨╡ ╨╖╨░╨┤╨░╤З╤Г/╨╛╤В╤З╤С╤В ╨╕╨╖ ╨░╤А╤Е╨╕╨▓╨░ ╨╕ ╨┐╤А╨╛╨▓╨╡╤А╤М╤В╨╡ ╨║╨░╤А╤В╨╛╤З╨║╤Г ╨╛╤В╤З╤С╤В╨░ ╨╜╨░ ╨┤╨╛╤Б╨║╨╡.
++
++- [ ] **Step 6: Commit**
++
++```bash
++git add app.js
++git commit -m "feat: replace report and archive button emojis with fontawesome icons"
++```
++
++---
++
++### Task 4: ╨б╨╡╤А╤Л╨╣ ╤Ж╨▓╨╡╤В ╨╕╨║╨╛╨╜╨╛╨║ ╨▓ ╨║╨╜╨╛╨┐╨║╨░╤Е ╨║╨░╤А╤В╨╛╤З╨╡╨║ ╨╕ ╨░╤А╤Е╨╕╨▓╨░
++
++**Files:**
++- Modify: `style.css` (╨▓ ╨║╨╛╨╜╨╡╤Ж ╤Д╨░╨╣╨╗╨░)
++
++**Interfaces:**
++- Consumes: ╨║╨╗╨░╤Б╤Б╤Л `btn-done`, `btn-delegate`, `btn-restore`, `btn-delete`, `btn-settings`, `btn-open` (╨║╨░╤А╤В╨╛╤З╨║╨╕), `btn-archived` (╨░╤А╤Е╨╕╨▓).
++- Produces: ╤Б╨╡╤А╤Л╨╡ ╨╕╨║╨╛╨╜╨║╨╕ #64748b. ╨Ъ╨╜╨╛╨┐╨║╨╕ ╨╜╨╡ ╨╕╨╖╨╝╨╡╨╜╤П╤О╤В╤Б╤П (╨╕╤Е `background` ╨╕ `color` ╨╛╤Б╤В╨░╤О╤В╤Б╤П ╨╕╨╖ ╤Б╤Г╤Й╨╡╤Б╤В╨▓╤Г╤О╤Й╨╕╤Е ╨┐╤А╨░╨▓╨╕╨╗).
++
++- [ ] **Step 1: ╨Ф╨╛╨▒╨░╨▓╨╕╤В╤М ╨┐╤А╨░╨▓╨╕╨╗╨╛ ╤Б╨╡╤А╨╛╨│╨╛ ╤Ж╨▓╨╡╤В╨░ ╨╕╨║╨╛╨╜╨╛╨║**
++
++╨Т ╨║╨╛╨╜╨╡╤Ж `style.css` ╨┤╨╛╨▒╨░╨▓╤М╤В╨╡:
++
++```css
++.task-card .btn-done i,
++.task-card .btn-delegate i,
++.task-card .btn-restore i,
++.task-card .btn-delete i,
++.task-card .btn-settings i,
++.task-card .btn-open i,
++.archive-row .btn-archived i {
++    color: #64748b;
++}
++```
++
++- [ ] **Step 2: ╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨▓╤А╤Г╤З╨╜╤Г╤О**
++
++╨Ю╤В╨║╤А╨╛╨╣╤В╨╡ `index.html`, admin/admin. ╨Э╨░ ╨║╨░╤А╤В╨╛╤З╨║╨░╤Е ╨╖╨░╨┤╨░╤З/╨╛╤В╤З╤С╤В╨╛╨▓ ╨╕ ╨▓ ╨░╤А╤Е╨╕╨▓╨╡ ╨╕╨║╨╛╨╜╨║╨╕ Font Awesome ╤Б╨╡╤А╤Л╨╡ (#64748b). ╨д╨╛╨╜ ╨╕ ╨╛╨▒╨▓╨╛╨┤╨║╨░ ╨║╨╜╨╛╨┐╨╛╨║ ╨╜╨╡ ╨╕╨╖╨╝╨╡╨╜╨╕╨╗╨╕╤Б╤М (╨╖╨╡╨╗╤С╨╜╤Л╨╣ ╤Г ┬л╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М┬╗, ╤Б╨╕╨╜╨╕╨╣ ╤Г ┬л╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М┬╗ ╨╕ ╤В.╨┤.).
++
++- [ ] **Step 3: Commit**
++
++```bash
++git add style.css
++git commit -m "style: gray fontawesome icons on card and archive buttons"
++```
++
++---
++
++## Self-Review
++
++**Spec coverage:**
++- CDN Font Awesome тЖТ Task 1.
++- ╨Ч╨░╨╝╨╡╨╜╨░ ╨╖╨╜╨░╤З╨║╨╛╨▓ ╨▓ ╨║╨░╤А╤В╨╛╤З╨║╨░╤Е ╨╖╨░╨┤╨░╤З тЖТ Task 2.
++- ╨Ч╨░╨╝╨╡╨╜╨░ ╨╖╨╜╨░╤З╨║╨╛╨▓ ╨▓ ╨║╨░╤А╤В╨╛╤З╨║╨░╤Е ╨╛╤В╤З╤С╤В╨╛╨▓ ╨╕ ╤Б╤В╤А╨╛╨║╨░╤Е ╨░╤А╤Е╨╕╨▓╨░ тЖТ Task 3.
++- ╨б╨╡╤А╤Л╨╣ ╤Ж╨▓╨╡╤В ╨╕╨║╨╛╨╜╨╛╨║ #64748b тЖТ Task 4.
++- ╨Ъ╨╜╨╛╨┐╨║╨╕ ╨╜╨╡ ╨╝╨╡╨╜╤П╤О╤В╤Б╤П тЖТ Global Constraints + Task 4 (╨┐╤А╨░╨▓╨╕╨╗╨╛ ╤Б╤В╨╕╨╗╨╕╨╖╤Г╨╡╤В ╤В╨╛╨╗╤М╨║╨╛ `i` ╨▓╨╜╤Г╤В╤А╨╕ ╨║╨╜╨╛╨┐╨╛╨║).
++- ╨Я╨░╨╜╨╡╨╗╤М ╨╕╨╜╤Б╤В╤А╤Г╨╝╨╡╨╜╤В╨╛╨▓/╨╝╨╛╨▒╨╕╨╗╤М╨╜╨░╤П ╨┐╨░╨╜╨╡╨╗╤М/╨╖╨░╨│╨╛╨╗╨╛╨▓╨║╨╕ ╨╜╨╡ ╤В╤А╨╛╨│╨░╤О╤В╤Б╤П тЖТ ╨╜╨╕ ╨╛╨┤╨╕╨╜ task ╨╕╤Е ╨╜╨╡ ╨╝╨╡╨╜╤П╨╡╤В.
++
++**Placeholder scan:** ╨Я╨╛╨╗╨╜╤Л╨╣ ╨║╨╛╨┤ ╨▓ ╨║╨░╨╢╨┤╨╛╨╝ ╤И╨░╨│╨╡, ╤В╨╛╤З╨╜╤Л╨╡ ╨┐╤Г╤В╨╕. ╨Я╨╗╨╡╨╣╤Б╤Е╨╛╨╗╨┤╨╡╤А╨╛╨▓ ╨╜╨╡╤В.
++
++**Type consistency:** ╨Ъ╨╗╨░╤Б╤Б╤Л ╨║╨╜╨╛╨┐╨╛╨║ (`btn-done`, `btn-archived` ╨╕ ╨┤╤А.) ╨╕ ╨╕╨║╨╛╨╜╨║╨╕ (`fa-check`, `fa-rotate-left`, `fa-paper-plane`, `fa-trash`, `fa-gear`, `fa-circle-info`, `fa-box-archive`) ╤Б╨╛╨│╨╗╨░╤Б╨╛╨▓╨░╨╜╤Л ╨╝╨╡╨╢╨┤╤Г Task 2/3 (╤А╨░╨╖╨╝╨╡╤В╨║╨░) ╨╕ Task 4 (╤Б╤В╨╕╨╗╨╕).
+diff --git a/index.html b/index.html
+index 8cce71c..19b1a24 100644
+--- a/index.html
++++ b/index.html
+@@ -8,6 +8,7 @@
+     <link rel="shortcut icon" href="grifon.ico" type="image/x-icon">
+     <link rel="manifest" href="manifest.json">
+     <link rel="stylesheet" href="style.css">
++    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+     <!-- SheetJS ╨┤╨╗╤П Excel (CDN ╤Б fallback) -->
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+     <script>
+diff --git a/style.css b/style.css
+index ceac858..fade5f9 100644
+--- a/style.css
++++ b/style.css
+@@ -922,3 +922,12 @@ body {
+     text-align: center;
+     padding: 1rem 0;
+ }
++.task-card .btn-done i,
++.task-card .btn-delegate i,
++.task-card .btn-restore i,
++.task-card .btn-delete i,
++.task-card .btn-settings i,
++.task-card .btn-open i,
++.archive-row .btn-archived i {
++    color: #64748b;
++}

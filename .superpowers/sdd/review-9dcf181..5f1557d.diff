@@ -1,0 +1,29 @@
+﻿diff --git a/app.js b/app.js
+index 59e103c..0577e0d 100644
+--- a/app.js
++++ b/app.js
+@@ -1133,18 +1133,18 @@
+             '</div>' +
+             '<div class="task-actions-row1">' +
+                 (task.status !== 'done'
+-                    ? '<button class="btn-done" data-action="done">тЬЕ ╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М</button>'
+-                    : '<button class="btn-restore" data-action="restore">тЖй ╨Т╨╡╤А╨╜╤Г╤В╤М</button>') +
++                    ? '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> ╨Т╤Л╨┐╨╛╨╗╨╜╨╕╤В╤М</button>'
++                    : '<button class="btn-restore" data-action="restore"><i class="fa-solid fa-rotate-left"></i> ╨Т╨╡╤А╨╜╤Г╤В╤М</button>') +
+                 (task.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === task.createdBy)
+-                    ? '<button class="btn-delegate" data-action="delegate">ЁЯУд ╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М</button>'
++                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> ╨Ф╨╡╨╗╨╡╨│╨╕╤А╨╛╨▓╨░╤В╤М</button>'
+                     : '') +
+             '</div>' +
+             '<div class="task-actions-row2">' +
+                 (currentUser.role === 'admin'
+-                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС</button>'
++                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i></button>'
+                     : '') +
+-                '<button class="btn-settings" data-action="settings" title="╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨╕">тЪЩя╕П</button>' +
+-                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ</button>' +
++                '<button class="btn-settings" data-action="settings" title="╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨╕"><i class="fa-solid fa-gear"></i></button>' +
++                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i></button>' +
+             '</div>';
+ 
+         div.querySelectorAll('[data-action]').forEach(function(btn) {

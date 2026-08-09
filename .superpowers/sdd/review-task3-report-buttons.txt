@@ -1,0 +1,32 @@
+﻿=== git log ===
+11e1fa3 feat: show delegated info in report details
+=== git diff --stat ===
+ app.js | 1 +
+ 1 file changed, 1 insertion(+)
+=== git diff -U10 ===
+diff --git a/app.js b/app.js
+index 906a8b3..4c56d65 100644
+--- a/app.js
++++ b/app.js
+@@ -1322,20 +1322,21 @@
+         modal.innerHTML =
+             '<div class="modal-content" style="max-width:450px;">' +
+                 '<span class="close-modal">&times;</span>' +
+                 '<h3>' + escapeHtml(report.title) + '</h3>' +
+                 '<div style="margin-top:1rem;font-size:0.95rem;color:#334155;">' +
+                     '<p><strong>Номер:</strong> ' + escapeHtml(numberLabel) + '</p>' +
+                     '<p><strong>Описание:</strong> ' + (report.description ? escapeHtml(report.description) : '<em>нет</em>') + '</p>' +
+                     '<p><strong>Приоритет:</strong> ' + escapeHtml(PRIORITY_LABELS[report.priority] || 'Средний') + '</p>' +
+                     (report.dueDate ? '<p><strong>Срок сдачи:</strong> ' + formatDateTime(report.dueDate) + '</p>' : '') +
+                     '<p><strong>Исполнитель:</strong> ' + (report.assignedTo ? escapeHtml(formatUserName(report.assignedTo)) : '<em>не назначен</em>') + '</p>' +
++                    (report.delegated ? '<p><strong>Делегировано:</strong> ' + (report.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') + '</p>' : '') +
+                     '<p><strong>Автор:</strong> ' + escapeHtml(formatUserName(report.createdBy)) + '</p>' +
+                     '<p><strong>Создан:</strong> ' + formatDateTime(report.createdAt) + '</p>' +
+                 '</div>' +
+             '</div>';
+         document.body.appendChild(modal);
+         if (positionModalAtPoint) positionModalAtPoint(modal, x, y);
+         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
+         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+     }
+ 

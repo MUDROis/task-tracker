@@ -1,0 +1,250 @@
+﻿=== git log ===
+1eac823 feat: allow admin to delete users with assignee cleanup
+11e1fa3 feat: show delegated info in report details
+186fce0 feat: add done/delegate buttons and delegation arrow to report card
+eb00c27 feat: generalize showDelegateModal for tasks and reports
+=== git diff --stat ===
+ app.js | 66 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 55 insertions(+), 11 deletions(-)
+=== git diff -U10 ===
+diff --git a/app.js b/app.js
+index 287d5e8..55a089c 100644
+--- a/app.js
++++ b/app.js
+@@ -880,30 +880,67 @@
+ 
+     function renderUsersList() {
+         usersList.innerHTML = users.map(function(u) {
+             var isAdmin = u.login === 'admin';
+             return '<div class="user-row" data-user="' + escapeHtml(u.login) + '">' +
+                 '<div class="user-row-view">' +
+                     '<span class="user-emoji-avatar">' + (u.emoji || '👤') + '</span>' +
+                     '<span><strong>' + escapeHtml(u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
+                     '<div class="user-row-actions">' +
+                         '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
++                        '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>' +
+                     '</div>' +
+                 '</div>' +
+             '</div>';
+         }).join('');
+ 
+         usersList.querySelectorAll('.btn-edit-user').forEach(function(btn) {
+             btn.addEventListener('click', function(e) {
+                 openEditUserModal(this.dataset.login, e.clientX, e.clientY);
+             });
+         });
++
++        usersList.querySelectorAll('.btn-delete-user').forEach(function(btn) {
++            btn.addEventListener('click', function(e) {
++                deleteUser(this.dataset.login);
++            });
++        });
++    }
++
++    function deleteUser(login) {
++        var user = users.find(function(u) { return u.login === login; });
++        if (!user) return;
++        if (login === 'admin') {
++            alert('Нельзя удалить основную учётную запись администратора');
++            return;
++        }
++        if (login === currentUser.login) {
++            alert('Вы не можете удалить самого себя');
++            return;
++        }
++        if (!confirm('Удалить сотрудника ' + login + '?')) return;
++        removeUser(login);
++        tasks.forEach(function(t) {
++            if (t.assignedTo === login) {
++                saveTask(Object.assign({}, t, { assignedTo: '', updatedAt: new Date().toISOString() }));
++            }
++        });
++        reports.forEach(function(r) {
++            if (r.assignedTo === login) {
++                saveReport(Object.assign({}, r, { assignedTo: '', updatedAt: new Date().toISOString() }));
++            }
++        });
++        getUsersRef().once('value').then(function(snapshot) {
++            const data = snapshot.val();
++            users = data ? Object.values(data) : [];
++            renderUsersList();
++        });
+     }
+ 
+     function openEditUserModal(login, x, y) {
+         const user = users.find(function(u) { return u.login === login; });
+         if (!user) return;
+         const modal = document.createElement('div');
+         modal.className = 'modal active';
+         modal.innerHTML =
+             '<div class="modal-content" style="max-width:400px;">' +
+                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
+@@ -1164,21 +1201,21 @@
+                 var y = e.clientY;
+                 if (action === 'delete') {
+                     if (confirm('Удалить задачу?')) {
+                         removeTask(task.id);
+                     }
+                 } else if (action === 'done') {
+                     changeStatus(task.id, 'done');
+                 } else if (action === 'restore') {
+                     changeStatus(task.id, task.previousStatus || 'in_progress');
+                 } else if (action === 'delegate') {
+-                    showDelegateModal(task.id, x, y);
++                    showDelegateModal(task, saveTask, 'задачу', x, y);
+                 } else if (action === 'open') {
+                     showTaskDetails(task, x, y);
+                 } else if (action === 'settings') {
+                     if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
+                         alert('Вы не можете редактировать эту задачу');
+                         return;
+                     }
+                     openTaskModal(task, x, y);
+                 }
+             });
+@@ -1322,77 +1359,76 @@
+         modal.innerHTML =
+             '<div class="modal-content" style="max-width:450px;">' +
+                 '<span class="close-modal">&times;</span>' +
+                 '<h3>' + escapeHtml(report.title) + '</h3>' +
+                 '<div style="margin-top:1rem;font-size:0.95rem;color:#334155;">' +
+                     '<p><strong>Номер:</strong> ' + escapeHtml(numberLabel) + '</p>' +
+                     '<p><strong>Описание:</strong> ' + (report.description ? escapeHtml(report.description) : '<em>нет</em>') + '</p>' +
+                     '<p><strong>Приоритет:</strong> ' + escapeHtml(PRIORITY_LABELS[report.priority] || 'Средний') + '</p>' +
+                     (report.dueDate ? '<p><strong>Срок сдачи:</strong> ' + formatDateTime(report.dueDate) + '</p>' : '') +
+                     '<p><strong>Исполнитель:</strong> ' + (report.assignedTo ? escapeHtml(formatUserName(report.assignedTo)) : '<em>не назначен</em>') + '</p>' +
++                    (report.delegated ? '<p><strong>Делегировано:</strong> ' + (report.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') + '</p>' : '') +
+                     '<p><strong>Автор:</strong> ' + escapeHtml(formatUserName(report.createdBy)) + '</p>' +
+                     '<p><strong>Создан:</strong> ' + formatDateTime(report.createdAt) + '</p>' +
+                 '</div>' +
+             '</div>';
+         document.body.appendChild(modal);
+         if (positionModalAtPoint) positionModalAtPoint(modal, x, y);
+         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
+         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+     }
+ 
+     // ---------- Делегирование ----------
+-    function showDelegateModal(taskId, x, y) {
+-        var task = tasks.find(function(t) { return t.id === taskId; });
+-        if (!task) return;
++    function showDelegateModal(item, saveFn, kind, x, y) {
++        if (!item) return;
+         var assignees = users
+             .filter(function(u) {
+                 if (u.login === currentUser.login && currentUser.role !== 'admin') return false;
+                 if (currentUser.role !== 'admin' && u.role === 'admin') return false;
+                 return true;
+             })
+             .map(function(u) { return u.login; });
+         if (assignees.length === 0) {
+             alert('Нет доступных сотрудников для делегирования');
+             return;
+         }
+         var modal = document.createElement('div');
+         modal.className = 'modal active';
+         modal.innerHTML =
+             '<div class="modal-content" style="max-width:400px;">' +
+                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
+-                '<h3>Делегировать задачу</h3>' +
+-                '<p><strong>' + escapeHtml(task.title) + '</strong></p>' +
++                '<h3>Делегировать ' + kind + '</h3>' +
++                '<p><strong>' + escapeHtml(item.title) + '</strong></p>' +
+                 '<div class="form-group">' +
+                     '<label for="delegateSelect">Выберите сотрудника</label>' +
+                     '<select id="delegateSelect">' +
+                         assignees.map(function(login) {
+                             var u = users.find(function(usr) { return usr.login === login; });
+                             var label = login + (u && u.role === 'admin' ? ' (Руководитель)' : '');
+-                            return '<option value="' + escapeHtml(login) + '" ' + (task.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
++                            return '<option value="' + escapeHtml(login) + '" ' + (item.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
+                         }).join('') +
+                     '</select>' +
+                 '</div>' +
+                 '<button id="delegateConfirmBtn" class="btn primary">Делегировать</button>' +
+             '</div>';
+         document.body.appendChild(modal);
+         positionModalAtPoint(modal, x, y);
+         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
+             var selected = document.getElementById('delegateSelect').value;
+-            var targetUser = users.find(function(u) { return u.login === selected; });
+             var delegatedBy = currentUser.role === 'admin' ? 'admin' : 'employee';
+-            var updated = Object.assign({}, task, {
++            var updated = Object.assign({}, item, {
+                 assignedTo: selected,
+                 delegated: true,
+                 delegatedBy: delegatedBy,
+                 updatedAt: new Date().toISOString()
+             });
+-            saveTask(updated);
++            saveFn(updated);
+             sendEmailNotification(selected, updated);
+             modal.remove();
+         });
+         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
+     }
+ 
+     // ---------- Уведомления по почте ----------
+     var PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
+ 
+     function sendEmailNotification(toLogin, taskData) {
+@@ -1802,29 +1838,35 @@
+         const div = document.createElement('div');
+         div.className = 'task-card report-card priority-' + (report.priority || 'medium');
+         div.dataset.id = report.id;
+ 
+         var numberLabel = report.reportNumber
+             ? '№' + report.reportNumber
+             : 'Отчёт';
+         var assigneeLabel = report.assignedTo ? '👤 ' + escapeHtml(formatUserName(report.assignedTo)) : '';
+ 
+         div.innerHTML =
++            (report.delegated
++                ? '<span class="task-delegate-arrow ' + (report.assignedTo === currentUser.login ? 'arrow-received' : 'arrow-delegated') + '">' + (report.assignedTo === currentUser.login ? '↙' : '↗') + '</span>'
++                : '') +
+             '<div class="task-title">' + escapeHtml(report.title || 'Без названия') + '</div>' +
+             '<div class="task-meta">' +
+                 '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
+                 (report.dueDate ? '<span>⏳ ' + formatDateTime(report.dueDate) + '</span>' : '') +
+                 (assigneeLabel ? '<span>' + assigneeLabel + '</span>' : '') +
+                 '<span>👤 ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
+             '</div>' +
+             '<div class="task-actions-row1">' +
+-                '<button class="btn-done" data-action="done"><i class="fa-solid fa-box-archive"></i> В архив</button>' +
++                '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> Выполнить</button>' +
++                (report.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === report.createdBy)
++                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> Делегировать</button>'
++                    : '') +
+             '</div>' +
+             '<div class="task-actions-row2">' +
+                 (currentUser.role === 'admin'
+                     ? '<button class="btn-delete" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i></button>'
+                     : '') +
+                 '<button class="btn-settings" data-action="settings" title="Изменить"><i class="fa-solid fa-gear"></i></button>' +
+                 '<button class="btn-open" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i></button>' +
+             '</div>';
+ 
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
+@@ -1832,20 +1874,22 @@
+                 e.stopPropagation();
+                 var action = this.dataset.action;
+                 var x = e.clientX;
+                 var y = e.clientY;
+                 if (action === 'delete') {
+                     if (confirm('Удалить отчёт?')) {
+                         removeReport(report.id);
+                     }
+                 } else if (action === 'done') {
+                     changeReportStatus(report.id, 'done');
++                } else if (action === 'delegate') {
++                    showDelegateModal(report, saveReport, 'отчёт', x, y);
+                 } else if (action === 'open') {
+                     showReportDetails(report, x, y);
+                 } else if (action === 'settings') {
+                     openReportModal(report, x, y);
+                 }
+             });
+         });
+ 
+         return div;
+     }

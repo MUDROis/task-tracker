@@ -1,0 +1,51 @@
+﻿diff --git a/app.js b/app.js
+index 0577e0d..b775a90 100644
+--- a/app.js
++++ b/app.js
+@@ -717,10 +717,10 @@
+                 '</div>' +
+             '</div>' +
+             '<div class="archive-row-actions">' +
+-                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
+-                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г">тЖй ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
++                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i> ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
++                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г"><i class="fa-solid fa-rotate-left"></i> ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
+                 (currentUser.role === 'admin'
+-                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
++                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i> ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
+                     : '') +
+             '</div>';
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
+@@ -758,10 +758,10 @@
+                 '</div>' +
+             '</div>' +
+             '<div class="archive-row-actions">' +
+-                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
+-                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г">тЖй ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
++                '<button class="btn-archived" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i> ╨Ю╤В╨║╤А╤Л╤В╤М</button>' +
++                '<button class="btn-archived" data-action="restore" title="╨Т╨╡╤А╨╜╤Г╤В╤М ╨╜╨░ ╨┤╨╛╤Б╨║╤Г"><i class="fa-solid fa-rotate-left"></i> ╨Т╨╡╤А╨╜╤Г╤В╤М</button>' +
+                 (currentUser.role === 'admin'
+-                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
++                    ? '<button class="btn-archived" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i> ╨г╨┤╨░╨╗╨╕╤В╤М</button>'
+                     : '') +
+             '</div>';
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
+@@ -1820,14 +1820,14 @@
+                 '<span>ЁЯСд ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
+             '</div>' +
+             '<div class="task-actions-row1">' +
+-                '<button class="btn-done" data-action="done">тЬЕ ╨Т ╨░╤А╤Е╨╕╨▓</button>' +
++                '<button class="btn-done" data-action="done"><i class="fa-solid fa-box-archive"></i> ╨Т ╨░╤А╤Е╨╕╨▓</button>' +
+             '</div>' +
+             '<div class="task-actions-row2">' +
+                 (currentUser.role === 'admin'
+-                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М">ЁЯЧС</button>'
++                    ? '<button class="btn-delete" data-action="delete" title="╨г╨┤╨░╨╗╨╕╤В╤М"><i class="fa-solid fa-trash"></i></button>'
+                     : '') +
+-                '<button class="btn-settings" data-action="settings" title="╨Ш╨╖╨╝╨╡╨╜╨╕╤В╤М">тЪЩя╕П</button>' +
+-                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М">тнХ</button>' +
++                '<button class="btn-settings" data-action="settings" title="╨Ш╨╖╨╝╨╡╨╜╨╕╤В╤М"><i class="fa-solid fa-gear"></i></button>' +
++                '<button class="btn-open" data-action="open" title="╨Ю╤В╨║╤А╤Л╤В╤М"><i class="fa-solid fa-circle-info"></i></button>' +
+             '</div>';
+ 
+         div.querySelectorAll('[data-action]').forEach(function(btn) {
