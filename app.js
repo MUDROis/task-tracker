@@ -205,6 +205,8 @@
     const addUserForm = document.getElementById('addUserForm');
     const newLogin = document.getElementById('newLogin');
     const newPassword = document.getElementById('newPassword');
+    const itemTypeToggle = document.getElementById('itemTypeToggle');
+    const taskStatusGroup = document.getElementById('taskStatusGroup');
 
     // ---------- Color picker interactivity ----------
     const DEFAULT_COLORS = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
@@ -1520,8 +1522,28 @@
     }
 
     // ---------- Модальное окно задачи ----------
-    function openTaskModal(taskData, x, y) {
-        if (taskData) {
+    function openTaskModal(taskData, x, y, mode) {
+        currentItemMode = mode || 'task';
+        if (taskData) currentItemMode = 'task';
+        var isReport = currentItemMode === 'report';
+        if (itemTypeToggle) {
+            itemTypeToggle.querySelectorAll('.item-type-btn').forEach(function(btn) {
+                btn.classList.toggle('active', btn.dataset.type === currentItemMode);
+            });
+        }
+        if (taskStatusGroup) {
+            taskStatusGroup.style.display = isReport ? 'none' : '';
+        }
+        if (isReport) {
+            modalTitle.textContent = 'Новый отчёт';
+            taskId.value = '';
+            taskTitle.value = '';
+            taskDesc.value = '';
+            taskStatus.value = 'reports';
+            taskPriority.value = 'medium';
+            taskDueDate.value = '';
+            taskAssignee.value = '';
+        } else if (taskData) {
             modalTitle.textContent = 'Редактировать задачу';
             taskId.value = taskData.id;
             taskTitle.value = taskData.title;
@@ -1544,6 +1566,21 @@
         positionModalAtPoint(taskModal, x, y);
     }
 
+    if (itemTypeToggle) {
+        itemTypeToggle.addEventListener('click', function(e) {
+            var btn = e.target.closest('.item-type-btn');
+            if (!btn) return;
+            currentItemMode = btn.dataset.type;
+            itemTypeToggle.querySelectorAll('.item-type-btn').forEach(function(b) {
+                b.classList.toggle('active', b === btn);
+            });
+            if (taskStatusGroup) {
+                taskStatusGroup.style.display = currentItemMode === 'report' ? 'none' : '';
+            }
+            modalTitle.textContent = currentItemMode === 'report' ? 'Новый отчёт' : 'Новая задача';
+        });
+    }
+
     function openReportModal(reportData, x, y) {
         if (reportData) {
             reportModalTitle.textContent = 'Редактировать отчёт';
@@ -1553,6 +1590,7 @@
             reportPriority.value = reportData.priority || 'medium';
             reportDueDate.value = reportData.dueDate || '';
             reportAssignee.value = reportData.assignedTo || '';
+            document.getElementById('reportStatus').value = 'reports';
         } else {
             reportModalTitle.textContent = 'Новый отчёт';
             reportId.value = '';
@@ -1562,6 +1600,7 @@
             reportDueDate.value = '';
             reportAssignee.value = '';
         }
+        document.getElementById('reportStatus').value = 'reports';
         reportModal.classList.add('active');
         positionModalAtPoint(reportModal, x, y);
     }
@@ -1717,13 +1756,13 @@
     });
 
     addTaskBtn.addEventListener('click', function(e) {
-        openTaskModal(null, e.clientX, e.clientY);
+        openTaskModal(null, e.clientX, e.clientY, 'task');
     });
 
     var addReportBtn = document.getElementById('addReportBtn');
     if (addReportBtn) {
         addReportBtn.addEventListener('click', function(e) {
-            openReportModal(null, e.clientX, e.clientY);
+            openTaskModal(null, e.clientX, e.clientY, 'report');
         });
     }
 
@@ -1737,7 +1776,7 @@
 
     if (mobileAddBtn) {
         mobileAddBtn.addEventListener('click', function(e) {
-            openTaskModal(null, e.clientX, e.clientY);
+            openTaskModal(null, e.clientX, e.clientY, 'task');
         });
     }
     if (mobileManageBtn) {
