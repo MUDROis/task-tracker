@@ -887,6 +887,7 @@
                     '<span><strong>' + escapeHtml(u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
                     '<div class="user-row-actions">' +
                         '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
+                        '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -896,6 +897,42 @@
             btn.addEventListener('click', function(e) {
                 openEditUserModal(this.dataset.login, e.clientX, e.clientY);
             });
+        });
+
+        usersList.querySelectorAll('.btn-delete-user').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                deleteUser(this.dataset.login);
+            });
+        });
+    }
+
+    function deleteUser(login) {
+        var user = users.find(function(u) { return u.login === login; });
+        if (!user) return;
+        if (login === 'admin') {
+            alert('Нельзя удалить основную учётную запись администратора');
+            return;
+        }
+        if (login === currentUser.login) {
+            alert('Вы не можете удалить самого себя');
+            return;
+        }
+        if (!confirm('Удалить сотрудника ' + login + '?')) return;
+        removeUser(login);
+        tasks.forEach(function(t) {
+            if (t.assignedTo === login) {
+                saveTask(Object.assign({}, t, { assignedTo: '', updatedAt: new Date().toISOString() }));
+            }
+        });
+        reports.forEach(function(r) {
+            if (r.assignedTo === login) {
+                saveReport(Object.assign({}, r, { assignedTo: '', updatedAt: new Date().toISOString() }));
+            }
+        });
+        getUsersRef().once('value').then(function(snapshot) {
+            const data = snapshot.val();
+            users = data ? Object.values(data) : [];
+            renderUsersList();
         });
     }
 
