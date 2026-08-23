@@ -48,10 +48,25 @@
         return deadlineStripClass(calendarDaysUntil(dueDate));
     }
 
+    // Сводка для кольца статистики: {total, done, pct} по доступным пользователю задачам и отчётам.
+    function statsSummary(tasks, reports, login, isAdmin) {
+        var visible = isAdmin ? function () { return true; } : function (item) {
+            return item.createdBy === login || item.assignedTo === login;
+        };
+        var all = [].concat(tasks || [], reports || []).filter(visible);
+        var done = all.filter(function (item) { return item.status === 'done'; }).length;
+        return {
+            total: all.length,
+            done: done,
+            pct: all.length ? Math.round(done / all.length * 100) : 0
+        };
+    }
+
     return {
         calendarDaysUntil: calendarDaysUntil,
         deadlineStripClass: deadlineStripClass,
         isCompletedLate: isCompletedLate,
-        doneStripClass: doneStripClass
+        doneStripClass: doneStripClass,
+        statsSummary: statsSummary
     };
 }));

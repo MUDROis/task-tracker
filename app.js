@@ -899,7 +899,7 @@
                     '<div class="user-row-actions">' +
                         '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
                         (u.login !== 'admin' && u.login !== currentUser.login
-                            ? '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:#dc2626;">Удалить</button>'
+                            ? '<button class="btn outline btn-delete-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;color:var(--danger);">Удалить</button>'
                             : '') +
                     '</div>' +
                 '</div>' +
@@ -1162,9 +1162,20 @@
             });
             renderReports();
             populateAssigneeSelect();
+            updateStatsRing();
         } catch (e) {
             console.error('Ошибка при рендеринге доски:', e);
         }
+    }
+
+    // ---------- Кольцо статистики (% выполненных) ----------
+    function updateStatsRing() {
+        var ringEl = document.getElementById('statsRing');
+        var pctEl = document.getElementById('ringPct');
+        if (!ringEl || !pctEl || !currentUser) return;
+        var stats = DeadlineHelpers.statsSummary(tasks, reports, currentUser.login, currentUser.role === 'admin');
+        ringEl.style.setProperty('--p', stats.pct);
+        pctEl.textContent = stats.pct + '%';
     }
 
     function createTaskCard(task) {
@@ -1381,7 +1392,7 @@
             '<div class="modal-content" style="max-width:450px;">' +
                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
                 '<h3>' + escapeHtml(task.title) + '</h3>' +
-                '<div style="margin-top:1rem;font-size:0.95rem;color:#334155;">' +
+                '<div style="margin-top:1rem;font-size:0.95rem;color:var(--muted);">' +
                     '<p><strong>Описание:</strong> ' + (task.description ? escapeHtml(task.description) : '<em>нет</em>') + '</p>' +
                     '<p><strong>Статус:</strong> ' + (statusLabels[task.status] || task.status) + '</p>' +
                     '<p><strong>Приоритет:</strong> ' + (priorityLabels[task.priority] || task.priority) + '</p>' +
@@ -1409,7 +1420,7 @@
             '<div class="modal-content" style="max-width:450px;">' +
                 '<span class="close-modal">&times;</span>' +
                 '<h3>' + escapeHtml(report.title) + '</h3>' +
-                '<div style="margin-top:1rem;font-size:0.95rem;color:#334155;">' +
+                '<div style="margin-top:1rem;font-size:0.95rem;color:var(--muted);">' +
                     '<p><strong>Номер:</strong> ' + escapeHtml(numberLabel) + '</p>' +
                     '<p><strong>Описание:</strong> ' + (report.description ? escapeHtml(report.description) : '<em>нет</em>') + '</p>' +
                     '<p><strong>Приоритет:</strong> ' + escapeHtml(PRIORITY_LABELS[report.priority] || 'Средний') + '</p>' +
@@ -2078,6 +2089,18 @@
     }
 
     // ---------- Запуск ----------
+    // Приветствие и текущая дата в шапке
+    (function initHeaderInfo() {
+        var greetEl = document.getElementById('greeting');
+        var dateEl = document.getElementById('currentDate');
+        if (!greetEl || !dateEl) return;
+        var now = new Date();
+        var h = now.getHours();
+        greetEl.textContent = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
+        var s = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+        dateEl.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+    })();
+
     // Ждём загрузки Firebase SDK
     function waitForFirebase(callback) {
         if (typeof firebase !== 'undefined' && firebase.database) {
