@@ -731,7 +731,7 @@
             '<div class="archive-row-main">' +
                 '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
                 '<div class="task-meta">' +
-                    (task.dueDate ? '<span>⏳ ' + formatDateTime(task.dueDate) + '</span>' : '') +
+                    (task.dueDate ? '<span><i class="fa-regular fa-calendar"></i> ' + formatDateTime(task.dueDate) + '</span>' : '') +
                     '<span>👤 ' + escapeHtml(formatUserName(task.assignedTo)) + '</span>' +
                 '</div>' +
             '</div>' +
@@ -773,7 +773,7 @@
                 '<div class="task-title">' + escapeHtml(report.title) + '</div>' +
                 '<div class="task-meta">' +
                     '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
-                    (report.dueDate ? '<span>⏳ ' + formatDateTime(report.dueDate) + '</span>' : '') +
+                    (report.dueDate ? '<span><i class="fa-regular fa-calendar"></i> ' + formatDateTime(report.dueDate) + '</span>' : '') +
                     (assigneeLabel ? '<span>' + assigneeLabel + '</span>' : '') +
                 '</div>' +
             '</div>' +
@@ -1195,9 +1195,8 @@
                 : '') +
             '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
             '<div class="task-meta">' +
-                '<span>📅 ' + new Date(task.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + '</span>' +
                 '<span>' + assigneeEmoji + ' ' + escapeHtml(assigneeName) + '</span>' +
-                (task.dueDate ? '<span>⏳ ' + new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</span>' : '') +
+                (task.dueDate ? '<span><i class="fa-regular fa-calendar"></i> ' + formatDateTime(task.dueDate) + '</span>' : '') +
             '</div>' +
             '<div class="task-actions-row1">' +
                 (task.status !== 'done'
@@ -2026,7 +2025,7 @@
             '<div class="task-title">' + escapeHtml(report.title || 'Без названия') + '</div>' +
             '<div class="task-meta">' +
                 '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
-                (report.dueDate ? '<span>⏳ ' + formatDateTime(report.dueDate) + '</span>' : '') +
+                (report.dueDate ? '<span><i class="fa-regular fa-calendar"></i> ' + formatDateTime(report.dueDate) + '</span>' : '') +
                 (assigneeLabel ? '<span>' + assigneeLabel + '</span>' : '') +
                 '<span>👤 ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
             '</div>' +
