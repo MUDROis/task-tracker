@@ -1178,6 +1178,49 @@
         pctEl.textContent = stats.pct + '%';
     }
 
+    // ---------- Полная карточка и мобильные тапы ----------
+    var TOUCH_TAP_MS = 300;
+    var isTouchDevice = window.matchMedia && window.matchMedia('(hover: none)').matches;
+
+    function canEditItem(item) {
+        return currentUser.role === 'admin' || item.createdBy === currentUser.login;
+    }
+
+    function openFullTask(task, x, y) {
+        if (canEditItem(task)) openTaskModal(task, x, y);
+        else showTaskDetails(task, x, y);
+    }
+
+    function openFullReport(report, x, y) {
+        if (canEditItem(report)) openReportModal(report, x, y);
+        else showReportDetails(report, x, y);
+    }
+
+    function attachMobileTapHandlers(cardEl, openFullFn) {
+        if (!isTouchDevice) return;
+        var lastTapTime = 0;
+        var singleTapTimer = null;
+        cardEl.addEventListener('click', function(e) {
+            if (e.target.closest('[data-action]')) return;
+            var now = Date.now();
+            if (now - lastTapTime < TOUCH_TAP_MS) {
+                if (singleTapTimer) { clearTimeout(singleTapTimer); singleTapTimer = null; }
+                lastTapTime = 0;
+                openFullFn(e.clientX, e.clientY);
+                return;
+            }
+            lastTapTime = now;
+            if (singleTapTimer) clearTimeout(singleTapTimer);
+            document.querySelectorAll('.task-card.controls-open').forEach(function(el) {
+                if (el !== cardEl) el.classList.remove('controls-open');
+            });
+            singleTapTimer = setTimeout(function() {
+                cardEl.classList.toggle('controls-open');
+                singleTapTimer = null;
+            }, TOUCH_TAP_MS);
+        });
+    }
+
     function createTaskCard(task) {
         const div = document.createElement('div');
         var stripClass = DeadlineHelpers.deadlineStripClass(DeadlineHelpers.calendarDaysUntil(task.dueDate));
@@ -1246,12 +1289,11 @@
         div.addEventListener('dragend', handleDragEnd);
 
         div.addEventListener('dblclick', function(e) {
-            if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
-                alert('Вы не можете редактировать эту задачу');
-                return;
-            }
-            openTaskModal(task, e.clientX, e.clientY);
+            e.preventDefault();
+            openFullTask(task, e.clientX, e.clientY);
         });
+
+        attachMobileTapHandlers(div, function(x, y) { openFullTask(task, x, y); });
 
         return div;
     }
@@ -2064,6 +2106,13 @@
                 }
             });
         });
+
+        div.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            openFullReport(report, e.clientX, e.clientY);
+        });
+
+        attachMobileTapHandlers(div, function(x, y) { openFullReport(report, x, y); });
 
         return div;
     }
