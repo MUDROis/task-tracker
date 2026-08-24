@@ -25,9 +25,9 @@ test('deadlineStripClass: диапазоны дней', function() {
     assert.strictEqual(H.deadlineStripClass(5), 'strip-warn');
     assert.strictEqual(H.deadlineStripClass(4), 'strip-warn');
     assert.strictEqual(H.deadlineStripClass(3), 'strip-orange');
-    assert.strictEqual(H.deadlineStripClass(2), 'strip-coral');
-    assert.strictEqual(H.deadlineStripClass(1), 'strip-red');
-    assert.strictEqual(H.deadlineStripClass(0), 'strip-overdue');
+    assert.strictEqual(H.deadlineStripClass(2), 'strip-scarlet');
+    assert.strictEqual(H.deadlineStripClass(1), 'strip-scarlet');
+    assert.strictEqual(H.deadlineStripClass(0), 'strip-red');
     assert.strictEqual(H.deadlineStripClass(-5), 'strip-overdue');
     assert.strictEqual(H.deadlineStripClass(null), 'strip-none');
 });

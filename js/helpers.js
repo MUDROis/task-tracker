@@ -29,8 +29,8 @@
         if (daysLeft > 5) return 'strip-ok';
         if (daysLeft >= 4) return 'strip-warn';
         if (daysLeft >= 3) return 'strip-orange';
-        if (daysLeft >= 2) return 'strip-coral';
-        if (daysLeft >= 1) return 'strip-red';
+        if (daysLeft >= 1) return 'strip-scarlet';
+        if (daysLeft >= 0) return 'strip-red';
         return 'strip-overdue';
     }
 

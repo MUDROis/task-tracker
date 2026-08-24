@@ -531,9 +531,9 @@ button { font-family: inherit; }
 .task-card.strip-ok { border-left-color: #22c55e; }
 .task-card.strip-warn { border-left-color: #a3e635; }
 .task-card.strip-orange { border-left-color: #f97316; }
-.task-card.strip-coral { border-left-color: #fb7185; }
-.task-card.strip-red { border-left-color: #ef4444; }
-.task-card.strip-overdue { border-left-color: #be123c; }
+.task-card.strip-scarlet { border-left-color: #ef4444; }
+.task-card.strip-red { border-left-color: #dc2626; }
+.task-card.strip-overdue { border-left-color: #881337; }
 .task-card.strip-none { border-left-color: #64748b; }
 
 .task-card .task-title {
@@ -1220,9 +1220,9 @@ button { font-family: inherit; }
 .archive-row.strip-ok { border-left-color: #22c55e; }
 .archive-row.strip-warn { border-left-color: #a3e635; }
 .archive-row.strip-orange { border-left-color: #f97316; }
-.archive-row.strip-coral { border-left-color: #fb7185; }
-.archive-row.strip-red { border-left-color: #ef4444; }
-.archive-row.strip-overdue { border-left-color: #be123c; }
+.archive-row.strip-scarlet { border-left-color: #ef4444; }
+.archive-row.strip-red { border-left-color: #dc2626; }
+.archive-row.strip-overdue { border-left-color: #881337; }
 .archive-row.strip-none { border-left-color: #64748b; }
 
 @media (prefers-reduced-motion: reduce) {
