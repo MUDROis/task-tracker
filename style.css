@@ -500,6 +500,7 @@ button { font-family: inherit; }
     cursor: grab;
     transition: background 0.2s, box-shadow 0.2s, border-color 0.2s, transform 0.18s;
     position: relative;
+    touch-action: manipulation;
 }
 
 .task-card:hover {
@@ -555,20 +556,33 @@ button { font-family: inherit; }
     letter-spacing: 0.02em;
 }
 
-.task-card .task-actions-row1 {
-    display: flex;
+.task-card .task-actions-row1,
+.task-card .task-actions-row2 {
+    display: none;
     justify-content: space-between;
     gap: 0.5rem;
     margin-top: 0.5rem;
 }
 
 .task-card .task-actions-row2 {
-    display: flex;
     justify-content: space-evenly;
-    gap: 0.5rem;
     margin-top: 0.35rem;
     padding-top: 0.35rem;
     border-top: 1px solid rgba(255,255,255,.06);
+}
+
+@media (hover: hover) {
+    .task-card:hover .task-actions-row1,
+    .task-card:hover .task-actions-row2 {
+        display: flex;
+    }
+}
+
+@media (hover: none) {
+    .task-card.controls-open .task-actions-row1,
+    .task-card.controls-open .task-actions-row2 {
+        display: flex;
+    }
 }
 
 .task-card .task-actions-row1 button,
@@ -580,28 +594,11 @@ button { font-family: inherit; }
     padding: 0.25rem 0.65rem;
     border-radius: 999px;
     cursor: pointer;
-    transition: background 0.15s, transform 0.12s, opacity 0.18s, visibility 0.18s;
+    transition: background 0.15s, transform 0.12s;
 }
 .task-card .task-actions-row1 button:active,
 .task-card .task-actions-row2 button:active {
     transform: scale(0.95);
-}
-
-/* Удалить / Настройки / Открыть — появляются при наведении на карточку */
-.task-card .task-actions-row2 button {
-    opacity: 0;
-    visibility: hidden;
-}
-.task-card:hover .task-actions-row2 button,
-.task-card:focus-within .task-actions-row2 button {
-    opacity: 1;
-    visibility: visible;
-}
-@media (hover: none) {
-    .task-card .task-actions-row2 button {
-        opacity: 1;
-        visibility: visible;
-    }
 }
 
 .task-card .btn-done {
