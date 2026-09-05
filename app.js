@@ -152,7 +152,7 @@
 
     // ---------- Конфигурация EmailJS ----------
     const EMAILJS_PUBLIC_KEY = 'e1iKZl_RU3ZoaikIL';
-    const EMAILJS_SERVICE_ID = 'service_k6yu0eb';
+    const EMAILJS_SERVICE_ID = 'service_5lbjjn3';
     const EMAILJS_TEMPLATE_ID = 'template_ql5rq3a';
 
     // ---------- Firebase пути ----------
