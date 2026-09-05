@@ -1,4 +1,4 @@
-const CACHE_NAME = 'task-tracker-v7';
+const CACHE_NAME = 'task-tracker-v8';
 const ASSETS = [
     './',
     './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
     './js/helpers.js',
     './firebase-config.js',
     './manifest.json',
+    './logo.png',
     './grifon.png',
     './grifon.ico',
     'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',

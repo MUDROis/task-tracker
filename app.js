@@ -61,7 +61,7 @@
         try {
             if (!baseFavicon) {
                 baseFavicon = new Image();
-                baseFavicon.src = 'grifon.png';
+                baseFavicon.src = 'logo.png';
             }
             var canvas = document.createElement('canvas');
             canvas.width = 64;
