@@ -257,6 +257,9 @@
             var newTasks = data ? Object.values(data) : [];
             newTasks.forEach(function(t) {
                 if (t.status === 'delegated') t.status = 'in_progress';
+                // Нормализуем срок в ISO-строку (UTC): единый формат для всех
+                // браузеров, чтобы new Date(...)/toLocaleDateString не бросали RangeError.
+                t.dueDate = DeadlineHelpers.normalizeDueDate(t.dueDate);
             });
 
             // Обнаружение новых задач
@@ -317,7 +320,7 @@
                     title: r.title || '',
                     description: r.description || '',
                     reportNumber: r.reportNumber || 0,
-                    dueDate: r.dueDate || '',
+                    dueDate: DeadlineHelpers.normalizeDueDate(r.dueDate),
                     createdBy: r.createdBy || ''
                 });
             });
@@ -355,7 +358,10 @@
     }
 
     function sendDeadlineNotification(task) {
-        var dueStr = new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+        var dueD = new Date(task.dueDate);
+        var dueStr = isNaN(dueD.getTime())
+            ? ''
+            : dueD.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + dueD.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
         // Уведомление исполнителю
         if (task.assignedTo) {
             var assignee = users.find(function(u) { return u.login === task.assignedTo; });
@@ -387,6 +393,33 @@
     // Запуск проверки каждую минуту
     setInterval(checkOverdueTasks, 60000);
 
+    // ---------- Обновление индикации дедлайнов по таймеру ----------
+    // Раз в минуту пересчитываем цвет левой полосы карточек,
+    // чтобы цвет автоматически менялся при наступлении 17:00, полуночи и т.д.
+    function refreshDeadlineStrips() {
+        if (!currentUser) return;
+        document.querySelectorAll('.task-card').forEach(function(card) {
+            var task = tasks.find(function(t) { return t.id === card.dataset.id; }) ||
+                       reports.find(function(r) { return r.id === card.dataset.id; });
+            if (!task) return;
+            var newClass = DeadlineHelpers.deadlineStripClassFromDate(task.dueDate);
+            var baseClasses = [
+                'strip-far','strip-close','strip-soon','strip-day',
+                'strip-red','strip-overdue','strip-none'
+            ];
+            baseClasses.forEach(function(c) { card.classList.remove(c); });
+            card.classList.add(newClass);
+            if (task.dueDate) {
+                card.setAttribute('aria-label', (task.title || 'Отчёт') + '. ' + deadlineStatusLabel(task.dueDate));
+            }
+        });
+    }
+
+    setInterval(refreshDeadlineStrips, 60000);
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) refreshDeadlineStrips();
+    });
+
     // Очистка бейджа при клике на страницу
     document.addEventListener('click', function() {
         if (badgeCount > 0) clearBadge();
@@ -394,6 +427,7 @@
 
     // ---------- Firebase: запись данных ----------
     function saveTask(task) {
+        task.dueDate = DeadlineHelpers.normalizeDueDate(task.dueDate);
         return getTasksRef().child(task.id).set(task)
             .then(function() {
                 console.log('Задача сохранена успешно:', task.id);
@@ -411,6 +445,7 @@
     }
 
     function saveReport(report) {
+        report.dueDate = DeadlineHelpers.normalizeDueDate(report.dueDate);
         return getReportsRef().child(report.id).set(report)
             .then(function() {
                 console.log('Отчёт сохранён:', report.id);
@@ -552,6 +587,7 @@
     function showMainPage() {
         loginPage.classList.remove('active');
         mainPage.classList.add('active');
+        updateHeaderGreeting(currentUser);
         userRoleBadge.textContent = currentUser.role === 'admin' ? 'Руководитель' : 'Сотрудник';
         manageUsersBtn.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
         const mobileManage = document.getElementById('mobileManageBtn');
@@ -1221,12 +1257,45 @@
         });
     }
 
+    function deadlineStatusLabel(dueDateStr) {
+        // Человекочитаемая подпись статуса дедлайна для доступности (aria-label)
+        var status = DeadlineHelpers.getDeadlineStatus(dueDateStr);
+        var labels = {
+            'far': 'Срок далеко (более 4 дней)',
+            'close': 'Срок приближается (2 дня)',
+            'soon': 'Срок завтра (1 день)',
+            'day': 'Срок сегодня (до 12:00)',
+            'oday': 'Срок сегодня, просрочено (после 17:00)',
+            'odays': 'Срок просрочен (более 1 дня)',
+            'none': 'Срок не задан'
+        };
+        return labels[status] || 'Срок не задан';
+    }
+    function deadlineStatusLabelShort(dueDateStr) {
+        // Короткая подпись для иконки/метки на карточке
+        var status = DeadlineHelpers.getDeadlineStatus(dueDateStr);
+        var labels = {
+            'far': 'Срок: далеко',
+            'close': 'Срок: 2 дня',
+            'soon': 'Срок: завтра',
+            'day': 'Срок сегодня',
+            'oday': 'Просрочено сегодня',
+            'odays': 'Просрочено давно',
+            'none': ''
+        };
+        return labels[status] || '';
+    }
+
     function createTaskCard(task) {
         const div = document.createElement('div');
-        var stripClass = DeadlineHelpers.deadlineStripClass(DeadlineHelpers.calendarDaysUntil(task.dueDate));
+        var stripClass = DeadlineHelpers.deadlineStripClassFromDate(task.dueDate);
         div.className = 'task-card priority-' + (task.priority || 'medium') + ' ' + stripClass;
         div.draggable = true;
         div.dataset.id = task.id;
+        if (task.dueDate) {
+            div.setAttribute('role', 'listitem');
+            div.setAttribute('aria-label', (task.title || 'Задача') + '. ' + deadlineStatusLabel(task.dueDate));
+        }
 
         const assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
         const assigneeName = task.assignedTo ? formatUserName(task.assignedTo) : 'не назначен';
@@ -1354,7 +1423,7 @@
             createdBy: currentUser.login,
             assignedTo: taskData.assignee || '',
             priority: taskData.priority || 'medium',
-            dueDate: taskData.dueDate || '',
+            dueDate: DeadlineHelpers.normalizeDueDate(taskData.dueDate),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -1439,10 +1508,10 @@
                     '<p><strong>Приоритет:</strong> ' + (priorityLabels[task.priority] || task.priority) + '</p>' +
                     '<p><strong>Исполнитель:</strong> ' + assigneeEmoji + ' ' + escapeHtml(assigneeName) + '</p>' +
                     '<p><strong>Создал:</strong> ' + escapeHtml(formatUserName(task.createdBy)) + '</p>' +
-                    '<p><strong>Создано:</strong> ' + new Date(task.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' +
-                    (task.dueDate ? '<p><strong>Срок:</strong> ' + new Date(task.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' : '') +
+                    '<p><strong>Создано:</strong> ' + formatDateTime(task.createdAt) + '</p>' +
+                    (task.dueDate ? '<p><strong>Срок:</strong> ' + formatDateTime(task.dueDate) + '</p>' : '') +
                     (task.delegated ? '<p><strong>Делегировано:</strong> ' + (task.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') + '</p>' : '') +
-                    (task.updatedAt ? '<p><strong>Обновлено:</strong> ' + new Date(task.updatedAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(task.updatedAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) + '</p>' : '') +
+                    (task.updatedAt ? '<p><strong>Обновлено:</strong> ' + formatDateTime(task.updatedAt) + '</p>' : '') +
                 '</div>' +
             '</div>';
         document.body.appendChild(modal);
@@ -1538,10 +1607,15 @@
         var user = users.find(function(u) { return u.login === toLogin; });
         var toEmail = user && user.email ? user.email : '';
         if (!toEmail) return;
-        var dueDateStr = taskData.dueDate ? new Date(taskData.dueDate).toLocaleDateString('ru-RU') : 'не указан';
+        var dueDateStr = 'не указан';
+        if (taskData.dueDate) {
+            var dueD = new Date(taskData.dueDate);
+            dueDateStr = isNaN(dueD.getTime()) ? 'не указан' : dueD.toLocaleDateString('ru-RU');
+        }
         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
             to_email: toEmail,
             to_name: toLogin,
+            subject: taskData.title || 'Новая задача',
             task_title: taskData.title || '',
             task_description: taskData.description || 'нет описания',
             task_priority: PRIORITY_LABELS[taskData.priority] || taskData.priority || 'Средний',
@@ -1602,7 +1676,7 @@
             taskDesc.value = taskData.description || '';
             taskStatus.value = taskData.status || 'in_progress';
             taskPriority.value = taskData.priority || 'medium';
-            taskDueDate.value = taskData.dueDate || '';
+            taskDueDate.value = DeadlineHelpers.toDateTimeLocalValue(taskData.dueDate);
             taskAssignee.value = taskData.assignedTo || '';
         } else {
             modalTitle.textContent = 'Новая задача';
@@ -1641,7 +1715,7 @@
             reportTitle.value = reportData.title || '';
             reportDesc.value = reportData.description || '';
             reportPriority.value = reportData.priority || 'medium';
-            reportDueDate.value = reportData.dueDate || '';
+            reportDueDate.value = DeadlineHelpers.toDateTimeLocalValue(reportData.dueDate);
             reportAssignee.value = reportData.assignedTo || '';
             document.getElementById('reportStatus').value = 'reports';
         } else {
@@ -1665,7 +1739,9 @@
         if (!title) return;
         var desc = reportDesc.value.trim();
         var priority = reportPriority.value;
-        var dueDate = reportDueDate.value;
+        // Нормализуем срок в ISO-строку (UTC), чтобы единый формат дат
+        // корректно обрабатывался во всех браузерах и функциях приложения.
+        var dueDate = DeadlineHelpers.normalizeDueDate(reportDueDate.value);
         var assignee = reportAssignee.value;
         var reportStatus = document.getElementById('reportStatus').value;
 
@@ -1734,7 +1810,9 @@
         var description = taskDesc.value.trim();
         var status = taskStatus.value;
         var priority = taskPriority.value;
-        var dueDate = taskDueDate.value;
+        // Нормализуем срок в ISO-строку (UTC), чтобы единый формат дат
+        // корректно обрабатывался во всех браузерах и функциях приложения.
+        var dueDate = DeadlineHelpers.normalizeDueDate(taskDueDate.value);
         var assignee = taskAssignee.value;
 
         if (currentItemMode === 'report') {
@@ -1900,10 +1978,10 @@
                 'Создал': formatUserName(t.createdBy),
                 'Исполнитель': formatUserName(t.assignedTo),
                 'Приоритет': t.priority || 'medium',
-                'Срок': t.dueDate ? new Date(t.dueDate).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(t.dueDate).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '',
+                'Срок': formatDateTime(t.dueDate),
                 'Делегировано': t.delegated ? (t.delegatedBy === 'admin' ? 'Руководителем' : 'Сотрудником') : '',
-                'Создано': t.createdAt ? new Date(t.createdAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(t.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '',
-                'Обновлено': t.updatedAt ? new Date(t.updatedAt).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date(t.updatedAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : ''
+                'Создано': formatDateTime(t.createdAt),
+                'Обновлено': formatDateTime(t.updatedAt)
             };
         });
         if (dataToExport.length === 0) {
@@ -1950,7 +2028,7 @@
                             status: row['Статус'] === 'Срочно' ? 'urgent' : (row['Статус'] === 'В работе' ? 'in_progress' : 'done'),
                             assignedTo: row['Исполнитель'] || existing.assignedTo,
                             priority: row['Приоритет'] || existing.priority,
-                            dueDate: row['Срок'] || existing.dueDate,
+                            dueDate: DeadlineHelpers.normalizeDueDate(row['Срок']) || existing.dueDate,
                             updatedAt: new Date().toISOString()
                         });
                         saveTask(updated);
@@ -1963,7 +2041,7 @@
                             createdBy: row['Создал'] || currentUser.login,
                             assignedTo: row['Исполнитель'] || '',
                             priority: row['Приоритет'] || 'medium',
-                            dueDate: row['Срок'] || '',
+                            dueDate: DeadlineHelpers.normalizeDueDate(row['Срок']) || '',
                             createdAt: row['Создано'] ? new Date(row['Создано']).toISOString() : new Date().toISOString(),
                             updatedAt: new Date().toISOString()
                         };
@@ -2051,9 +2129,13 @@
 
     function createReportCard(report) {
         const div = document.createElement('div');
-        var stripClass = DeadlineHelpers.deadlineStripClass(DeadlineHelpers.calendarDaysUntil(report.dueDate));
+        var stripClass = DeadlineHelpers.deadlineStripClassFromDate(report.dueDate);
         div.className = 'task-card report-card priority-' + (report.priority || 'medium') + ' ' + stripClass;
         div.dataset.id = report.id;
+        if (report.dueDate) {
+            div.setAttribute('role', 'listitem');
+            div.setAttribute('aria-label', (report.title || 'Отчёт') + '. ' + deadlineStatusLabel(report.dueDate));
+        }
 
         var numberLabel = report.reportNumber
             ? '№' + report.reportNumber
@@ -2137,17 +2219,24 @@
     }
 
     // ---------- Запуск ----------
-    // Приветствие и текущая дата в шапке
-    (function initHeaderInfo() {
+    // Приветствие и текущая дата в шапке (имя подтягивается из профиля/сессии)
+    function updateHeaderGreeting(user) {
         var greetEl = document.getElementById('greeting');
         var dateEl = document.getElementById('currentDate');
-        if (!greetEl || !dateEl) return;
-        var now = new Date();
-        var h = now.getHours();
-        greetEl.textContent = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
-        var s = now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-        dateEl.textContent = s.charAt(0).toUpperCase() + s.slice(1);
-    })();
+        if (greetEl) {
+            var now = new Date();
+            var h = now.getHours();
+            var greetingText = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
+            greetEl.textContent = user && user.login ? greetingText + ', ' + user.login + '!' : greetingText + '!';
+        }
+        if (dateEl) {
+            var now2 = new Date();
+            var s = now2.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+            dateEl.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+        }
+    }
+
+    updateHeaderGreeting(null); // Показываем приветствие/дату до авторизации
 
     // Ждём загрузки Firebase SDK
     function waitForFirebase(callback) {

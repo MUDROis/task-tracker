@@ -13,6 +13,14 @@
     --accent-ink: #221403;
     --danger: #ff5d6c;
     --teal: #4fd1c5;
+    /* Цвета индикации дедлайнов (левая полоса карточки) */
+    --deadline-far: #00a550;      /* более 4 дней / ровно 4 дня */
+    --deadline-close: #4cbb17;    /* ровно 2 дня */
+    --deadline-soon: #F1C40F;     /* ровно 1 день */
+    --deadline-day: #ced23a;      /* день дедлайна, до 12:00 */
+    --deadline-red: #E74C3C;      /* день дедлайна, >= 17:00 */
+    --deadline-burgundy: #8B0000; /* прошло более 1 дня */
+    --deadline-none: #64748b;     /* дедлайн не задан */
 }
 @property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
 
@@ -40,8 +48,8 @@ body::before {
     pointer-events: none;
     z-index: 0;
     background-image:
-        linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+        linear-gradient(rgba(255,255,255,.031) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.031) 1px, transparent 1px);
     background-size: 36px 36px;
     -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 25%, transparent 78%);
             mask-image: radial-gradient(ellipse at 50% 0%, #000 25%, transparent 78%);
@@ -269,14 +277,23 @@ button { font-family: inherit; }
     margin-top: 3px;
     font-size: 0.78rem;
     color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.35;
+    min-width: 0;
 }
 
 .head-sub b {
     color: var(--accent);
     font-weight: 500;
+}
+
+.head-sub .head-now,
+.head-sub .head-date {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .header-right {
@@ -529,13 +546,18 @@ button { font-family: inherit; }
     text-shadow: 0 0 9px rgba(255,93,108,.5);
 }
 
-.task-card.strip-ok { border-left-color: #22c55e; }
-.task-card.strip-warn { border-left-color: #a3e635; }
-.task-card.strip-orange { border-left-color: #f97316; }
-.task-card.strip-scarlet { border-left-color: #ef4444; }
-.task-card.strip-red { border-left-color: #dc2626; }
-.task-card.strip-overdue { border-left-color: #881337; }
-.task-card.strip-none { border-left-color: #64748b; }
+.task-card.strip-far { border-left-color: var(--deadline-far); }
+.task-card.strip-close { border-left-color: var(--deadline-close); }
+.task-card.strip-soon { border-left-color: var(--deadline-soon); }
+.task-card.strip-day { border-left-color: var(--deadline-day); }
+.task-card.strip-red { border-left-color: var(--deadline-red); }
+.task-card.strip-overdue { border-left-color: var(--deadline-burgundy); }
+.task-card.strip-none { border-left-color: var(--deadline-none); }
+/* Устаревшие классы — оставлены совместимости со старыми значениями */
+.task-card.strip-ok { border-left-color: var(--deadline-far); }
+.task-card.strip-warn { border-left-color: var(--deadline-close); }
+.task-card.strip-orange { border-left-color: var(--deadline-day); }
+.task-card.strip-scarlet { border-left-color: var(--deadline-soon); }
 
 .task-card .task-title {
     font-weight: 600;
@@ -1214,13 +1236,18 @@ button { font-family: inherit; }
 .archive-row-done {
     background: var(--bg1);
 }
-.archive-row.strip-ok { border-left-color: #22c55e; }
-.archive-row.strip-warn { border-left-color: #a3e635; }
-.archive-row.strip-orange { border-left-color: #f97316; }
-.archive-row.strip-scarlet { border-left-color: #ef4444; }
-.archive-row.strip-red { border-left-color: #dc2626; }
-.archive-row.strip-overdue { border-left-color: #881337; }
-.archive-row.strip-none { border-left-color: #64748b; }
+.archive-row.strip-far { border-left-color: var(--deadline-far); }
+.archive-row.strip-close { border-left-color: var(--deadline-close); }
+.archive-row.strip-soon { border-left-color: var(--deadline-soon); }
+.archive-row.strip-day { border-left-color: var(--deadline-day); }
+.archive-row.strip-red { border-left-color: var(--deadline-red); }
+.archive-row.strip-overdue { border-left-color: var(--deadline-burgundy); }
+.archive-row.strip-none { border-left-color: var(--deadline-none); }
+/* Устаревшие классы — совместимость */
+.archive-row.strip-ok { border-left-color: var(--deadline-far); }
+.archive-row.strip-warn { border-left-color: var(--deadline-close); }
+.archive-row.strip-orange { border-left-color: var(--deadline-day); }
+.archive-row.strip-scarlet { border-left-color: var(--deadline-soon); }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
