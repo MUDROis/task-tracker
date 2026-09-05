@@ -294,6 +294,7 @@
             users = users.map(function(u) {
                 return Object.assign({}, u, {
                     role: u.role || 'employee',
+                    name: u.name || '',
                     color: u.color || DEFAULT_COLORS[users.indexOf(u) % DEFAULT_COLORS.length],
                     email: u.email || '',
                     emoji: u.emoji || ''
@@ -303,7 +304,7 @@
             if (currentUser) {
                 const fresh = users.find(function(u) { return u.login === currentUser.login; });
                 if (fresh) {
-                    currentUser = { uid: fresh.uid, login: fresh.login, role: fresh.role, color: fresh.color, email: fresh.email, emoji: fresh.emoji };
+                    currentUser = { uid: fresh.uid, login: fresh.login, name: fresh.name || '', role: fresh.role, color: fresh.color, email: fresh.email, emoji: fresh.emoji };
                 }
             }
             populateAssigneeSelect();
@@ -494,6 +495,7 @@
                 return getUsersRef().child('admin').set({
                     uid: uid,
                     login: 'admin',
+                    name: 'Харитон',
                     role: 'admin',
                     color: '#3b82f6',
                     email: ''
@@ -528,11 +530,17 @@
                         currentUser = {
                             uid: user.uid,
                             login: userData.login,
+                            name: userData.name || '',
                             role: userData.role,
                             color: userData.color,
                             email: userData.email,
                             emoji: userData.emoji || ''
                         };
+                        // Первичная миграция существующей записи admin: добавляем имя
+                        if (login === 'admin' && !userData.name) {
+                            currentUser.name = 'Харитон';
+                            saveUser(currentUser);
+                        }
                         saveSession(currentUser);
                         showMainPage();
                         initFirebaseListeners();
@@ -541,6 +549,7 @@
                         currentUser = {
                             uid: user.uid,
                             login: login,
+                            name: 'Харитон',
                             role: 'admin',
                             color: '#3b82f6',
                             email: '',
@@ -619,6 +628,7 @@
                     currentUser = {
                         uid: userData.uid,
                         login: userData.login,
+                        name: userData.name || '',
                         role: userData.role,
                         color: userData.color,
                         email: userData.email,
@@ -931,7 +941,7 @@
             return '<div class="user-row" data-user="' + escapeHtml(u.login) + '">' +
                 '<div class="user-row-view">' +
                     '<span class="user-emoji-avatar">' + (u.emoji || '👤') + '</span>' +
-                    '<span><strong>' + escapeHtml(u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
+                    '<span><strong>' + escapeHtml(u.name || u.login) + '</strong> (' + (u.role === 'admin' ? 'Руководитель' : 'Сотрудник') + ')' + (u.email ? ' · ' + escapeHtml(u.email) : '') + '</span>' +
                     '<div class="user-row-actions">' +
                         '<button class="btn outline btn-edit-user" data-login="' + escapeHtml(u.login) + '" style="padding:0.2rem 0.6rem;font-size:0.8rem;">Изменить</button>' +
                         (u.login !== 'admin' && u.login !== currentUser.login
@@ -2091,6 +2101,7 @@
     function formatUserName(login) {
         if (!login) return '—';
         var u = users.find(function(u) { return u.login === login; });
+        if (u && u.name) return u.name;
         if (u && u.role === 'admin') return 'Руководитель';
         return login;
     }
@@ -2227,7 +2238,8 @@
             var now = new Date();
             var h = now.getHours();
             var greetingText = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
-            greetEl.textContent = user && user.login ? greetingText + ', ' + user.login + '!' : greetingText + '!';
+            var displayName = (user && user.name) || (user && user.login) || '';
+            greetEl.textContent = displayName ? greetingText + ', ' + displayName + '!' : greetingText + '!';
         }
         if (dateEl) {
             var now2 = new Date();
