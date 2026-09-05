@@ -61,7 +61,7 @@
         try {
             if (!baseFavicon) {
                 baseFavicon = new Image();
-                baseFavicon.src = 'logo.png';
+                baseFavicon.src = 'logo.png?v=2';
             }
             var canvas = document.createElement('canvas');
             canvas.width = 64;
