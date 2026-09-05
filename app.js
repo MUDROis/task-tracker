@@ -151,9 +151,9 @@
     }
 
     // ---------- Конфигурация EmailJS ----------
-    const EMAILJS_PUBLIC_KEY = 'lb2TPZ78OFd1qVw_Z';
-    const EMAILJS_SERVICE_ID = 'service_ikd99cp';
-    const EMAILJS_TEMPLATE_ID = 'template_vd7pyer';
+    const EMAILJS_PUBLIC_KEY = 'e1iKZl_RU3ZoaikIL';
+    const EMAILJS_SERVICE_ID = 'service_k6yu0eb';
+    const EMAILJS_TEMPLATE_ID = 'template_ql5rq3a';
 
     // ---------- Firebase пути ----------
     function getTasksRef() {
