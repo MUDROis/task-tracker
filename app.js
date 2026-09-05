@@ -1658,7 +1658,7 @@
     }
 
     // ---------- Модальное окно задачи ----------
-    function openTaskModal(taskData, x, y, mode) {
+    function openTaskModal(taskData, x, y, mode, presetStatus) {
         currentItemMode = mode || 'task';
         if (taskData) currentItemMode = 'task';
         var isReport = currentItemMode === 'report';
@@ -1693,7 +1693,7 @@
             taskId.value = '';
             taskTitle.value = '';
             taskDesc.value = '';
-            taskStatus.value = 'in_progress';
+            taskStatus.value = presetStatus || 'in_progress';
             taskPriority.value = 'medium';
             taskDueDate.value = '';
             taskAssignee.value = '';
@@ -1920,6 +1920,43 @@
             openTaskModal(null, e.clientX, e.clientY, 'report');
         });
     }
+
+    // ---------- Создание по двойному клику в колонке ----------
+    // Двойной клик/тап по пустому месту колонки открывает модалку создания
+    // с автоматически подставленным статусом соответствующей колонки:
+    // «Срочные» -> urgent, «В работе» -> in_progress, «Отчёты» -> режим отчёта.
+    function columnCreateTask(e, column) {
+        var status = column.dataset.status;
+        if (status === 'reports') {
+            openTaskModal(null, e.clientX, e.clientY, 'report');
+        } else {
+            openTaskModal(null, e.clientX, e.clientY, 'task', status);
+        }
+    }
+
+    function isColumnInteractiveTarget(target) {
+        return !!target.closest('.task-card, button, input, select, textarea, [data-action]');
+    }
+
+    document.querySelectorAll('.column').forEach(function(column) {
+        column.addEventListener('dblclick', function(e) {
+            if (isColumnInteractiveTarget(e.target)) return;
+            columnCreateTask(e, column);
+        });
+        if (isTouchDevice) {
+            var lastColumnTapTime = 0;
+            column.addEventListener('click', function(e) {
+                if (isColumnInteractiveTarget(e.target)) return;
+                var now = Date.now();
+                if (now - lastColumnTapTime < TOUCH_TAP_MS) {
+                    lastColumnTapTime = 0;
+                    columnCreateTask(e, column);
+                } else {
+                    lastColumnTapTime = now;
+                }
+            });
+        }
+    });
 
     // ---------- Мобильные кнопки ----------
     var mobileAddBtn = document.getElementById('mobileAddBtn');
