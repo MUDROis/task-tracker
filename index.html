@@ -96,6 +96,15 @@
                 <button id="archiveBtn" class="btn outline btn-sm">🗂 Архив</button>
             </div>
 
+            <!-- Переключатель Задачи/Отчёты и фильтр по сотрудникам -->
+            <div class="view-bar">
+                <div class="view-switcher" role="group" aria-label="Переключение вида">
+                    <button id="viewTasksBtn" type="button" class="view-switch-btn active" data-view="tasks">Задачи</button>
+                    <button id="viewReportsBtn" type="button" class="view-switch-btn" data-view="reports">Отчёты</button>
+                </div>
+                <select id="employeeFilter" class="employee-filter" aria-label="Фильтр по сотрудникам" style="display:none;"></select>
+            </div>
+
             <!-- Мобильная нижняя панель -->
             <div class="mobile-bar">
                 <button id="mobileManageBtn" class="mobile-bar-btn" title="Управление">👥</button>
@@ -126,6 +135,10 @@
                     </div>
                     <div class="task-list" id="list_in_progress"></div>
                 </div>
+            </div>
+
+            <!-- Отчёты (отдельный вид) -->
+            <div id="reportsView" class="reports-view" style="display:none;">
                 <div class="column" data-status="reports">
                     <div class="column-header">
                         <h3>📄 Отчёты</h3>
