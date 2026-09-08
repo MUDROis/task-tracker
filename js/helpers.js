@@ -182,6 +182,176 @@
         });
     }
 
+    // ====================================================================
+    //  Роли, права (чекбоксы функций) и иерархическая видимость.
+    //  Полный перечень функций системы — ровно 15 пунктов (по ТЗ).
+    // ====================================================================
+    var ROLES = {
+        manager: { label: 'Менеджер (админ)', description: 'Полный доступ ко всем функциям системы.' },
+        management: { label: 'Управление', description: 'Административная роль; не может удалять/редактировать сотрудников Менеджера и удалять задачи.' },
+        department: { label: 'Отдел', description: 'Отдел; не управляет сотрудниками и не назначает задачи Управлению.' },
+        specialist: { label: 'Специалист', description: 'Базовая роль для работы с задачами.' }
+    };
+
+    var PERMISSIONS = [
+        { key: 'addEmployees', label: 'Добавлять сотрудников' },
+        { key: 'deleteEmployees', label: 'Удалять сотрудников' },
+        { key: 'editEmployees', label: 'Редактировать сотрудников' },
+        { key: 'deleteManagerEmployees', label: 'Удалять сотрудников, созданных Менеджером' },
+        { key: 'editManagerEmployees', label: 'Редактировать сотрудников, добавленных Менеджером' },
+        { key: 'assignTasksToManagement', label: 'Назначать задачи Управлению' },
+        { key: 'assignTasksToDepartment', label: 'Назначать задачи Отделу' },
+        { key: 'assignTasksToSpecialist', label: 'Назначать задачи Специалистам' },
+        { key: 'createTasks', label: 'Создавать задачи' },
+        { key: 'editTasks', label: 'Редактировать задачи' },
+        { key: 'deleteTasks', label: 'Удалять задачи' },
+        { key: 'manageRoles', label: 'Управлять ролями и правами пользователей' },
+        { key: 'viewReports', label: 'Просматривать отчёты и аналитику' },
+        { key: 'exportData', label: 'Экспортировать данные' },
+        { key: 'systemSettings', label: 'Настраивать систему' }
+    ];
+
+    function allTrue() {
+        var out = {};
+        PERMISSIONS.forEach(function (p) { out[p.key] = true; });
+        return out;
+    }
+
+    var ROLE_PRESETS = {
+        manager: allTrue(),
+        management: (function () {
+            var o = allTrue();
+            o.deleteManagerEmployees = false;
+            o.editManagerEmployees = false;
+            o.deleteTasks = false;
+            o.manageRoles = false;
+            o.systemSettings = false;
+            return o;
+        }()),
+        department: (function () {
+            var o = allTrue();
+            o.addEmployees = false;
+            o.deleteEmployees = false;
+            o.editEmployees = false;
+            o.deleteManagerEmployees = false;
+            o.editManagerEmployees = false;
+            o.assignTasksToManagement = false;
+            o.deleteTasks = false;
+            o.manageRoles = false;
+            o.exportData = false;
+            o.systemSettings = false;
+            return o;
+        }()),
+        specialist: (function () {
+            var o = allTrue();
+            o.addEmployees = false;
+            o.deleteEmployees = false;
+            o.editEmployees = false;
+            o.deleteManagerEmployees = false;
+            o.editManagerEmployees = false;
+            o.assignTasksToManagement = false;
+            o.assignTasksToDepartment = false;
+            o.deleteTasks = false;
+            o.manageRoles = false;
+            o.viewReports = false;
+            o.exportData = false;
+            o.systemSettings = false;
+            return o;
+        }())
+    };
+
+    function copyMap(src) {
+        return JSON.parse(JSON.stringify(src || {}));
+    }
+
+    // Нормализует пользователя из БД: миграция старых ролей admin/employee,
+    // подстановка пресета прав, если permissions не задан.
+    function normalizeUser(u) {
+        u = u || {};
+        var role = u.role || 'specialist';
+        if (role === 'admin') role = 'manager';
+        if (role === 'employee') role = 'specialist';
+        if (!ROLES[role]) role = 'specialist';
+        return {
+            uid: u.uid || '',
+            login: u.login,
+            name: u.name || '',
+            role: role,
+            permissions: u.permissions ? copyMap(u.permissions) : copyMap(ROLE_PRESETS[role]),
+            email: u.email || '',
+            color: u.color || '',
+            emoji: u.emoji || '',
+            createdBy: u.createdBy || '',
+            createdAt: u.createdAt || ''
+        };
+    }
+
+    function isManager(user) {
+        return !!(user && user.role === 'manager');
+    }
+
+    function canDo(user, permissionKey) {
+        if (!user) return false;
+        if (user.role === 'manager') return true;
+        return !!(user.permissions && user.permissions[permissionKey] === true);
+    }
+
+    function canAssignTo(user, targetRole) {
+        if (!user) return false;
+        if (user.role === 'manager') return true;
+        var map = {
+            management: 'assignTasksToManagement',
+            department: 'assignTasksToDepartment',
+            specialist: 'assignTasksToSpecialist'
+        };
+        var key = map[targetRole];
+        if (!key) return false;
+        return !!(user.permissions && user.permissions[key] === true);
+    }
+
+    // Логины сотрудников, подчинённых login по цепочке createdBy (рекурсивно).
+    function collectSubordinateLogins(login, usersArr) {
+        var list = usersArr || [];
+        var result = [];
+        var seen = {};
+        function visit(current) {
+            list.forEach(function (u) {
+                if (u.createdBy === current && !seen[u.login]) {
+                    seen[u.login] = true;
+                    result.push(u.login);
+                    visit(u.login);
+                }
+            });
+        }
+        visit(login);
+        return result;
+    }
+
+    // Главный фильтр видимости с учётом роли.
+    // manager/management — всё; department — своё + подчинённые по цепочке
+    // createdBy (а также назначенное лично и делегированное им); specialist — своё.
+    function visibleHierarchyItems(items, login, role, usersArr) {
+        if (role === 'manager' || role === 'management') {
+            return (items || []).slice();
+        }
+        var mine = {};
+        mine[login] = true;
+        if (role === 'department') {
+            collectSubordinateLogins(login, usersArr).forEach(function (s) { mine[s] = true; });
+        }
+        return (items || []).filter(function (item) {
+            return mine[item.createdBy] === true || item.assignedTo === login || item.delegatedBy === login;
+        });
+    }
+
+    function visibleHierarchyTasks(tasks, login, role, usersArr) {
+        return visibleHierarchyItems(tasks, login, role, usersArr);
+    }
+
+    function visibleHierarchyReports(reports, login, role, usersArr) {
+        return visibleHierarchyItems(reports, login, role, usersArr);
+    }
+
     return {
         calendarDaysUntil: calendarDaysUntil,
         deadlineStripClass: deadlineStripClass,
@@ -194,6 +364,16 @@
         statsSummary: statsSummary,
         itemVisibleToUser: itemVisibleToUser,
         visibleTasks: visibleTasks,
-        visibleReports: visibleReports
+        visibleReports: visibleReports,
+        ROLES: ROLES,
+        PERMISSIONS: PERMISSIONS,
+        ROLE_PRESETS: ROLE_PRESETS,
+        normalizeUser: normalizeUser,
+        canDo: canDo,
+        canAssignTo: canAssignTo,
+        isManager: isManager,
+        collectSubordinateLogins: collectSubordinateLogins,
+        visibleHierarchyTasks: visibleHierarchyTasks,
+        visibleHierarchyReports: visibleHierarchyReports
     };
 }));
