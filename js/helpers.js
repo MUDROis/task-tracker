@@ -156,6 +156,32 @@
         };
     }
 
+    // Видимость элемента для пользователя: не-админ — только своё
+    // (createdBy === login || assignedTo === login), админ — всё.
+    // selectedEmployee применяется только для админа.
+    function itemVisibleToUser(item, login, isAdmin, selectedEmployee) {
+        if (!item) return false;
+        if (!isAdmin && item.createdBy !== login && item.assignedTo !== login) return false;
+        if (isAdmin && selectedEmployee) {
+            return item.createdBy === selectedEmployee || item.assignedTo === selectedEmployee;
+        }
+        return true;
+    }
+
+    // Задачи, видимые пользователю (учётка роли и фильтра по сотруднику).
+    function visibleTasks(tasks, login, isAdmin, selectedEmployee) {
+        return (tasks || []).filter(function (t) {
+            return itemVisibleToUser(t, login, isAdmin, selectedEmployee);
+        });
+    }
+
+    // Отчёты, видимые пользователю (учётка роли и фильтра по сотруднику).
+    function visibleReports(reports, login, isAdmin, selectedEmployee) {
+        return (reports || []).filter(function (r) {
+            return itemVisibleToUser(r, login, isAdmin, selectedEmployee);
+        });
+    }
+
     return {
         calendarDaysUntil: calendarDaysUntil,
         deadlineStripClass: deadlineStripClass,
@@ -165,6 +191,9 @@
         normalizeDueDate: normalizeDueDate,
         toDateTimeLocalValue: toDateTimeLocalValue,
         doneStripClass: doneStripClass,
-        statsSummary: statsSummary
+        statsSummary: statsSummary,
+        itemVisibleToUser: itemVisibleToUser,
+        visibleTasks: visibleTasks,
+        visibleReports: visibleReports
     };
 }));
