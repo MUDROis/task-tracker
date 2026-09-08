@@ -18,6 +18,8 @@
     let initialLoadDone = false;
     var blockedMessage = null;
     let currentItemMode = 'task'; // 'task' | 'report' — режим модалки добавления
+    let activeView = 'tasks'; // 'tasks' | 'reports' — текущая вкладка
+    let selectedEmployee = ''; // логин выбранного сотрудника в фильтре; '' — все
 
     // ---------- Звуковое уведомление ----------
     function playNotificationSound() {
@@ -207,6 +209,10 @@
     const newPassword = document.getElementById('newPassword');
     const itemTypeToggle = document.getElementById('itemTypeToggle');
     const taskStatusGroup = document.getElementById('taskStatusGroup');
+    const viewTasksBtn = document.getElementById('viewTasksBtn');
+    const viewReportsBtn = document.getElementById('viewReportsBtn');
+    const employeeFilter = document.getElementById('employeeFilter');
+    const reportsView = document.getElementById('reportsView');
 
     // ---------- Color picker interactivity ----------
     const DEFAULT_COLORS = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
@@ -308,6 +314,7 @@
                 }
             }
             populateAssigneeSelect();
+            populateEmployeeFilter();
             if (initialLoadDone) renderBoard();
         });
 
@@ -602,6 +609,8 @@
         const mobileManage = document.getElementById('mobileManageBtn');
         if (mobileManage) mobileManage.style.display = currentUser.role === 'admin' ? 'flex' : 'none';
         populateAssigneeSelect();
+        populateEmployeeFilter();
+        switchView('tasks');
     }
 
     // ---------- Авторизация ----------
@@ -1175,6 +1184,42 @@
         return tasks.filter(function(t) {
             return t.createdBy === currentUser.login || t.assignedTo === currentUser.login;
         });
+    }
+
+    // ---------- Переключение вкладок «Задачи» / «Отчёты» ----------
+    function switchView(view) {
+        activeView = view === 'reports' ? 'reports' : 'tasks';
+        const onTasks = activeView === 'tasks';
+        if (viewTasksBtn) viewTasksBtn.classList.toggle('active', onTasks);
+        if (viewReportsBtn) viewReportsBtn.classList.toggle('active', !onTasks);
+        const boardEl = document.getElementById('board');
+        if (boardEl) boardEl.style.display = onTasks ? '' : 'none';
+        if (reportsView) reportsView.style.display = onTasks ? 'none' : '';
+        renderBoard();
+    }
+
+    // ---------- Фильтр по сотрудникам (только для администратора) ----------
+    function populateEmployeeFilter() {
+        if (!employeeFilter) return;
+        const isAdmin = currentUser && currentUser.role === 'admin';
+        employeeFilter.style.display = isAdmin ? '' : 'none';
+        if (!isAdmin) {
+            employeeFilter.value = '';
+            selectedEmployee = '';
+            return;
+        }
+        const prev = employeeFilter.value;
+        employeeFilter.innerHTML = '<option value="">Все сотрудники</option>';
+        users.slice().sort(function(a, b) {
+            return (formatUserName(a.login) || a.login).localeCompare(formatUserName(b.login) || b.login, 'ru');
+        }).forEach(function(u) {
+            const opt = document.createElement('option');
+            opt.value = u.login;
+            opt.textContent = formatUserName(u.login) + (u.role === 'admin' ? ' (Руководитель)' : '');
+            employeeFilter.appendChild(opt);
+        });
+        employeeFilter.value = prev;
+        if (employeeFilter.value !== prev) selectedEmployee = employeeFilter.value;
     }
 
     function renderBoard() {
@@ -1920,6 +1965,14 @@
             openTaskModal(null, e.clientX, e.clientY, 'report');
         });
     }
+
+    // ---------- Переключатель вкладок ----------
+    if (viewTasksBtn) viewTasksBtn.addEventListener('click', function() { switchView('tasks'); });
+    if (viewReportsBtn) viewReportsBtn.addEventListener('click', function() { switchView('reports'); });
+    if (employeeFilter) employeeFilter.addEventListener('change', function() {
+        selectedEmployee = employeeFilter.value;
+        renderBoard();
+    });
 
     // ---------- Создание по двойному клику в колонке ----------
     // Двойной клик/тап по пустому месту колонки открывает модалку создания
