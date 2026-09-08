@@ -426,6 +426,59 @@ button { font-family: inherit; }
     background: rgba(255,255,255,.05);
 }
 
+/* ===== ПАНЕЛЬ ПЕРЕКЛЮЧЕНИЯ ВИДА (Задачи | Отчёты) ===== */
+.view-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+.view-switcher {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.2rem;
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+}
+.view-switch-btn {
+    padding: 0.4rem 1.05rem;
+    border: none;
+    background: transparent;
+    border-radius: 0.5rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+}
+.view-switch-btn:hover {
+    color: var(--text);
+}
+.view-switch-btn.active {
+    background: var(--accent);
+    color: var(--accent-ink);
+}
+.employee-filter {
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: var(--surface2);
+    color: var(--text);
+    color-scheme: dark;
+    max-width: 220px;
+}
+.employee-filter:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255,180,84,.15);
+}
+
 /* ===== BOARD ===== */
 .board {
     display: grid;
@@ -1254,5 +1307,23 @@ button { font-family: inherit; }
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: .01ms !important;
+    }
+}
+
+/* ===== МОБИЛЬНОЕ ПЕРЕКЛЮЧЕНИЕ ВИДА ===== */
+@media (max-width: 768px) {
+    .view-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .view-switcher {
+        width: 100%;
+    }
+    .view-switch-btn {
+        flex: 1;
+        padding: 0.55rem 1rem;
+    }
+    .employee-filter {
+        max-width: none;
     }
 }
