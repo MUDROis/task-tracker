@@ -427,13 +427,11 @@ button { font-family: inherit; }
 }
 
 /* ===== ПАНЕЛЬ ПЕРЕКЛЮЧЕНИЯ ВИДА (Задачи | Отчёты) ===== */
-.view-bar {
+.toolbar-view-switch {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-end;
     gap: 0.75rem;
-    margin-bottom: 1.25rem;
+    margin-left: auto;
 }
 .view-switcher {
     display: flex;
@@ -1312,18 +1310,35 @@ button { font-family: inherit; }
 
 /* ===== МОБИЛЬНОЕ ПЕРЕКЛЮЧЕНИЕ ВИДА ===== */
 @media (max-width: 768px) {
-    .view-bar {
-        flex-direction: column;
-        align-items: stretch;
+    .toolbar {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .toolbar > #addTaskBtn,
+    .toolbar > .toolbar-settings-group,
+    .toolbar > #fileInput,
+    .toolbar > #manageUsersBtn,
+    .toolbar > #archiveBtn {
+        display: none;
+    }
+    .toolbar-view-switch {
+        margin-left: 0;
+        flex: 1;
+        justify-content: space-between;
+        gap: 0.5rem;
     }
     .view-switcher {
-        width: 100%;
+        flex: 1;
     }
     .view-switch-btn {
         flex: 1;
         padding: 0.55rem 1rem;
     }
     .employee-filter {
+        flex: 1;
+        min-width: 0;
         max-width: none;
     }
 }

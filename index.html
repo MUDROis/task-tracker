@@ -94,15 +94,13 @@
                 <input type="file" id="fileInput" accept=".xlsx" style="display:none">
                 <button id="manageUsersBtn" class="btn outline btn-sm" style="display:none;">👥 Управление</button>
                 <button id="archiveBtn" class="btn outline btn-sm">🗂 Архив</button>
-            </div>
-
-            <!-- Переключатель Задачи/Отчёты и фильтр по сотрудникам -->
-            <div class="view-bar">
-                <div class="view-switcher" role="group" aria-label="Переключение вида">
-                    <button id="viewTasksBtn" type="button" class="view-switch-btn active" data-view="tasks">Задачи</button>
-                    <button id="viewReportsBtn" type="button" class="view-switch-btn" data-view="reports">Отчёты</button>
+                <div class="toolbar-view-switch">
+                    <select id="employeeFilter" class="employee-filter" aria-label="Фильтр по сотрудникам" style="display:none;"></select>
+                    <div class="view-switcher" role="group" aria-label="Переключение вида">
+                        <button id="viewTasksBtn" type="button" class="view-switch-btn active" data-view="tasks">Задачи</button>
+                        <button id="viewReportsBtn" type="button" class="view-switch-btn" data-view="reports">Отчёты</button>
+                    </div>
                 </div>
-                <select id="employeeFilter" class="employee-filter" aria-label="Фильтр по сотрудникам" style="display:none;"></select>
             </div>
 
             <!-- Мобильная нижняя панель -->
