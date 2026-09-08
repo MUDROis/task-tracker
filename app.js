@@ -970,7 +970,7 @@
         }).forEach(function(u) {
             const opt = document.createElement('option');
             opt.value = u.login;
-            opt.textContent = formatUserName(u.login) + (DeadlineHelpers.isManager(u) ? ' (Руководитель)' : '');
+            opt.textContent = formatUserNameWithRole(u.login);
             employeeFilter.appendChild(opt);
         });
         employeeFilter.value = prev;
@@ -1383,8 +1383,7 @@
                     '<label for="delegateSelect">Выберите сотрудника</label>' +
                     '<select id="delegateSelect">' +
                         assignees.map(function(login) {
-                            var u = users.find(function(usr) { return usr.login === login; });
-                            var label = login + (u && DeadlineHelpers.isManager(u) ? ' (Руководитель)' : '');
+                            var label = formatUserNameWithRole(login);
                             return '<option value="' + escapeHtml(login) + '" ' + (item.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
                         }).join('') +
                     '</select>' +
@@ -1452,7 +1451,7 @@
         users.forEach(function(u) {
             var opt = document.createElement('option');
             opt.value = u.login;
-            opt.textContent = u.login + (DeadlineHelpers.isManager(u) ? ' (Руководитель)' : '');
+            opt.textContent = formatUserNameWithRole(u.login);
             select.appendChild(opt);
         });
         if (currentVal) select.value = currentVal;
@@ -1965,18 +1964,26 @@
         if (!login) return '—';
         var u = users.find(function(u) { return u.login === login; });
         if (u && u.name) return u.name;
-        if (u && u.role) return formatRoleLabel(u.role);
+        if (u) return u.login;
         return login;
+    }
+
+    function formatUserNameWithRole(login) {
+        if (!login) return '—';
+        var u = users.find(function(u) { return u.login === login; });
+        var name = (u && u.name) ? u.name : login;
+        var role = u ? formatRoleLabel(u.role) : '';
+        return role ? name + ' — ' + role : name;
     }
 
     function formatRoleLabel(role) {
         var labels = {
-            manager: 'Руководитель',
+            manager: 'Менеджер',
             management: 'Управление',
             department: 'Отдел',
             specialist: 'Специалист'
         };
-        return labels[role] || (role === 'admin' ? 'Руководитель' : role);
+        return labels[role] || (role === 'admin' ? 'Менеджер' : role);
     }
 
     function delegatedByLabel(role) {

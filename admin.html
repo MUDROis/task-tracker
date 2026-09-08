@@ -36,6 +36,10 @@
             <form id="addUserForm">
                 <div class="admin-grid">
                     <div class="form-group">
+                        <label for="addName">Имя и фамилия</label>
+                        <input type="text" id="addName" placeholder="Иван Иванов" autocomplete="name">
+                    </div>
+                    <div class="form-group">
                         <label for="addLogin">Логин</label>
                         <input type="text" id="addLogin" required minlength="3" placeholder="ivanov" autocomplete="username">
                     </div>
@@ -64,6 +68,20 @@
                 <h2 class="admin-h1" id="userName"></h2>
                 <p id="userMeta" class="muted"></p>
                 <form id="userForm" style="margin-top:14px;">
+                    <div class="admin-grid">
+                        <div class="form-group">
+                            <label for="editName">Имя и фамилия</label>
+                            <input type="text" id="editName" placeholder="Иван Иванов" autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmail">Email</label>
+                            <input type="email" id="editEmail" placeholder="ivanov@mudro.ru">
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmoji">Эмодзи (иконка)</label>
+                            <input type="text" id="editEmoji" maxlength="4" placeholder="👤">
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="roleSelect">Роль пользователя</label>
                         <select id="roleSelect"></select>

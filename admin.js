@@ -31,6 +31,9 @@
     var userName = document.getElementById('userName');
     var userMeta = document.getElementById('userMeta');
     var userForm = document.getElementById('userForm');
+    var editName = document.getElementById('editName');
+    var editEmail = document.getElementById('editEmail');
+    var editEmoji = document.getElementById('editEmoji');
     var roleSelect = document.getElementById('roleSelect');
     var roleHint = document.getElementById('roleHint');
     var permissionsList = document.getElementById('permissionsList');
@@ -62,8 +65,9 @@
         users.forEach(function (u) {
             var opt = document.createElement('option');
             opt.value = u.login;
+            var name = u.name || u.login;
             var roleLabel = DeadlineHelpers.ROLES[u.role] ? DeadlineHelpers.ROLES[u.role].label : u.role;
-            opt.textContent = u.login + ' — ' + roleLabel;
+            opt.textContent = name + ' — ' + roleLabel;
             if (u.login === selectedLogin) opt.selected = true;
             userSelect.appendChild(opt);
         });
@@ -94,11 +98,17 @@
         var user = users.find(function (u) { return u.login === selectedLogin; });
         if (!user) { userPanel.hidden = true; return; }
         userPanel.hidden = false;
-        userName.textContent = user.login;
+        userName.textContent = user.name || user.login;
         var roleLabel = DeadlineHelpers.ROLES[user.role] ? DeadlineHelpers.ROLES[user.role].label : user.role;
         var createdStr = user.createdAt ? new Date(user.createdAt).toLocaleString('ru-RU') : '—';
-        userMeta.textContent = (user.email || 'Email не указан') + ' • Роль: ' + roleLabel +
-            ' • Создан: ' + createdStr + (user.createdBy ? ' • Создал: ' + user.createdBy : '');
+        userMeta.textContent = 'Логин: ' + user.login +
+            (user.email ? ' • Email: ' + user.email : '') +
+            ' • Роль: ' + roleLabel +
+            ' • Создан: ' + createdStr +
+            (user.createdBy ? ' • Создал: ' + (users.find(function(u){return u.login===user.createdBy;}) || {}).name || user.createdBy : '');
+        editName.value = user.name || '';
+        editEmail.value = user.email || '';
+        editEmoji.value = user.emoji || '';
         fillRoleSelect(roleSelect, user.role);
         roleHint.textContent = DeadlineHelpers.ROLES[user.role] ? DeadlineHelpers.ROLES[user.role].description : '';
         renderPermissions(user);
@@ -207,6 +217,7 @@
             var password = document.getElementById('addPassword').value;
             var email = document.getElementById('addEmail').value.trim();
             var role = addRoleSelect.value;
+            var name = document.getElementById('addName').value.trim();
             if (!login || !password || !email || !role) return;
             if (users.some(function (u) { return u.login.toLowerCase() === login.toLowerCase(); })) {
                 alert('Сотрудник с таким логином уже существует.');
@@ -219,9 +230,11 @@
                     var rec = DeadlineHelpers.normalizeUser({
                         uid: cred.user.uid,
                         login: login,
+                        name: name || login,
                         role: role,
                         email: email,
                         color: '#3b82f6',
+                        emoji: '👤',
                         createdAt: new Date().toISOString()
                     });
                     rec.createdBy = selectedLogin || '';
@@ -251,6 +264,9 @@
                 perm[cb.dataset.key] = cb.checked;
             });
             var updated = Object.assign({}, user, {
+                name: editName.value.trim(),
+                email: editEmail.value.trim(),
+                emoji: editEmoji.value.trim(),
                 role: roleSelect.value,
                 permissions: perm,
                 updatedAt: new Date().toISOString()
@@ -288,7 +304,7 @@
             if (!user) return;
             var managerCount = users.filter(function (u) { return u.role === 'manager'; }).length;
             if (user.role === 'manager' && managerCount <= 1) {
-                alert('Нельзя удалить последнего пользователя с ролью «Менеджер (админ)».');
+                alert('Нельзя удалить последнего пользователя с ролью «Менеджер».');
                 return;
             }
             if (!confirm('Удалить пользователя «' + user.login + '»?')) return;
