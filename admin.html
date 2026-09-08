@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Админ-панель: роли и права</title>
+    <link rel="icon" href="logo.png?v=2" type="image/png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/400.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/500.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/600.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/600.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="admin-style.css">
+    <script src="js/helpers.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <div class="orb orb-a" aria-hidden="true"></div>
+    <div class="orb orb-b" aria-hidden="true"></div>
+    <main class="admin-wrap">
+        <a class="btn btn--ghost admin-back" href="index.html">← Вернуться к трекеру</a>
+        <div class="admin-topbar">
+            <label class="visually-hidden" for="userSelect">Сотрудник</label>
+            <select id="userSelect" aria-label="Список сотрудников"></select>
+            <button id="showAddUserBtn" class="btn btn--charcoal" type="button">➕ Добавить сотрудника</button>
+        </div>
+        <h1 class="admin-h1">Панель администратора</h1>
+        <p class="admin-sub">Управление сотрудниками, ролями и функционалом каждого пользователя</p>
+
+        <section id="addUserPanel" class="admin-card" hidden>
+            <h2>Новый сотрудник</h2>
+            <form id="addUserForm">
+                <div class="admin-grid">
+                    <div class="form-group">
+                        <label for="addLogin">Логин</label>
+                        <input type="text" id="addLogin" required minlength="3" placeholder="ivanov" autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="addPassword">Пароль</label>
+                        <input type="password" id="addPassword" required minlength="6" placeholder="••••••" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="addEmail">Email</label>
+                        <input type="email" id="addEmail" required placeholder="ivanov@mudro.ru">
+                    </div>
+                    <div class="form-group">
+                        <label for="addRoleSelect">Роль</label>
+                        <select id="addRoleSelect"></select>
+                    </div>
+                </div>
+                <div class="admin-form-actions">
+                    <button class="btn primary" type="submit">Создать сотрудника</button>
+                    <button class="btn btn--ghost" type="button" id="cancelAddUserBtn">Отмена</button>
+                </div>
+            </form>
+        </section>
+
+        <div class="admin-layout">
+            <section id="userPanel" class="admin-card" hidden>
+                <h2 class="admin-h1" id="userName"></h2>
+                <p id="userMeta" class="muted"></p>
+                <form id="userForm" style="margin-top:14px;">
+                    <div class="form-group">
+                        <label for="roleSelect">Роль пользователя</label>
+                        <select id="roleSelect"></select>
+                    </div>
+                    <div class="role-hint" id="roleHint"></div>
+                    <fieldset class="permissions-fieldset">
+                        <legend>Функции пользователя</legend>
+                        <div id="permissionsList" class="permissions"></div>
+                    </fieldset>
+                    <div class="admin-form-actions">
+                        <button class="btn primary" type="submit">💾 Сохранить права</button>
+                        <button class="btn btn--charcoal" type="button" id="resetRoleBtn">Сбросить на пресет роли</button>
+                        <button class="btn btn--danger" type="button" id="deleteUserBtn">Удалить пользователя</button>
+                    </div>
+                    <p id="saveStatus" class="admin-status" role="status"></p>
+                </form>
+            </section>
+
+            <aside class="admin-card">
+                <h2>Пресеты ролей</h2>
+                <p class="muted">Функции, включённые/выключенные по умолчанию для каждой роли. Админ может менять их для конкретного пользователя.</p>
+                <div id="rolesPresetList" class="roles-list"></div>
+            </aside>
+        </div>
+    </main>
+    <script src="admin.js"></script>
+</body>
+</html>
