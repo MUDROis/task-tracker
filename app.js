@@ -296,15 +296,13 @@
         // Слушаем пользователей в реальном времени
         getUsersRef().on('value', function(snapshot) {
             const data = snapshot.val();
-            users = data ? Object.values(data) : [];
-            users = users.map(function(u) {
-                return Object.assign({}, u, {
-                    role: u.role || 'employee',
-                    name: u.name || '',
-                    color: u.color || DEFAULT_COLORS[users.indexOf(u) % DEFAULT_COLORS.length],
-                    email: u.email || '',
-                    emoji: u.emoji || ''
-                });
+            const rawUsers = data ? Object.values(data) : [];
+            users = rawUsers.map(function(u) {
+                var normalized = DeadlineHelpers.normalizeUser(u);
+                if (!normalized.color) {
+                    normalized.color = DEFAULT_COLORS[rawUsers.indexOf(u) % DEFAULT_COLORS.length];
+                }
+                return normalized;
             });
             // Если текущий пользователь есть в списке — обновляем его данные
             if (currentUser) {
@@ -492,6 +490,13 @@
         getUsersRef().child(login).remove();
     }
 
+    // Нормализация текущего пользователя: миграция ролей + пресет прав.
+    function buildCurrentUser(userData, uid) {
+        return DeadlineHelpers.normalizeUser(Object.assign({}, userData, {
+            uid: uid || userData.uid
+        }));
+    }
+
     // ---------- Автосоздание admin-пользователя ----------
     function ensureAdminUser() {
         console.log('ensureAdminUser: попытка создания admin...');
@@ -499,14 +504,14 @@
             .then(function(userCredential) {
                 const uid = userCredential.user.uid;
                 console.log('ensureAdminUser: admin создан в Auth, uid=' + uid + ', записываю в DB...');
-                return getUsersRef().child('admin').set({
-                    uid: uid,
+                return getUsersRef().child('admin').set(Object.assign({}, DeadlineHelpers.normalizeUser({
                     login: 'admin',
                     name: 'Харитон',
-                    role: 'admin',
+                    role: 'manager',
                     color: '#3b82f6',
-                    email: ''
-                });
+                    email: '',
+                    createdBy: ''
+                }), { uid: uid }));
             })
             .then(function() {
                 console.log('ensureAdminUser: admin записан в DB. Войдите: admin / admin123');
@@ -534,15 +539,7 @@
                 getUsersRef().child(login).once('value').then(function(snapshot) {
                     const userData = snapshot.val();
                     if (userData) {
-                        currentUser = {
-                            uid: user.uid,
-                            login: userData.login,
-                            name: userData.name || '',
-                            role: userData.role,
-                            color: userData.color,
-                            email: userData.email,
-                            emoji: userData.emoji || ''
-                        };
+                        currentUser = buildCurrentUser(userData, user.uid);
                         // Первичная миграция существующей записи admin: добавляем имя
                         if (login === 'admin' && !userData.name) {
                             currentUser.name = 'Харитон';
@@ -553,15 +550,15 @@
                         initFirebaseListeners();
                     } else if (login === 'admin') {
                         // Первый вход admin — создаём запись в БД
-                        currentUser = {
+                        currentUser = DeadlineHelpers.normalizeUser({
                             uid: user.uid,
                             login: login,
                             name: 'Харитон',
-                            role: 'admin',
+                            role: 'manager',
                             color: '#3b82f6',
                             email: '',
-                            emoji: ''
-                        };
+                            createdBy: ''
+                        });
                         saveUser(currentUser);
                         saveSession(currentUser);
                         showMainPage();
@@ -634,15 +631,7 @@
                 const userData = snapshot.val();
                 console.log('Данные из DB:', userData);
                 if (userData) {
-                    currentUser = {
-                        uid: userData.uid,
-                        login: userData.login,
-                        name: userData.name || '',
-                        role: userData.role,
-                        color: userData.color,
-                        email: userData.email,
-                        emoji: userData.emoji || ''
-                    };
+                    currentUser = buildCurrentUser(userData, user.uid);
                     saveSession(currentUser);
                     showMainPage();
                 }
