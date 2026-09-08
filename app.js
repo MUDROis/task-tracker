@@ -1180,10 +1180,7 @@
     }
 
     function getTasksForUser() {
-        if (currentUser.role === 'admin') return tasks;
-        return tasks.filter(function(t) {
-            return t.createdBy === currentUser.login || t.assignedTo === currentUser.login;
-        });
+        return DeadlineHelpers.visibleTasks(tasks, currentUser.login, currentUser.role === 'admin', selectedEmployee);
     }
 
     // ---------- Переключение вкладок «Задачи» / «Отчёты» ----------
@@ -1264,7 +1261,9 @@
         var ringEl = document.getElementById('statsRing');
         var pctEl = document.getElementById('ringPct');
         if (!ringEl || !pctEl || !currentUser) return;
-        var stats = DeadlineHelpers.statsSummary(tasks, reports, currentUser.login, currentUser.role === 'admin');
+        var ringTasks = getTasksForUser();
+        var ringReports = reports.filter(isMyReport);
+        var stats = DeadlineHelpers.statsSummary(ringTasks, ringReports, currentUser.login, currentUser.role === 'admin');
         ringEl.style.setProperty('--p', stats.pct);
         pctEl.textContent = stats.pct + '%';
     }
@@ -2224,8 +2223,7 @@
     }
 
     function isMyReport(report) {
-        if (currentUser.role === 'admin') return true;
-        return report.createdBy === currentUser.login || report.assignedTo === currentUser.login;
+        return DeadlineHelpers.itemVisibleToUser(report, currentUser.login, currentUser.role === 'admin', selectedEmployee);
     }
 
     function createReportCard(report) {
