@@ -1,12 +1,12 @@
-﻿// ============================================================
-//  РўСЂРµРєРµСЂ Р·Р°РґР°С‡ вЂ” PWA СЃ Firebase Realtime Database + Auth
-//  Р”Р°РЅРЅС‹Рµ СЃРёРЅС…СЂРѕРЅРёР·РёСЂСѓСЋС‚СЃСЏ РјРµР¶РґСѓ РІСЃРµРјРё СѓСЃС‚СЂРѕР№СЃС‚РІР°РјРё РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё
+// ============================================================
+//  Трекер задач — PWA с Firebase Realtime Database + Auth
+//  Данные синхронизируются между всеми устройствами в реальном времени
 // ============================================================
 
 (function() {
     'use strict';
 
-    // ---------- Р“Р»РѕР±Р°Р»СЊРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ ----------
+    // ---------- Глобальные переменные ----------
     let currentUser = null;
     let tasks = [];
     let reports = [];
@@ -17,11 +17,11 @@
     let knownTaskIds = new Set();
     let initialLoadDone = false;
     var blockedMessage = null;
-    let currentItemMode = 'task'; // 'task' | 'report' вЂ” СЂРµР¶РёРј РјРѕРґР°Р»РєРё РґРѕР±Р°РІР»РµРЅРёСЏ
-    let activeView = 'tasks'; // 'tasks' | 'reports' вЂ” С‚РµРєСѓС‰Р°СЏ РІРєР»Р°РґРєР°
-    let selectedEmployee = ''; // Р»РѕРіРёРЅ РІС‹Р±СЂР°РЅРЅРѕРіРѕ СЃРѕС‚СЂСѓРґРЅРёРєР° РІ С„РёР»СЊС‚СЂРµ; '' вЂ” РІСЃРµ
+    let currentItemMode = 'task'; // 'task' | 'report' — режим модалки добавления
+    let activeView = 'tasks'; // 'tasks' | 'reports' — текущая вкладка
+    let selectedEmployee = ''; // логин выбранного сотрудника в фильтре; '' — все
 
-    // ---------- Р—РІСѓРєРѕРІРѕРµ СѓРІРµРґРѕРјР»РµРЅРёРµ ----------
+    // ---------- Звуковое уведомление ----------
     function playNotificationSound() {
         try {
             var ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -40,7 +40,7 @@
         } catch (e) {}
     }
 
-    // ---------- Р‘РµР№РґР¶ РЅР° РёРєРѕРЅРєРµ PWA ----------
+    // ---------- Бейдж на иконке PWA ----------
     var badgeCount = 0;
     var baseFavicon = null;
 
@@ -55,7 +55,7 @@
                 }
             } catch (e) {}
         }
-        // Canvas-favicon С„РѕР»Р±СЌРє
+        // Canvas-favicon фолбэк
         setFaviconBadge(badgeCount);
     }
 
@@ -128,20 +128,20 @@
         updateBadge();
     }
 
-    // ---------- Р’РёР·СѓР°Р»СЊРЅРѕРµ СѓРІРµРґРѕРјР»РµРЅРёРµ ----------
+    // ---------- Визуальное уведомление ----------
     function showToast(title, subtitle, type) {
         type = type || 'new-task';
         var container = document.getElementById('toastContainer');
         var toast = document.createElement('div');
         toast.className = 'toast toast-' + type;
-        var icon = type === 'delegated' ? 'рџ“¤' : 'рџ“‹';
+        var icon = type === 'delegated' ? '📤' : '📋';
         toast.innerHTML =
             '<span class="toast-icon">' + icon + '</span>' +
             '<div class="toast-body">' +
                 '<span class="toast-title">' + escapeHtml(title) + '</span>' +
                 '<span class="toast-subtitle">' + escapeHtml(subtitle) + '</span>' +
             '</div>' +
-            '<button class="toast-close" title="Р—Р°РєСЂС‹С‚СЊ">&times;</button>';
+            '<button class="toast-close" title="Закрыть">&times;</button>';
         container.appendChild(toast);
         incrementBadge();
         toast.querySelector('.toast-close').addEventListener('click', function() {
@@ -152,12 +152,12 @@
         });
     }
 
-    // ---------- РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ EmailJS ----------
+    // ---------- Конфигурация EmailJS ----------
     const EMAILJS_PUBLIC_KEY = 'e1iKZl_RU3ZoaikIL';
     const EMAILJS_SERVICE_ID = 'service_5lbjjn3';
     const EMAILJS_TEMPLATE_ID = 'template_ql5rq3a';
 
-    // ---------- Firebase РїСѓС‚Рё ----------
+    // ---------- Firebase пути ----------
     function getTasksRef() {
         return firebase.database().ref('teams/' + TEAM_ID + '/tasks');
     }
@@ -168,7 +168,7 @@
         return firebase.database().ref('teams/' + TEAM_ID + '/reports');
     }
 
-    // ---------- DOM-СЌР»РµРјРµРЅС‚С‹ ----------
+    // ---------- DOM-элементы ----------
     const loginPage = document.getElementById('loginPage');
     const mainPage = document.getElementById('mainPage');
     const loginForm = document.getElementById('loginForm');
@@ -211,7 +211,7 @@
     // ---------- Color picker interactivity ----------
     const DEFAULT_COLORS = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
 
-    // ---------- Р Р°Р±РѕС‚Р° СЃ localStorage (СЃРµСЃСЃРёСЏ) ----------
+    // ---------- Работа с localStorage (сессия) ----------
     function isLocalStorageAvailable() {
         try {
             const test = '__test__';
@@ -246,23 +246,23 @@
         return null;
     }
 
-    // ---------- Firebase: Р·Р°РіСЂСѓР·РєР° РґР°РЅРЅС‹С… ----------
+    // ---------- Firebase: загрузка данных ----------
     let listenersInitialized = false;
     function initFirebaseListeners() {
         if (listenersInitialized) return;
         listenersInitialized = true;
-        // РЎР»СѓС€Р°РµРј Р·Р°РґР°С‡Рё РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё
+        // Слушаем задачи в реальном времени
         getTasksRef().on('value', function(snapshot) {
             var data = snapshot.val();
             var newTasks = data ? Object.values(data) : [];
             newTasks.forEach(function(t) {
                 if (t.status === 'delegated') t.status = 'in_progress';
-                // РќРѕСЂРјР°Р»РёР·СѓРµРј СЃСЂРѕРє РІ ISO-СЃС‚СЂРѕРєСѓ (UTC): РµРґРёРЅС‹Р№ С„РѕСЂРјР°С‚ РґР»СЏ РІСЃРµС…
-                // Р±СЂР°СѓР·РµСЂРѕРІ, С‡С‚РѕР±С‹ new Date(...)/toLocaleDateString РЅРµ Р±СЂРѕСЃР°Р»Рё RangeError.
+                // Нормализуем срок в ISO-строку (UTC): единый формат для всех
+                // браузеров, чтобы new Date(...)/toLocaleDateString не бросали RangeError.
                 t.dueDate = DeadlineHelpers.normalizeDueDate(t.dueDate);
             });
 
-            // РћР±РЅР°СЂСѓР¶РµРЅРёРµ РЅРѕРІС‹С… Р·Р°РґР°С‡
+            // Обнаружение новых задач
             if (initialLoadDone && currentUser) {
                 newTasks.forEach(function(t) {
                     if (!knownTaskIds.has(t.id)) {
@@ -271,9 +271,9 @@
                         if (assignedToMe && !isMyTask) {
                             playNotificationSound();
                             if (t.delegated) {
-                                showToast(t.title, 'Р”РµР»РµРіРёСЂРѕРІР°РЅРѕ РІР°Рј РѕС‚ ' + (t.createdBy || ''), 'delegated');
+                                showToast(t.title, 'Делегировано вам от ' + (t.createdBy || ''), 'delegated');
                             } else {
-                                showToast(t.title, 'РќР°Р·РЅР°С‡РµРЅР° РІР°Рј РѕС‚ ' + (t.createdBy || ''), 'new-task');
+                                showToast(t.title, 'Назначена вам от ' + (t.createdBy || ''), 'new-task');
                             }
                         }
                     }
@@ -287,7 +287,7 @@
             checkOverdueTasks();
         });
 
-        // РЎР»СѓС€Р°РµРј РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё
+        // Слушаем пользователей в реальном времени
         getUsersRef().on('value', function(snapshot) {
             const data = snapshot.val();
             const rawUsers = data ? Object.values(data) : [];
@@ -298,7 +298,7 @@
                 }
                 return normalized;
             });
-            // Р•СЃР»Рё С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РµСЃС‚СЊ РІ СЃРїРёСЃРєРµ вЂ” РѕР±РЅРѕРІР»СЏРµРј РµРіРѕ РґР°РЅРЅС‹Рµ
+            // Если текущий пользователь есть в списке — обновляем его данные
             if (currentUser) {
                 const fresh = users.find(function(u) { return u.login === currentUser.login; });
                 if (fresh) {
@@ -310,7 +310,7 @@
             if (initialLoadDone) renderBoard();
         });
 
-        // РЎР»СѓС€Р°РµРј РѕС‚С‡С‘С‚С‹ РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё
+        // Слушаем отчёты в реальном времени
         getReportsRef().on('value', function(snapshot) {
             var data = snapshot.val();
             reports = data ? Object.values(data) : [];
@@ -328,7 +328,7 @@
         });
     }
 
-    // ---------- РђРІС‚РѕРїРµСЂРµС…РѕРґ РїСЂРѕСЃСЂРѕС‡РµРЅРЅС‹С… Р·Р°РґР°С‡ РІ "РЎСЂРѕС‡РЅРѕ" ----------
+    // ---------- Автопереход просроченных задач в "Срочно" ----------
     var overdueNotified = new Set();
 
     function checkOverdueTasks() {
@@ -338,7 +338,7 @@
         tasks.forEach(function(t) {
             if (!t.dueDate) return;
             var due = new Date(t.dueDate);
-            // РџСЂРѕСЃСЂРѕС‡РµРЅР°: РІСЂРµРјСЏ РІС‹С€Р»Рѕ Рё Р·Р°РґР°С‡Р° РІ СЂР°Р±РѕС‚Рµ
+            // Просрочена: время вышло и задача в работе
             if (now > due && t.status === 'in_progress') {
                 var patched = Object.assign({}, t, {
                     status: 'urgent',
@@ -347,7 +347,7 @@
                 saveTask(patched);
                 updated = true;
             }
-            // РџРѕСЃР»РµРґРЅРёР№ РґРµРЅСЊ СЃСЂРѕРєР°: СѓРІРµРґРѕРјР»РµРЅРёРµ РёСЃРїРѕР»РЅРёС‚РµР»СЋ Рё admin'Сѓ (С‚РѕР»СЊРєРѕ РґР»СЏ РЅРµРІС‹РїРѕР»РЅРµРЅРЅС‹С…)
+            // Последний день срока: уведомление исполнителю и admin'у (только для невыполненных)
             var dayMs = 24 * 60 * 60 * 1000;
             var diffMs = due.getTime() - now.getTime();
             if (t.status !== 'done' && diffMs > 0 && diffMs <= dayMs && !overdueNotified.has(t.id)) {
@@ -362,27 +362,27 @@
         var dueStr = isNaN(dueD.getTime())
             ? ''
             : dueD.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + dueD.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
-        // РЈРІРµРґРѕРјР»РµРЅРёРµ РёСЃРїРѕР»РЅРёС‚РµР»СЋ
+        // Уведомление исполнителю
         if (task.assignedTo) {
             var assignee = users.find(function(u) { return u.login === task.assignedTo; });
             if (assignee && assignee.email) {
                 sendEmailNotification(task.assignedTo, {
                     title: task.title,
-                    description: 'РСЃС‚РµРєР°РµС‚ СЃСЂРѕРє Р·Р°РґР°С‡Рё: ' + dueStr,
+                    description: 'Истекает срок задачи: ' + dueStr,
                     priority: task.priority,
                     dueDate: task.dueDate
                 });
             }
-            showToast(task.title, 'РСЃС‚РµРєР°РµС‚ СЃСЂРѕРє! Р”Рѕ: ' + dueStr, 'new-task');
+            showToast(task.title, 'Истекает срок! До: ' + dueStr, 'new-task');
             playNotificationSound();
         }
-        // РЈРІРµРґРѕРјР»РµРЅРёРµ admin'Сѓ
+        // Уведомление руководителю
         if (currentUser.login !== task.assignedTo) {
-            var admin = users.find(function(u) { return u.role === 'admin'; });
+            var admin = users.find(function(u) { return u.role === 'manager'; });
             if (admin && admin.email && admin.login !== currentUser.login) {
                 sendEmailNotification(admin.login, {
                     title: task.title,
-                    description: 'РСЃС‚РµРєР°РµС‚ СЃСЂРѕРє Р·Р°РґР°С‡Рё (РёСЃРїРѕР»РЅРёС‚РµР»СЊ: ' + (task.assignedTo || 'РЅРµ РЅР°Р·РЅР°С‡РµРЅ') + '): ' + dueStr,
+                    description: 'Истекает срок задачи (исполнитель: ' + (task.assignedTo || 'не назначен') + '): ' + dueStr,
                     priority: task.priority,
                     dueDate: task.dueDate
                 });
@@ -390,12 +390,12 @@
         }
     }
 
-    // Р—Р°РїСѓСЃРє РїСЂРѕРІРµСЂРєРё РєР°Р¶РґСѓСЋ РјРёРЅСѓС‚Сѓ
+    // Запуск проверки каждую минуту
     setInterval(checkOverdueTasks, 60000);
 
-    // ---------- РћР±РЅРѕРІР»РµРЅРёРµ РёРЅРґРёРєР°С†РёРё РґРµРґР»Р°Р№РЅРѕРІ РїРѕ С‚Р°Р№РјРµСЂСѓ ----------
-    // Р Р°Р· РІ РјРёРЅСѓС‚Сѓ РїРµСЂРµСЃС‡РёС‚С‹РІР°РµРј С†РІРµС‚ Р»РµРІРѕР№ РїРѕР»РѕСЃС‹ РєР°СЂС‚РѕС‡РµРє,
-    // С‡С‚РѕР±С‹ С†РІРµС‚ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РјРµРЅСЏР»СЃСЏ РїСЂРё РЅР°СЃС‚СѓРїР»РµРЅРёРё 17:00, РїРѕР»СѓРЅРѕС‡Рё Рё С‚.Рґ.
+    // ---------- Обновление индикации дедлайнов по таймеру ----------
+    // Раз в минуту пересчитываем цвет левой полосы карточек,
+    // чтобы цвет автоматически менялся при наступлении 17:00, полуночи и т.д.
     function refreshDeadlineStrips() {
         if (!currentUser) return;
         document.querySelectorAll('.task-card').forEach(function(card) {
@@ -410,7 +410,7 @@
             baseClasses.forEach(function(c) { card.classList.remove(c); });
             card.classList.add(newClass);
             if (task.dueDate) {
-                card.setAttribute('aria-label', (task.title || 'РћС‚С‡С‘С‚') + '. ' + deadlineStatusLabel(task.dueDate));
+                card.setAttribute('aria-label', (task.title || 'Отчёт') + '. ' + deadlineStatusLabel(task.dueDate));
             }
         });
     }
@@ -420,22 +420,22 @@
         if (!document.hidden) refreshDeadlineStrips();
     });
 
-    // РћС‡РёСЃС‚РєР° Р±РµР№РґР¶Р° РїСЂРё РєР»РёРєРµ РЅР° СЃС‚СЂР°РЅРёС†Сѓ
+    // Очистка бейджа при клике на страницу
     document.addEventListener('click', function() {
         if (badgeCount > 0) clearBadge();
     });
 
-    // ---------- Firebase: Р·Р°РїРёСЃСЊ РґР°РЅРЅС‹С… ----------
+    // ---------- Firebase: запись данных ----------
     function saveTask(task) {
         task.dueDate = DeadlineHelpers.normalizeDueDate(task.dueDate);
         return getTasksRef().child(task.id).set(task)
             .then(function() {
-                console.log('Р—Р°РґР°С‡Р° СЃРѕС…СЂР°РЅРµРЅР° СѓСЃРїРµС€РЅРѕ:', task.id);
+                console.log('Задача сохранена успешно:', task.id);
                 return task;
             })
             .catch(function(error) {
-                console.error('РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ Р·Р°РґР°С‡Рё:', error);
-                alert('РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ Р·Р°РґР°С‡Рё: ' + error.message);
+                console.error('Ошибка сохранения задачи:', error);
+                alert('Ошибка сохранения задачи: ' + error.message);
                 throw error;
             });
     }
@@ -448,12 +448,12 @@
         report.dueDate = DeadlineHelpers.normalizeDueDate(report.dueDate);
         return getReportsRef().child(report.id).set(report)
             .then(function() {
-                console.log('РћС‚С‡С‘С‚ СЃРѕС…СЂР°РЅС‘РЅ:', report.id);
+                console.log('Отчёт сохранён:', report.id);
                 return report;
             })
             .catch(function(error) {
-                console.error('РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р°:', error);
-                alert('РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ РѕС‚С‡С‘С‚Р°: ' + error.message);
+                console.error('Ошибка сохранения отчёта:', error);
+                alert('Ошибка сохранения отчёта: ' + error.message);
                 throw error;
             });
     }
@@ -484,23 +484,23 @@
         getUsersRef().child(login).remove();
     }
 
-    // РќРѕСЂРјР°Р»РёР·Р°С†РёСЏ С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: РјРёРіСЂР°С†РёСЏ СЂРѕР»РµР№ + РїСЂРµСЃРµС‚ РїСЂР°РІ.
+    // Нормализация текущего пользователя: миграция ролей + пресет прав.
     function buildCurrentUser(userData, uid) {
         return DeadlineHelpers.normalizeUser(Object.assign({}, userData, {
             uid: uid || userData.uid
         }));
     }
 
-    // ---------- РђРІС‚РѕСЃРѕР·РґР°РЅРёРµ admin-РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ ----------
+    // ---------- Автосоздание admin-пользователя ----------
     function ensureAdminUser() {
-        console.log('ensureAdminUser: РїРѕРїС‹С‚РєР° СЃРѕР·РґР°РЅРёСЏ admin...');
+        console.log('ensureAdminUser: попытка создания admin...');
         auth.createUserWithEmailAndPassword('admin@tasktracker.local', 'admin123')
             .then(function(userCredential) {
                 const uid = userCredential.user.uid;
-                console.log('ensureAdminUser: admin СЃРѕР·РґР°РЅ РІ Auth, uid=' + uid + ', Р·Р°РїРёСЃС‹РІР°СЋ РІ DB...');
+                console.log('ensureAdminUser: admin создан в Auth, uid=' + uid + ', записываю в DB...');
                 return getUsersRef().child('admin').set(Object.assign({}, DeadlineHelpers.normalizeUser({
                     login: 'admin',
-                    name: 'РҐР°СЂРёС‚РѕРЅ',
+                    name: 'Харитон',
                     role: 'manager',
                     color: '#3b82f6',
                     email: '',
@@ -508,25 +508,25 @@
                 }), { uid: uid }));
             })
             .then(function() {
-                console.log('ensureAdminUser: admin Р·Р°РїРёСЃР°РЅ РІ DB. Р’РѕР№РґРёС‚Рµ: admin / admin123');
+                console.log('ensureAdminUser: admin записан в DB. Войдите: admin / admin123');
             })
             .catch(function(error) {
                 if (error.code === 'auth/email-already-in-use') {
-                    console.log('ensureAdminUser: admin СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚, РїСЂРѕРїСѓСЃРєР°СЋ');
+                    console.log('ensureAdminUser: admin уже существует, пропускаю');
                 } else {
-                    console.log('ensureAdminUser: РѕС€РёР±РєР° вЂ”', error.code, error.message);
+                    console.log('ensureAdminUser: ошибка —', error.code, error.message);
                 }
             });
     }
 
-    // ---------- РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ ----------
+    // ---------- Инициализация ----------
     function init() {
-        console.log('РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРёР»РѕР¶РµРЅРёСЏ...');
+        console.log('Инициализация приложения...');
 
-        // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Firebase Auth
+        // Инициализация Firebase Auth
         auth = firebase.auth();
         
-        // РЎР»СѓС€Р°РµРј СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РІС‚РѕСЂРёР·Р°С†РёРё
+        // Слушаем состояние авторизации
         auth.onAuthStateChanged(function(user) {
             if (user) {
                 const login = user.email.replace('@tasktracker.local', '');
@@ -534,20 +534,20 @@
                     const userData = snapshot.val();
                     if (userData) {
                         currentUser = buildCurrentUser(userData, user.uid);
-                        // РџРµСЂРІРёС‡РЅР°СЏ РјРёРіСЂР°С†РёСЏ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№ Р·Р°РїРёСЃРё admin: РґРѕР±Р°РІР»СЏРµРј РёРјСЏ
+                        // Первичная миграция существующей записи admin: добавляем имя
                         if (login === 'admin' && !userData.name) {
-                            currentUser.name = 'РҐР°СЂРёС‚РѕРЅ';
+                            currentUser.name = 'Харитон';
                             saveUser(currentUser);
                         }
                         saveSession(currentUser);
                         showMainPage();
                         initFirebaseListeners();
                     } else if (login === 'admin') {
-                        // РџРµСЂРІС‹Р№ РІС…РѕРґ admin вЂ” СЃРѕР·РґР°С‘Рј Р·Р°РїРёСЃСЊ РІ Р‘Р”
+                        // Первый вход admin — создаём запись в БД
                         currentUser = DeadlineHelpers.normalizeUser({
                             uid: user.uid,
                             login: login,
-                            name: 'РҐР°СЂРёС‚РѕРЅ',
+                            name: 'Харитон',
                             role: 'manager',
                             color: '#3b82f6',
                             email: '',
@@ -558,8 +558,8 @@
                         showMainPage();
                         initFirebaseListeners();
                     } else {
-                        // Р—Р°РїРёСЃРё РЅРµС‚ РІ Р‘Р” вЂ” Р°РєРєР°СѓРЅС‚ СѓРґР°Р»С‘РЅ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРј
-                        blockedMessage = 'Р’Р°С€ Р°РєРєР°СѓРЅС‚ СѓРґР°Р»С‘РЅ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРј';
+                        // Записи нет в БД — аккаунт удалён администратором
+                        blockedMessage = 'Ваш аккаунт удалён администратором';
                         auth.signOut();
                     }
                 });
@@ -573,16 +573,16 @@
             }
         });
 
-        // РЎРѕР·РґР°С‘Рј admin РµСЃР»Рё РµРіРѕ РЅРµС‚
+        // Создаём admin если его нет
         ensureAdminUser();
 
-        // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ EmailJS
+        // Инициализация EmailJS
         if (EMAILJS_PUBLIC_KEY && typeof emailjs !== 'undefined') {
             try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch (e) {}
         }
     }
 
-    // ---------- РЎС‚СЂР°РЅРёС†С‹ ----------
+    // ---------- Страницы ----------
     function showLoginPage() {
         loginPage.classList.add('active');
         mainPage.classList.remove('active');
@@ -595,62 +595,81 @@
         loginPage.classList.remove('active');
         mainPage.classList.add('active');
         updateHeaderGreeting(currentUser);
-        userRoleBadge.textContent = currentUser.role === 'admin' ? 'Р СѓРєРѕРІРѕРґРёС‚РµР»СЊ' : 'РЎРѕС‚СЂСѓРґРЅРёРє';
-        manageUsersBtn.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
+        userRoleBadge.textContent = formatRoleLabel(currentUser.role);
+        manageUsersBtn.style.display = DeadlineHelpers.canDo(currentUser, 'manageRoles') ? 'inline-block' : 'none';
         const mobileManage = document.getElementById('mobileManageBtn');
-        if (mobileManage) mobileManage.style.display = currentUser.role === 'admin' ? 'flex' : 'none';
+        if (mobileManage) mobileManage.style.display = DeadlineHelpers.canDo(currentUser, 'manageRoles') ? 'flex' : 'none';
+        const canCreate = DeadlineHelpers.canDo(currentUser, 'createTasks');
+        addTaskBtn.style.display = canCreate ? '' : 'none';
+        const addReportBtn = document.getElementById('addReportBtn');
+        if (addReportBtn) addReportBtn.style.display = canCreate ? '' : 'none';
+        const mobileAddBtn = document.getElementById('mobileAddBtn');
+        if (mobileAddBtn) mobileAddBtn.style.display = canCreate ? 'flex' : 'none';
+        const canExport = DeadlineHelpers.canDo(currentUser, 'exportData') || DeadlineHelpers.canDo(currentUser, 'systemSettings');
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) exportBtn.style.display = canExport ? '' : 'none';
+        const importBtn = document.getElementById('importBtn');
+        if (importBtn) importBtn.style.display = canExport ? '' : 'none';
+        const toolbarSettingsBtn = document.getElementById('toolbarSettingsBtn');
+        if (toolbarSettingsBtn) toolbarSettingsBtn.style.display = canExport ? '' : 'none';
+        const mobileExportBtn = document.getElementById('mobileExportBtn');
+        if (mobileExportBtn) mobileExportBtn.style.display = canExport ? '' : 'none';
+        const mobileImportBtn = document.getElementById('mobileImportBtn');
+        if (mobileImportBtn) mobileImportBtn.style.display = canExport ? '' : 'none';
+        const mobileSettingsBtn = document.getElementById('mobileSettingsBtn');
+        if (mobileSettingsBtn) mobileSettingsBtn.style.display = canExport ? '' : 'none';
         populateAssigneeSelect();
         populateEmployeeFilter();
         switchView('tasks');
     }
 
-    // ---------- РђРІС‚РѕСЂРёР·Р°С†РёСЏ ----------
+    // ---------- Авторизация ----------
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const login = loginInput.value.trim();
         const password = passwordInput.value;
         if (!login || !password) {
-            loginError.textContent = 'Р—Р°РїРѕР»РЅРёС‚Рµ РѕР±Р° РїРѕР»СЏ';
+            loginError.textContent = 'Заполните оба поля';
             return;
         }
 
         const email = login + '@tasktracker.local';
-        console.log('Р’С…РѕРґ: email=' + email);
+        console.log('Вход: email=' + email);
         auth.signInWithEmailAndPassword(email, password)
             .then(function(userCredential) {
-                console.log('Р’С…РѕРґ СѓСЃРїРµС€РµРЅ, uid=' + userCredential.user.uid);
+                console.log('Вход успешен, uid=' + userCredential.user.uid);
                 return getUsersRef().child(login).once('value');
             })
             .then(function(snapshot) {
                 const userData = snapshot.val();
-                console.log('Р”Р°РЅРЅС‹Рµ РёР· DB:', userData);
+                console.log('Данные из DB:', userData);
                 if (userData) {
                     currentUser = buildCurrentUser(userData, user.uid);
                     saveSession(currentUser);
                     showMainPage();
                 }
-                // Р—Р°РїРёСЃРё РЅРµС‚ РІ Р‘Р” вЂ” СЃРѕР·РґР°РЅРёРµ Р·Р°РїРёСЃРё РґР»СЏ admin Рё Р±Р»РѕРєРёСЂРѕРІРєР° СѓРґР°Р»С‘РЅРЅС‹С…
-                // РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‚СЃСЏ РІ onAuthStateChanged (РµРґРёРЅС‹Р№ РёСЃС‚РѕС‡РЅРёРє РёСЃС‚РёРЅС‹).
-                // initFirebaseListeners СѓР¶Рµ РІС‹Р·С‹РІР°РµС‚СЃСЏ РІ onAuthStateChanged
+                // Записи нет в БД — создание записи для admin и блокировка удалённых
+                // обрабатываются в onAuthStateChanged (единый источник истины).
+                // initFirebaseListeners уже вызывается в onAuthStateChanged
             })
             .catch(function(error) {
-                console.error('РћС€РёР±РєР°:', error.code, error.message);
+                console.error('Ошибка:', error.code, error.message);
                 if (error.code === 'auth/user-not-found') {
-                    loginError.textContent = 'РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ';
+                    loginError.textContent = 'Пользователь не найден';
                 } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    loginError.textContent = 'РќРµРІРµСЂРЅС‹Р№ РїР°СЂРѕР»СЊ';
+                    loginError.textContent = 'Неверный пароль';
                 } else if (error.code === 'auth/too-many-requests') {
-                    loginError.textContent = 'РЎР»РёС€РєРѕРј РјРЅРѕРіРѕ РїРѕРїС‹С‚РѕРє. РџРѕРїСЂРѕР±СѓР№С‚Рµ РїРѕР·Р¶Рµ';
+                    loginError.textContent = 'Слишком много попыток. Попробуйте позже';
                 } else {
-                    loginError.textContent = 'РћС€РёР±РєР°: ' + error.message;
+                    loginError.textContent = 'Ошибка: ' + error.message;
                 }
             });
     });
 
     logoutBtn.addEventListener('click', function() {
-        // Р’С‹С…РѕРґ РёР· Firebase Auth
+        // Выход из Firebase Auth
         auth.signOut().then(function() {
-            // РћС‚РєР»СЋС‡Р°РµРј listeners
+            // Отключаем listeners
             getTasksRef().off();
             getUsersRef().off();
             getReportsRef().off();
@@ -662,12 +681,13 @@
             listenersInitialized = false;
             showLoginPage();
         }).catch(function(error) {
-            console.error('РћС€РёР±РєР° РІС‹С…РѕРґР°:', error);
+            console.error('Ошибка выхода:', error);
         });
     });
 
-    // ---------- РЈРїСЂР°РІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё (РѕС‚РґРµР»СЊРЅР°СЏ СЃС‚СЂР°РЅРёС†Р°) ----------
+    // ---------- Управление пользователями ----------
     function openManagePanel(x, y) {
+        console.log('openManagePanel: currentUser =', currentUser);
         if (!currentUser || !DeadlineHelpers.canDo(currentUser, 'manageRoles')) {
             return;
         }
@@ -700,10 +720,8 @@
         var search = (document.getElementById('archiveSearch').value || '').trim().toLowerCase();
         list.innerHTML = '';
         if (archiveTab === 'tasks') {
-            var archivedTasks = tasks.filter(function(t) {
-                if (t.status !== 'done') return false;
-                if (currentUser.role === 'admin') return true;
-                return t.createdBy === currentUser.login || t.assignedTo === currentUser.login;
+            var archivedTasks = DeadlineHelpers.visibleHierarchyTasks(tasks, currentUser.login, currentUser.role, users).filter(function(t) {
+                return t.status === 'done';
             });
             if (search) {
                 archivedTasks = archivedTasks.filter(function(t) {
@@ -711,29 +729,27 @@
                 });
             }
             if (archivedTasks.length === 0) {
-                list.innerHTML = '<p class="archive-empty">РќРµС‚ Р°СЂС…РёРІРёСЂРѕРІР°РЅРЅС‹С… Р·Р°РґР°С‡</p>';
+                list.innerHTML = '<p class="archive-empty">Нет архивированных задач</p>';
                 return;
             }
             archivedTasks.forEach(function(t) {
                 list.appendChild(createArchiveTaskRow(t));
             });
         } else {
-            var archivedReports = reports.filter(function(r) {
-                if (r.status !== 'done') return false;
-                if (currentUser.role === 'admin') return true;
-                return r.createdBy === currentUser.login || r.assignedTo === currentUser.login;
+            var archivedReports = DeadlineHelpers.visibleHierarchyReports(reports, currentUser.login, currentUser.role, users).filter(function(r) {
+                return r.status === 'done';
             });
             if (search) {
                 archivedReports = archivedReports.filter(function(r) {
                     var numberLabel = r.reportNumber
-                        ? 'в„–' + r.reportNumber
+                        ? '№' + r.reportNumber
                         : '';
                     var hay = (r.title || '').toLowerCase() + ' ' + numberLabel.toLowerCase();
                     return hay.indexOf(search) !== -1;
                 });
             }
             if (archivedReports.length === 0) {
-                list.innerHTML = '<p class="archive-empty">РќРµС‚ Р°СЂС…РёРІРёСЂРѕРІР°РЅРЅС‹С… РѕС‚С‡С‘С‚РѕРІ</p>';
+                list.innerHTML = '<p class="archive-empty">Нет архивированных отчётов</p>';
                 return;
             }
             archivedReports.forEach(function(r) {
@@ -750,14 +766,14 @@
                 '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
                 '<div class="task-meta">' +
                     (task.dueDate ? '<span><i class="fa-regular fa-calendar"></i> ' + formatDateTime(task.dueDate) + '</span>' : '') +
-                    '<span>рџ‘¤ ' + escapeHtml(formatUserName(task.assignedTo)) + '</span>' +
+                    '<span>👤 ' + escapeHtml(formatUserName(task.assignedTo)) + '</span>' +
                 '</div>' +
             '</div>' +
             '<div class="archive-row-actions">' +
-                '<button class="btn-archived" data-action="open" title="РћС‚РєСЂС‹С‚СЊ"><i class="fa-solid fa-circle-info"></i> РћС‚РєСЂС‹С‚СЊ</button>' +
-                '<button class="btn-archived" data-action="restore" title="Р’РµСЂРЅСѓС‚СЊ РЅР° РґРѕСЃРєСѓ"><i class="fa-solid fa-rotate-left"></i> Р’РµСЂРЅСѓС‚СЊ</button>' +
-                (currentUser.role === 'admin'
-                    ? '<button class="btn-archived" data-action="delete" title="РЈРґР°Р»РёС‚СЊ"><i class="fa-solid fa-trash"></i> РЈРґР°Р»РёС‚СЊ</button>'
+                '<button class="btn-archived" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i> Открыть</button>' +
+                '<button class="btn-archived" data-action="restore" title="Вернуть на доску"><i class="fa-solid fa-rotate-left"></i> Вернуть</button>' +
+                (DeadlineHelpers.canDo(currentUser, 'deleteTasks')
+                    ? '<button class="btn-archived" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i> Удалить</button>'
                     : '') +
             '</div>';
         div.querySelectorAll('[data-action]').forEach(function(btn) {
@@ -770,7 +786,7 @@
                 } else if (action === 'restore') {
                     changeStatus(task.id, task.previousStatus || 'in_progress');
                 } else if (action === 'delete') {
-                    if (confirm('РЈРґР°Р»РёС‚СЊ Р·Р°РґР°С‡Сѓ?')) {
+                    if (confirm('Удалить задачу?')) {
                         removeTask(task.id);
                     }
                 }
@@ -781,25 +797,25 @@
 
     function createArchiveReportRow(report) {
         var numberLabel = report.reportNumber
-            ? 'в„–' + report.reportNumber
-            : 'РћС‚С‡С‘С‚';
-        var assigneeLabel = report.assignedTo ? 'рџ‘¤ ' + escapeHtml(formatUserName(report.assignedTo)) : '';
+            ? '№' + report.reportNumber
+            : 'Отчёт';
+        var assigneeLabel = report.assignedTo ? '👤 ' + escapeHtml(formatUserName(report.assignedTo)) : '';
         var div = document.createElement('div');
         div.className = 'archive-row archive-row-done ' + DeadlineHelpers.doneStripClass(report.completedAt, report.dueDate, report.completedLate);
         div.innerHTML =
             '<div class="archive-row-main">' +
                 '<div class="task-title">' + escapeHtml(report.title) + '</div>' +
                 '<div class="task-meta">' +
-                    '<span>рџ“„ ' + escapeHtml(numberLabel) + '</span>' +
+                    '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
                     (report.dueDate ? '<span><i class="fa-regular fa-calendar"></i> ' + formatDateTime(report.dueDate) + '</span>' : '') +
                     (assigneeLabel ? '<span>' + assigneeLabel + '</span>' : '') +
                 '</div>' +
             '</div>' +
             '<div class="archive-row-actions">' +
-                '<button class="btn-archived" data-action="open" title="РћС‚РєСЂС‹С‚СЊ"><i class="fa-solid fa-circle-info"></i> РћС‚РєСЂС‹С‚СЊ</button>' +
-                '<button class="btn-archived" data-action="restore" title="Р’РµСЂРЅСѓС‚СЊ РЅР° РґРѕСЃРєСѓ"><i class="fa-solid fa-rotate-left"></i> Р’РµСЂРЅСѓС‚СЊ</button>' +
-                (currentUser.role === 'admin'
-                    ? '<button class="btn-archived" data-action="delete" title="РЈРґР°Р»РёС‚СЊ"><i class="fa-solid fa-trash"></i> РЈРґР°Р»РёС‚СЊ</button>'
+                '<button class="btn-archived" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i> Открыть</button>' +
+                '<button class="btn-archived" data-action="restore" title="Вернуть на доску"><i class="fa-solid fa-rotate-left"></i> Вернуть</button>' +
+                (DeadlineHelpers.canDo(currentUser, 'deleteTasks')
+                    ? '<button class="btn-archived" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i> Удалить</button>'
                     : '') +
             '</div>';
         div.querySelectorAll('[data-action]').forEach(function(btn) {
@@ -812,7 +828,7 @@
                 } else if (action === 'restore') {
                     changeReportStatus(report.id, 'active');
                 } else if (action === 'delete') {
-                    if (confirm('РЈРґР°Р»РёС‚СЊ РѕС‚С‡С‘С‚?')) {
+                    if (confirm('Удалить отчёт?')) {
                         removeReport(report.id);
                     }
                 }
@@ -862,68 +878,70 @@
 
     function exportArchiveExcel() {
         if (typeof XLSX === 'undefined') {
-            alert('Р‘РёР±Р»РёРѕС‚РµРєР° XLSX РЅРµ Р·Р°РіСЂСѓР¶РµРЅР°. РџСЂРѕРІРµСЂСЊС‚Рµ РёРЅС‚РµСЂРЅРµС‚-СЃРѕРµРґРёРЅРµРЅРёРµ.');
+            alert('Библиотека XLSX не загружена. Проверьте интернет-соединение.');
             return;
         }
         var rows = [];
-        var archivedTasks = tasks.filter(function(t) {
-            if (t.status !== 'done') return false;
-            if (currentUser.role === 'admin') return true;
-            return t.createdBy === currentUser.login || t.assignedTo === currentUser.login;
+        var archivedTasks = DeadlineHelpers.visibleHierarchyTasks(tasks, currentUser.login, currentUser.role, users).filter(function(t) {
+            return t.status === 'done';
         });
         archivedTasks.forEach(function(t) {
             rows.push({
-                'РўРёРї': 'Р—Р°РґР°С‡Р°',
-                'Р—Р°РіРѕР»РѕРІРѕРє': t.title,
-                'РћРїРёСЃР°РЅРёРµ': t.description || '',
-                'РЎСЂРѕРє': t.dueDate ? formatDateTime(t.dueDate) : '',
-                'РЎРѕР·РґР°Р»': formatUserName(t.createdBy),
-                'РСЃРїРѕР»РЅРёС‚РµР»СЊ': formatUserName(t.assignedTo)
+                'Тип': 'Задача',
+                'Заголовок': t.title,
+                'Описание': t.description || '',
+                'Срок': t.dueDate ? formatDateTime(t.dueDate) : '',
+                'Создал': formatUserName(t.createdBy),
+                'Исполнитель': formatUserName(t.assignedTo)
             });
         });
-        var archivedReports = reports.filter(function(r) {
-            if (r.status !== 'done') return false;
-            if (currentUser.role === 'admin') return true;
-            return r.createdBy === currentUser.login || r.assignedTo === currentUser.login;
+        var archivedReports = DeadlineHelpers.visibleHierarchyReports(reports, currentUser.login, currentUser.role, users).filter(function(r) {
+            return r.status === 'done';
         });
         archivedReports.forEach(function(r) {
             rows.push({
-                'РўРёРї': 'РћС‚С‡С‘С‚',
-                'Р—Р°РіРѕР»РѕРІРѕРє': r.title,
-                'РћРїРёСЃР°РЅРёРµ': r.description || '',
-                'РЎСЂРѕРє': r.dueDate ? formatDateTime(r.dueDate) : '',
-                'РЎРѕР·РґР°Р»': formatUserName(r.createdBy),
-                'РСЃРїРѕР»РЅРёС‚РµР»СЊ': r.assignedTo ? formatUserName(r.assignedTo) : ''
+                'Тип': 'Отчёт',
+                'Заголовок': r.title,
+                'Описание': r.description || '',
+                'Срок': r.dueDate ? formatDateTime(r.dueDate) : '',
+                'Создал': formatUserName(r.createdBy),
+                'Исполнитель': r.assignedTo ? formatUserName(r.assignedTo) : ''
             });
         });
         if (rows.length === 0) {
-            alert('РќРµС‚ СЌР»РµРјРµРЅС‚РѕРІ РІ Р°СЂС…РёРІРµ РґР»СЏ РІС‹РіСЂСѓР·РєРё');
+            alert('Нет элементов в архиве для выгрузки');
             return;
         }
         var wb = XLSX.utils.book_new();
         var ws = XLSX.utils.json_to_sheet(rows);
         ws['!cols'] = [{wch:8},{wch:30},{wch:40},{wch:15},{wch:12},{wch:15}];
-        XLSX.utils.book_append_sheet(wb, ws, 'РђСЂС…РёРІ');
-        XLSX.writeFile(wb, 'РђСЂС…РёРІ_' + new Date().toISOString().slice(0,10) + '.xlsx');
+        XLSX.utils.book_append_sheet(wb, ws, 'Архив');
+        XLSX.writeFile(wb, 'Архив_' + new Date().toISOString().slice(0,10) + '.xlsx');
     }
 
-    // Р—Р°РєСЂС‹С‚РёРµ РјРѕРґР°Р»СЊРЅС‹С… РѕРєРѕРЅ
+    // Закрытие модальных окон
     document.querySelectorAll('.close-modal').forEach(function(el) {
         el.addEventListener('click', function() {
             this.closest('.modal').classList.remove('active');
         });
     });
 
-    // ---------- Р Р°Р±РѕС‚Р° СЃ Р·Р°РґР°С‡Р°РјРё ----------
+    // ---------- Работа с задачами ----------
     function generateId() {
         return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     }
 
     function getTasksForUser() {
-        return DeadlineHelpers.visibleTasks(tasks, currentUser.login, currentUser.role === 'admin', selectedEmployee);
+        var visible = DeadlineHelpers.visibleHierarchyTasks(tasks, currentUser.login, currentUser.role, users);
+        if (selectedEmployee && DeadlineHelpers.isManager(currentUser)) {
+            visible = visible.filter(function(t) {
+                return t.createdBy === selectedEmployee || t.assignedTo === selectedEmployee;
+            });
+        }
+        return visible;
     }
 
-    // ---------- РџРµСЂРµРєР»СЋС‡РµРЅРёРµ РІРєР»Р°РґРѕРє В«Р—Р°РґР°С‡РёВ» / В«РћС‚С‡С‘С‚С‹В» ----------
+    // ---------- Переключение вкладок «Задачи» / «Отчёты» ----------
     function switchView(view) {
         activeView = view === 'reports' ? 'reports' : 'tasks';
         const onTasks = activeView === 'tasks';
@@ -935,10 +953,10 @@
         renderBoard();
     }
 
-    // ---------- Р¤РёР»СЊС‚СЂ РїРѕ СЃРѕС‚СЂСѓРґРЅРёРєР°Рј (С‚РѕР»СЊРєРѕ РґР»СЏ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°) ----------
+    // ---------- Фильтр по сотрудникам (только для руководителя) ----------
     function populateEmployeeFilter() {
         if (!employeeFilter) return;
-        const isAdmin = currentUser && currentUser.role === 'admin';
+        const isAdmin = currentUser && DeadlineHelpers.isManager(currentUser);
         employeeFilter.style.display = isAdmin ? '' : 'none';
         if (!isAdmin) {
             employeeFilter.value = '';
@@ -946,13 +964,13 @@
             return;
         }
         const prev = employeeFilter.value;
-        employeeFilter.innerHTML = '<option value="">Р’СЃРµ СЃРѕС‚СЂСѓРґРЅРёРєРё</option>';
+        employeeFilter.innerHTML = '<option value="">Все сотрудники</option>';
         users.slice().sort(function(a, b) {
             return (formatUserName(a.login) || a.login).localeCompare(formatUserName(b.login) || b.login, 'ru');
         }).forEach(function(u) {
             const opt = document.createElement('option');
             opt.value = u.login;
-            opt.textContent = formatUserName(u.login) + (u.role === 'admin' ? ' (Р СѓРєРѕРІРѕРґРёС‚РµР»СЊ)' : '');
+            opt.textContent = formatUserName(u.login) + (DeadlineHelpers.isManager(u) ? ' (Руководитель)' : '');
             employeeFilter.appendChild(opt);
         });
         employeeFilter.value = prev;
@@ -964,7 +982,7 @@
             const userTasks = getTasksForUser();
             userTasks.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
 
-            // Р•СЃР»Рё Р·Р°РґР°С‡Р° РёРјРµРµС‚ РІС‹СЃРѕРєРёР№ РїСЂРёРѕСЂРёС‚РµС‚, Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё СЃС‚Р°РІРёРј РµС‘ РІ 'urgent'
+            // Если задача имеет высокий приоритет, автоматически ставим её в 'urgent'
             userTasks.forEach(function(t) {
                 if (t.priority === 'high' && t.status !== 'urgent' && t.status !== 'done') {
                     t.status = 'urgent';
@@ -981,7 +999,7 @@
                 countEl.textContent = filtered.length;
                 list.innerHTML = '';
                 if (filtered.length === 0) {
-                    list.innerHTML = '<p style="color:#94a3b8;font-size:0.9rem;text-align:center;padding:1rem 0;">РќРµС‚ Р·Р°РґР°С‡</p>';
+                    list.innerHTML = '<p style="color:#94a3b8;font-size:0.9rem;text-align:center;padding:1rem 0;">Нет задач</p>';
                     return;
                 }
                 filtered.forEach(function(task) {
@@ -992,28 +1010,28 @@
             populateAssigneeSelect();
             updateStatsRing();
         } catch (e) {
-            console.error('РћС€РёР±РєР° РїСЂРё СЂРµРЅРґРµСЂРёРЅРіРµ РґРѕСЃРєРё:', e);
+            console.error('Ошибка при рендеринге доски:', e);
         }
     }
 
-    // ---------- РљРѕР»СЊС†Рѕ СЃС‚Р°С‚РёСЃС‚РёРєРё (% РІС‹РїРѕР»РЅРµРЅРЅС‹С…) ----------
+    // ---------- Кольцо статистики (% выполненных) ----------
     function updateStatsRing() {
         var ringEl = document.getElementById('statsRing');
         var pctEl = document.getElementById('ringPct');
         if (!ringEl || !pctEl || !currentUser) return;
         var ringTasks = getTasksForUser();
         var ringReports = reports.filter(isMyReport);
-        var stats = DeadlineHelpers.statsSummary(ringTasks, ringReports, currentUser.login, currentUser.role === 'admin');
+        var stats = DeadlineHelpers.statsSummary(ringTasks, ringReports, currentUser.login, DeadlineHelpers.isManager(currentUser));
         ringEl.style.setProperty('--p', stats.pct);
         pctEl.textContent = stats.pct + '%';
     }
 
-    // ---------- РџРѕР»РЅР°СЏ РєР°СЂС‚РѕС‡РєР° Рё РјРѕР±РёР»СЊРЅС‹Рµ С‚Р°РїС‹ ----------
+    // ---------- Полная карточка и мобильные тапы ----------
     var TOUCH_TAP_MS = 300;
     var isTouchDevice = window.matchMedia && window.matchMedia('(hover: none)').matches;
 
     function canEditItem(item) {
-        return currentUser.role === 'admin' || item.createdBy === currentUser.login;
+        return DeadlineHelpers.canDo(currentUser, 'editTasks');
     }
 
     function openFullTask(task, x, y) {
@@ -1052,29 +1070,29 @@
     }
 
     function deadlineStatusLabel(dueDateStr) {
-        // Р§РµР»РѕРІРµРєРѕС‡РёС‚Р°РµРјР°СЏ РїРѕРґРїРёСЃСЊ СЃС‚Р°С‚СѓСЃР° РґРµРґР»Р°Р№РЅР° РґР»СЏ РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё (aria-label)
+        // Человекочитаемая подпись статуса дедлайна для доступности (aria-label)
         var status = DeadlineHelpers.getDeadlineStatus(dueDateStr);
         var labels = {
-            'far': 'РЎСЂРѕРє РґР°Р»РµРєРѕ (Р±РѕР»РµРµ 4 РґРЅРµР№)',
-            'close': 'РЎСЂРѕРє РїСЂРёР±Р»РёР¶Р°РµС‚СЃСЏ (2 РґРЅСЏ)',
-            'soon': 'РЎСЂРѕРє Р·Р°РІС‚СЂР° (1 РґРµРЅСЊ)',
-            'day': 'РЎСЂРѕРє СЃРµРіРѕРґРЅСЏ (РґРѕ 12:00)',
-            'oday': 'РЎСЂРѕРє СЃРµРіРѕРґРЅСЏ, РїСЂРѕСЃСЂРѕС‡РµРЅРѕ (РїРѕСЃР»Рµ 17:00)',
-            'odays': 'РЎСЂРѕРє РїСЂРѕСЃСЂРѕС‡РµРЅ (Р±РѕР»РµРµ 1 РґРЅСЏ)',
-            'none': 'РЎСЂРѕРє РЅРµ Р·Р°РґР°РЅ'
+            'far': 'Срок далеко (более 4 дней)',
+            'close': 'Срок приближается (2 дня)',
+            'soon': 'Срок завтра (1 день)',
+            'day': 'Срок сегодня (до 12:00)',
+            'oday': 'Срок сегодня, просрочено (после 17:00)',
+            'odays': 'Срок просрочен (более 1 дня)',
+            'none': 'Срок не задан'
         };
-        return labels[status] || 'РЎСЂРѕРє РЅРµ Р·Р°РґР°РЅ';
+        return labels[status] || 'Срок не задан';
     }
     function deadlineStatusLabelShort(dueDateStr) {
-        // РљРѕСЂРѕС‚РєР°СЏ РїРѕРґРїРёСЃСЊ РґР»СЏ РёРєРѕРЅРєРё/РјРµС‚РєРё РЅР° РєР°СЂС‚РѕС‡РєРµ
+        // Короткая подпись для иконки/метки на карточке
         var status = DeadlineHelpers.getDeadlineStatus(dueDateStr);
         var labels = {
-            'far': 'РЎСЂРѕРє: РґР°Р»РµРєРѕ',
-            'close': 'РЎСЂРѕРє: 2 РґРЅСЏ',
-            'soon': 'РЎСЂРѕРє: Р·Р°РІС‚СЂР°',
-            'day': 'РЎСЂРѕРє СЃРµРіРѕРґРЅСЏ',
-            'oday': 'РџСЂРѕСЃСЂРѕС‡РµРЅРѕ СЃРµРіРѕРґРЅСЏ',
-            'odays': 'РџСЂРѕСЃСЂРѕС‡РµРЅРѕ РґР°РІРЅРѕ',
+            'far': 'Срок: далеко',
+            'close': 'Срок: 2 дня',
+            'soon': 'Срок: завтра',
+            'day': 'Срок сегодня',
+            'oday': 'Просрочено сегодня',
+            'odays': 'Просрочено давно',
             'none': ''
         };
         return labels[status] || '';
@@ -1088,16 +1106,16 @@
         div.dataset.id = task.id;
         if (task.dueDate) {
             div.setAttribute('role', 'listitem');
-            div.setAttribute('aria-label', (task.title || 'Р—Р°РґР°С‡Р°') + '. ' + deadlineStatusLabel(task.dueDate));
+            div.setAttribute('aria-label', (task.title || 'Задача') + '. ' + deadlineStatusLabel(task.dueDate));
         }
 
         const assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
-        const assigneeName = task.assignedTo ? formatUserName(task.assignedTo) : 'РЅРµ РЅР°Р·РЅР°С‡РµРЅ';
-        const assigneeEmoji = assigneeUser ? (assigneeUser.emoji || 'рџ‘¤') : 'рџ‘¤';
+        const assigneeName = task.assignedTo ? formatUserName(task.assignedTo) : 'не назначен';
+        const assigneeEmoji = assigneeUser ? (assigneeUser.emoji || '👤') : '👤';
 
         div.innerHTML =
             (task.delegated
-                ? '<span class="task-delegate-arrow ' + (task.assignedTo === currentUser.login ? 'arrow-received' : 'arrow-delegated') + '">' + (task.assignedTo === currentUser.login ? 'в†™' : 'в†—') + '</span>'
+                ? '<span class="task-delegate-arrow ' + (task.assignedTo === currentUser.login ? 'arrow-received' : 'arrow-delegated') + '">' + (task.assignedTo === currentUser.login ? '↙' : '↗') + '</span>'
                 : '') +
             '<div class="task-title">' + escapeHtml(task.title) + '</div>' +
             '<div class="task-meta">' +
@@ -1106,18 +1124,18 @@
             '</div>' +
             '<div class="task-actions-row1">' +
                 (task.status !== 'done'
-                    ? '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> Р’С‹РїРѕР»РЅРёС‚СЊ</button>'
-                    : '<button class="btn-restore" data-action="restore"><i class="fa-solid fa-rotate-left"></i> Р’РµСЂРЅСѓС‚СЊ</button>') +
-                (task.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === task.createdBy)
-                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> Р”РµР»РµРіРёСЂРѕРІР°С‚СЊ</button>'
+                    ? '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> Выполнить</button>'
+                    : '<button class="btn-restore" data-action="restore"><i class="fa-solid fa-rotate-left"></i> Вернуть</button>') +
+                (task.status !== 'done' && DeadlineHelpers.canDo(currentUser, 'createTasks')
+                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> Делегировать</button>'
                     : '') +
             '</div>' +
             '<div class="task-actions-row2">' +
-                (currentUser.role === 'admin'
-                    ? '<button class="btn-delete" data-action="delete" title="РЈРґР°Р»РёС‚СЊ"><i class="fa-solid fa-trash"></i></button>'
+                (DeadlineHelpers.canDo(currentUser, 'deleteTasks')
+                    ? '<button class="btn-delete" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i></button>'
                     : '') +
-                '<button class="btn-settings" data-action="settings" title="РќР°СЃС‚СЂРѕР№РєРё"><i class="fa-solid fa-gear"></i></button>' +
-                '<button class="btn-open" data-action="open" title="РћС‚РєСЂС‹С‚СЊ"><i class="fa-solid fa-circle-info"></i></button>' +
+                '<button class="btn-settings" data-action="settings" title="Настройки"><i class="fa-solid fa-gear"></i></button>' +
+                '<button class="btn-open" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i></button>' +
             '</div>';
 
         div.querySelectorAll('[data-action]').forEach(function(btn) {
@@ -1127,7 +1145,7 @@
                 var x = e.clientX;
                 var y = e.clientY;
                 if (action === 'delete') {
-                    if (confirm('РЈРґР°Р»РёС‚СЊ Р·Р°РґР°С‡Сѓ?')) {
+                    if (confirm('Удалить задачу?')) {
                         removeTask(task.id);
                     }
                 } else if (action === 'done') {
@@ -1135,12 +1153,12 @@
                 } else if (action === 'restore') {
                     changeStatus(task.id, task.previousStatus || 'in_progress');
                 } else if (action === 'delegate') {
-                    showDelegateModal(task, saveTask, 'Р·Р°РґР°С‡Сѓ', x, y);
+                    showDelegateModal(task, saveTask, 'задачу', x, y);
                 } else if (action === 'open') {
                     showTaskDetails(task, x, y);
                 } else if (action === 'settings') {
-                    if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
-                        alert('Р’С‹ РЅРµ РјРѕР¶РµС‚Рµ СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЌС‚Сѓ Р·Р°РґР°С‡Сѓ');
+                    if (!canEditItem(task)) {
+                        alert('Вы не можете редактировать эту задачу');
                         return;
                     }
                     openTaskModal(task, x, y);
@@ -1194,8 +1212,8 @@
             var newStatus = column.dataset.status;
             var task = tasks.find(function(t) { return t.id === draggedTaskId; });
             if (!task) return;
-            if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login && task.assignedTo !== currentUser.login) {
-                alert('Р’С‹ РЅРµ РјРѕР¶РµС‚Рµ РёР·РјРµРЅСЏС‚СЊ СЌС‚Сѓ Р·Р°РґР°С‡Сѓ');
+            if (task.createdBy !== currentUser.login && task.assignedTo !== currentUser.login && !DeadlineHelpers.canDo(currentUser, 'editTasks')) {
+                alert('Вы не можете изменять эту задачу');
                 draggedTaskId = null;
                 return;
             }
@@ -1204,7 +1222,7 @@
         });
     });
 
-    // ---------- CRUD Р·Р°РґР°С‡ ----------
+    // ---------- CRUD задач ----------
     function addTask(taskData) {
         var newTask = {
             id: generateId(),
@@ -1283,13 +1301,13 @@
         });
     }
 
-    // ---------- РџРѕРєР°Р· РґРµС‚Р°Р»РµР№ Р·Р°РґР°С‡Рё ----------
+    // ---------- Показ деталей задачи ----------
     function showTaskDetails(task, x, y) {
         var assigneeUser = task.assignedTo ? users.find(function(u) { return u.login === task.assignedTo; }) : null;
-        var assigneeName = task.assignedTo ? formatUserName(task.assignedTo) : 'РЅРµ РЅР°Р·РЅР°С‡РµРЅ';
-        var assigneeEmoji = assigneeUser ? (assigneeUser.emoji || 'рџ‘¤') : 'рџ‘¤';
-        var priorityLabels = { low: 'РќРёР·РєРёР№', medium: 'РЎСЂРµРґРЅРёР№', high: 'Р’С‹СЃРѕРєРёР№' };
-        var statusLabels = { urgent: 'РЎСЂРѕС‡РЅРѕ', in_progress: 'Р’ СЂР°Р±РѕС‚Рµ', done: 'Р’С‹РїРѕР»РЅРµРЅРѕ' };
+        var assigneeName = task.assignedTo ? formatUserName(task.assignedTo) : 'не назначен';
+        var assigneeEmoji = assigneeUser ? (assigneeUser.emoji || '👤') : '👤';
+        var priorityLabels = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
+        var statusLabels = { urgent: 'Срочно', in_progress: 'В работе', done: 'Выполнено' };
         var modal = document.createElement('div');
         modal.className = 'modal active';
         modal.innerHTML =
@@ -1297,15 +1315,15 @@
                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
                 '<h3>' + escapeHtml(task.title) + '</h3>' +
                 '<div style="margin-top:1rem;font-size:0.95rem;color:var(--muted);">' +
-                    '<p><strong>РћРїРёСЃР°РЅРёРµ:</strong> ' + (task.description ? escapeHtml(task.description) : '<em>РЅРµС‚</em>') + '</p>' +
-                    '<p><strong>РЎС‚Р°С‚СѓСЃ:</strong> ' + (statusLabels[task.status] || task.status) + '</p>' +
-                    '<p><strong>РџСЂРёРѕСЂРёС‚РµС‚:</strong> ' + (priorityLabels[task.priority] || task.priority) + '</p>' +
-                    '<p><strong>РСЃРїРѕР»РЅРёС‚РµР»СЊ:</strong> ' + assigneeEmoji + ' ' + escapeHtml(assigneeName) + '</p>' +
-                    '<p><strong>РЎРѕР·РґР°Р»:</strong> ' + escapeHtml(formatUserName(task.createdBy)) + '</p>' +
-                    '<p><strong>РЎРѕР·РґР°РЅРѕ:</strong> ' + formatDateTime(task.createdAt) + '</p>' +
-                    (task.dueDate ? '<p><strong>РЎСЂРѕРє:</strong> ' + formatDateTime(task.dueDate) + '</p>' : '') +
-                    (task.delegated ? '<p><strong>Р”РµР»РµРіРёСЂРѕРІР°РЅРѕ:</strong> ' + (task.delegatedBy === 'admin' ? 'Р СѓРєРѕРІРѕРґРёС‚РµР»РµРј' : 'РЎРѕС‚СЂСѓРґРЅРёРєРѕРј') + '</p>' : '') +
-                    (task.updatedAt ? '<p><strong>РћР±РЅРѕРІР»РµРЅРѕ:</strong> ' + formatDateTime(task.updatedAt) + '</p>' : '') +
+                    '<p><strong>Описание:</strong> ' + (task.description ? escapeHtml(task.description) : '<em>нет</em>') + '</p>' +
+                    '<p><strong>Статус:</strong> ' + (statusLabels[task.status] || task.status) + '</p>' +
+                    '<p><strong>Приоритет:</strong> ' + (priorityLabels[task.priority] || task.priority) + '</p>' +
+                    '<p><strong>Исполнитель:</strong> ' + assigneeEmoji + ' ' + escapeHtml(assigneeName) + '</p>' +
+                    '<p><strong>Создал:</strong> ' + escapeHtml(formatUserName(task.createdBy)) + '</p>' +
+                    '<p><strong>Создано:</strong> ' + formatDateTime(task.createdAt) + '</p>' +
+                    (task.dueDate ? '<p><strong>Срок:</strong> ' + formatDateTime(task.dueDate) + '</p>' : '') +
+                    (task.delegated ? '<p><strong>Делегировано:</strong> ' + escapeHtml(delegatedByLabel(task.delegatedBy)) + '</p>' : '') +
+                    (task.updatedAt ? '<p><strong>Обновлено:</strong> ' + formatDateTime(task.updatedAt) + '</p>' : '') +
                 '</div>' +
             '</div>';
         document.body.appendChild(modal);
@@ -1316,8 +1334,8 @@
 
     function showReportDetails(report, x, y) {
         var numberLabel = report.reportNumber
-            ? 'в„–' + report.reportNumber
-            : 'РћС‚С‡С‘С‚';
+            ? '№' + report.reportNumber
+            : 'Отчёт';
         var modal = document.createElement('div');
         modal.className = 'modal active';
         modal.innerHTML =
@@ -1325,14 +1343,14 @@
                 '<span class="close-modal">&times;</span>' +
                 '<h3>' + escapeHtml(report.title) + '</h3>' +
                 '<div style="margin-top:1rem;font-size:0.95rem;color:var(--muted);">' +
-                    '<p><strong>РќРѕРјРµСЂ:</strong> ' + escapeHtml(numberLabel) + '</p>' +
-                    '<p><strong>РћРїРёСЃР°РЅРёРµ:</strong> ' + (report.description ? escapeHtml(report.description) : '<em>РЅРµС‚</em>') + '</p>' +
-                    '<p><strong>РџСЂРёРѕСЂРёС‚РµС‚:</strong> ' + escapeHtml(PRIORITY_LABELS[report.priority] || 'РЎСЂРµРґРЅРёР№') + '</p>' +
-                    (report.dueDate ? '<p><strong>РЎСЂРѕРє СЃРґР°С‡Рё:</strong> ' + formatDateTime(report.dueDate) + '</p>' : '') +
-                    '<p><strong>РСЃРїРѕР»РЅРёС‚РµР»СЊ:</strong> ' + (report.assignedTo ? escapeHtml(formatUserName(report.assignedTo)) : '<em>РЅРµ РЅР°Р·РЅР°С‡РµРЅ</em>') + '</p>' +
-                    (report.delegated ? '<p><strong>Р”РµР»РµРіРёСЂРѕРІР°РЅРѕ:</strong> ' + (report.delegatedBy === 'admin' ? 'Р СѓРєРѕРІРѕРґРёС‚РµР»РµРј' : 'РЎРѕС‚СЂСѓРґРЅРёРєРѕРј') + '</p>' : '') +
-                    '<p><strong>РђРІС‚РѕСЂ:</strong> ' + escapeHtml(formatUserName(report.createdBy)) + '</p>' +
-                    '<p><strong>РЎРѕР·РґР°РЅ:</strong> ' + formatDateTime(report.createdAt) + '</p>' +
+                    '<p><strong>Номер:</strong> ' + escapeHtml(numberLabel) + '</p>' +
+                    '<p><strong>Описание:</strong> ' + (report.description ? escapeHtml(report.description) : '<em>нет</em>') + '</p>' +
+                    '<p><strong>Приоритет:</strong> ' + escapeHtml(PRIORITY_LABELS[report.priority] || 'Средний') + '</p>' +
+                    (report.dueDate ? '<p><strong>Срок сдачи:</strong> ' + formatDateTime(report.dueDate) + '</p>' : '') +
+                    '<p><strong>Исполнитель:</strong> ' + (report.assignedTo ? escapeHtml(formatUserName(report.assignedTo)) : '<em>не назначен</em>') + '</p>' +
+                    (report.delegated ? '<p><strong>Делегировано:</strong> ' + escapeHtml(delegatedByLabel(report.delegatedBy)) + '</p>' : '') +
+                    '<p><strong>Автор:</strong> ' + escapeHtml(formatUserName(report.createdBy)) + '</p>' +
+                    '<p><strong>Создан:</strong> ' + formatDateTime(report.createdAt) + '</p>' +
                 '</div>' +
             '</div>';
         document.body.appendChild(modal);
@@ -1341,18 +1359,17 @@
         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
-    // ---------- Р”РµР»РµРіРёСЂРѕРІР°РЅРёРµ ----------
+    // ---------- Делегирование ----------
     function showDelegateModal(item, saveFn, kind, x, y) {
         if (!item) return;
         var assignees = users
-            .filter(function(u) {
-                if (u.login === currentUser.login && currentUser.role !== 'admin') return false;
-                if (currentUser.role !== 'admin' && u.role === 'admin') return false;
-                return true;
+            .filter(function (u) {
+                if (u.login === currentUser.login) return false;
+                return DeadlineHelpers.canAssignTo(currentUser, u.role);
             })
-            .map(function(u) { return u.login; });
+            .map(function (u) { return u.login; });
         if (assignees.length === 0) {
-            alert('РќРµС‚ РґРѕСЃС‚СѓРїРЅС‹С… СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ РґР»СЏ РґРµР»РµРіРёСЂРѕРІР°РЅРёСЏ');
+            alert('Нет доступных сотрудников для делегирования');
             return;
         }
         var modal = document.createElement('div');
@@ -1360,25 +1377,25 @@
         modal.innerHTML =
             '<div class="modal-content" style="max-width:400px;">' +
                 '<span class="close-modal" onclick="this.closest(\'.modal\').remove()">&times;</span>' +
-                '<h3>Р”РµР»РµРіРёСЂРѕРІР°С‚СЊ ' + escapeHtml(kind) + '</h3>' +
+                '<h3>Делегировать ' + escapeHtml(kind) + '</h3>' +
                 '<p><strong>' + escapeHtml(item.title) + '</strong></p>' +
                 '<div class="form-group">' +
-                    '<label for="delegateSelect">Р’С‹Р±РµСЂРёС‚Рµ СЃРѕС‚СЂСѓРґРЅРёРєР°</label>' +
+                    '<label for="delegateSelect">Выберите сотрудника</label>' +
                     '<select id="delegateSelect">' +
                         assignees.map(function(login) {
                             var u = users.find(function(usr) { return usr.login === login; });
-                            var label = login + (u && u.role === 'admin' ? ' (Р СѓРєРѕРІРѕРґРёС‚РµР»СЊ)' : '');
+                            var label = login + (u && DeadlineHelpers.isManager(u) ? ' (Руководитель)' : '');
                             return '<option value="' + escapeHtml(login) + '" ' + (item.assignedTo === login ? 'selected' : '') + '>' + escapeHtml(label) + '</option>';
                         }).join('') +
                     '</select>' +
                 '</div>' +
-                '<button id="delegateConfirmBtn" class="btn primary">Р”РµР»РµРіРёСЂРѕРІР°С‚СЊ</button>' +
+                '<button id="delegateConfirmBtn" class="btn primary">Делегировать</button>' +
             '</div>';
         document.body.appendChild(modal);
         positionModalAtPoint(modal, x, y);
         modal.querySelector('#delegateConfirmBtn').addEventListener('click', function() {
             var selected = document.getElementById('delegateSelect').value;
-            var delegatedBy = currentUser.role === 'admin' ? 'admin' : 'employee';
+            var delegatedBy = DeadlineHelpers.isManager(currentUser) ? 'manager' : currentUser.role;
             var updated = Object.assign({}, item, {
                 assignedTo: selected,
                 delegated: true,
@@ -1392,8 +1409,8 @@
         modal.querySelector('.close-modal').addEventListener('click', function() { modal.remove(); });
     }
 
-    // ---------- РЈРІРµРґРѕРјР»РµРЅРёСЏ РїРѕ РїРѕС‡С‚Рµ ----------
-    var PRIORITY_LABELS = { low: 'РќРёР·РєРёР№', medium: 'РЎСЂРµРґРЅРёР№', high: 'Р’С‹СЃРѕРєРёР№' };
+    // ---------- Уведомления по почте ----------
+    var PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
 
     function sendEmailNotification(toLogin, taskData) {
         if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) return;
@@ -1401,28 +1418,28 @@
         var user = users.find(function(u) { return u.login === toLogin; });
         var toEmail = user && user.email ? user.email : '';
         if (!toEmail) return;
-        var dueDateStr = 'РЅРµ СѓРєР°Р·Р°РЅ';
+        var dueDateStr = 'не указан';
         if (taskData.dueDate) {
             var dueD = new Date(taskData.dueDate);
-            dueDateStr = isNaN(dueD.getTime()) ? 'РЅРµ СѓРєР°Р·Р°РЅ' : dueD.toLocaleDateString('ru-RU');
+            dueDateStr = isNaN(dueD.getTime()) ? 'не указан' : dueD.toLocaleDateString('ru-RU');
         }
         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
             to_email: toEmail,
             to_name: toLogin,
-            subject: taskData.title || 'РќРѕРІР°СЏ Р·Р°РґР°С‡Р°',
+            subject: taskData.title || 'Новая задача',
             task_title: taskData.title || '',
-            task_description: taskData.description || 'РЅРµС‚ РѕРїРёСЃР°РЅРёСЏ',
-            task_priority: PRIORITY_LABELS[taskData.priority] || taskData.priority || 'РЎСЂРµРґРЅРёР№',
+            task_description: taskData.description || 'нет описания',
+            task_priority: PRIORITY_LABELS[taskData.priority] || taskData.priority || 'Средний',
             task_due_date: dueDateStr,
             from_name: currentUser.login
         }).then(function(res) {
-            console.log('EmailJS: РїРёСЃСЊРјРѕ РѕС‚РїСЂР°РІР»РµРЅРѕ', res);
+            console.log('EmailJS: письмо отправлено', res);
         }).catch(function(err) {
-            console.error('EmailJS: РѕС€РёР±РєР° РѕС‚РїСЂР°РІРєРё', err);
+            console.error('EmailJS: ошибка отправки', err);
         });
     }
 
-    // ---------- РџРѕРїСѓР»СЏС†РёСЏ select РёСЃРїРѕР»РЅРёС‚РµР»РµР№ ----------
+    // ---------- Популяция select исполнителей ----------
     function populateAssigneeSelect() {
         populateSelect(taskAssignee);
         populateSelect(reportAssignee);
@@ -1431,17 +1448,17 @@
     function populateSelect(select) {
         if (!select) return;
         var currentVal = select.value;
-        select.innerHTML = '<option value="">РќРµ РЅР°Р·РЅР°С‡РµРЅ</option>';
+        select.innerHTML = '<option value="">Не назначен</option>';
         users.forEach(function(u) {
             var opt = document.createElement('option');
             opt.value = u.login;
-            opt.textContent = u.login + (u.role === 'admin' ? ' (Р СѓРєРѕРІРѕРґРёС‚РµР»СЊ)' : '');
+            opt.textContent = u.login + (DeadlineHelpers.isManager(u) ? ' (Руководитель)' : '');
             select.appendChild(opt);
         });
         if (currentVal) select.value = currentVal;
     }
 
-    // ---------- РњРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ Р·Р°РґР°С‡Рё ----------
+    // ---------- Модальное окно задачи ----------
     function openTaskModal(taskData, x, y, mode, presetStatus) {
         currentItemMode = mode || 'task';
         if (taskData) currentItemMode = 'task';
@@ -1455,7 +1472,7 @@
             taskStatusGroup.style.display = isReport ? 'none' : '';
         }
         if (isReport) {
-            modalTitle.textContent = 'РќРѕРІС‹Р№ РѕС‚С‡С‘С‚';
+            modalTitle.textContent = 'Новый отчёт';
             taskId.value = '';
             taskTitle.value = '';
             taskDesc.value = '';
@@ -1464,7 +1481,7 @@
             taskDueDate.value = '';
             taskAssignee.value = '';
         } else if (taskData) {
-            modalTitle.textContent = 'Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р·Р°РґР°С‡Сѓ';
+            modalTitle.textContent = 'Редактировать задачу';
             taskId.value = taskData.id;
             taskTitle.value = taskData.title;
             taskDesc.value = taskData.description || '';
@@ -1473,7 +1490,7 @@
             taskDueDate.value = DeadlineHelpers.toDateTimeLocalValue(taskData.dueDate);
             taskAssignee.value = taskData.assignedTo || '';
         } else {
-            modalTitle.textContent = 'РќРѕРІР°СЏ Р·Р°РґР°С‡Р°';
+            modalTitle.textContent = 'Новая задача';
             taskId.value = '';
             taskTitle.value = '';
             taskDesc.value = '';
@@ -1498,13 +1515,13 @@
             if (taskStatusGroup) {
                 taskStatusGroup.style.display = currentItemMode === 'report' ? 'none' : '';
             }
-            modalTitle.textContent = currentItemMode === 'report' ? 'РќРѕРІС‹Р№ РѕС‚С‡С‘С‚' : 'РќРѕРІР°СЏ Р·Р°РґР°С‡Р°';
+            modalTitle.textContent = currentItemMode === 'report' ? 'Новый отчёт' : 'Новая задача';
         });
     }
 
     function openReportModal(reportData, x, y) {
         if (reportData) {
-            reportModalTitle.textContent = 'Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РѕС‚С‡С‘С‚';
+            reportModalTitle.textContent = 'Редактировать отчёт';
             reportId.value = reportData.id;
             reportTitle.value = reportData.title || '';
             reportDesc.value = reportData.description || '';
@@ -1513,7 +1530,7 @@
             reportAssignee.value = reportData.assignedTo || '';
             document.getElementById('reportStatus').value = 'reports';
         } else {
-            reportModalTitle.textContent = 'РќРѕРІС‹Р№ РѕС‚С‡С‘С‚';
+            reportModalTitle.textContent = 'Новый отчёт';
             reportId.value = '';
             reportTitle.value = '';
             reportDesc.value = '';
@@ -1529,12 +1546,16 @@
     reportForm.addEventListener('submit', function(e) {
         e.preventDefault();
         var id = reportId.value;
+        if (!id && !DeadlineHelpers.canDo(currentUser, 'createTasks')) {
+            alert('У вас нет прав на создание отчётов');
+            return;
+        }
         var title = reportTitle.value.trim();
         if (!title) return;
         var desc = reportDesc.value.trim();
         var priority = reportPriority.value;
-        // РќРѕСЂРјР°Р»РёР·СѓРµРј СЃСЂРѕРє РІ ISO-СЃС‚СЂРѕРєСѓ (UTC), С‡С‚РѕР±С‹ РµРґРёРЅС‹Р№ С„РѕСЂРјР°С‚ РґР°С‚
-        // РєРѕСЂСЂРµРєС‚РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ РІРѕ РІСЃРµС… Р±СЂР°СѓР·РµСЂР°С… Рё С„СѓРЅРєС†РёСЏС… РїСЂРёР»РѕР¶РµРЅРёСЏ.
+        // Нормализуем срок в ISO-строку (UTC), чтобы единый формат дат
+        // корректно обрабатывался во всех браузерах и функциях приложения.
         var dueDate = DeadlineHelpers.normalizeDueDate(reportDueDate.value);
         var assignee = reportAssignee.value;
         var reportStatus = document.getElementById('reportStatus').value;
@@ -1599,13 +1620,17 @@
     taskForm.addEventListener('submit', function(e) {
         e.preventDefault();
         var id = taskId.value;
+        if (!id && !DeadlineHelpers.canDo(currentUser, 'createTasks')) {
+            alert('У вас нет прав на создание задач');
+            return;
+        }
         var title = taskTitle.value.trim();
         if (!title) return;
         var description = taskDesc.value.trim();
         var status = taskStatus.value;
         var priority = taskPriority.value;
-        // РќРѕСЂРјР°Р»РёР·СѓРµРј СЃСЂРѕРє РІ ISO-СЃС‚СЂРѕРєСѓ (UTC), С‡С‚РѕР±С‹ РµРґРёРЅС‹Р№ С„РѕСЂРјР°С‚ РґР°С‚
-        // РєРѕСЂСЂРµРєС‚РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ РІРѕ РІСЃРµС… Р±СЂР°СѓР·РµСЂР°С… Рё С„СѓРЅРєС†РёСЏС… РїСЂРёР»РѕР¶РµРЅРёСЏ.
+        // Нормализуем срок в ISO-строку (UTC), чтобы единый формат дат
+        // корректно обрабатывался во всех браузерах и функциях приложения.
         var dueDate = DeadlineHelpers.normalizeDueDate(taskDueDate.value);
         var assignee = taskAssignee.value;
 
@@ -1630,8 +1655,8 @@
         if (id) {
             var task = tasks.find(function(t) { return t.id === id; });
             if (task) {
-                if (currentUser.role !== 'admin' && task.createdBy !== currentUser.login) {
-                    alert('Р’С‹ РЅРµ РјРѕР¶РµС‚Рµ СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЌС‚Сѓ Р·Р°РґР°С‡Сѓ');
+                if (!canEditItem(task)) {
+                    alert('Вы не можете редактировать эту задачу');
                     return;
                 }
                 if (status === 'reports') {
@@ -1705,7 +1730,7 @@
         });
     }
 
-    // ---------- РџРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ РІРєР»Р°РґРѕРє ----------
+    // ---------- Переключатель вкладок ----------
     if (viewTasksBtn) viewTasksBtn.addEventListener('click', function() { switchView('tasks'); });
     if (viewReportsBtn) viewReportsBtn.addEventListener('click', function() { switchView('reports'); });
     if (employeeFilter) employeeFilter.addEventListener('change', function() {
@@ -1713,11 +1738,12 @@
         renderBoard();
     });
 
-    // ---------- РЎРѕР·РґР°РЅРёРµ РїРѕ РґРІРѕР№РЅРѕРјСѓ РєР»РёРєСѓ РІ РєРѕР»РѕРЅРєРµ ----------
-    // Р”РІРѕР№РЅРѕР№ РєР»РёРє/С‚Р°Рї РїРѕ РїСѓСЃС‚РѕРјСѓ РјРµСЃС‚Сѓ РєРѕР»РѕРЅРєРё РѕС‚РєСЂС‹РІР°РµС‚ РјРѕРґР°Р»РєСѓ СЃРѕР·РґР°РЅРёСЏ
-    // СЃ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РїРѕРґСЃС‚Р°РІР»РµРЅРЅС‹Рј СЃС‚Р°С‚СѓСЃРѕРј СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµР№ РєРѕР»РѕРЅРєРё:
-    // В«РЎСЂРѕС‡РЅС‹РµВ» -> urgent, В«Р’ СЂР°Р±РѕС‚РµВ» -> in_progress, В«РћС‚С‡С‘С‚С‹В» -> СЂРµР¶РёРј РѕС‚С‡С‘С‚Р°.
+    // ---------- Создание по двойному клику в колонке ----------
+    // Двойной клик/тап по пустому месту колонки открывает модалку создания
+    // с автоматически подставленным статусом соответствующей колонки:
+    // «Срочные» -> urgent, «В работе» -> in_progress, «Отчёты» -> режим отчёта.
     function columnCreateTask(e, column) {
+        if (!DeadlineHelpers.canDo(currentUser, 'createTasks')) return;
         var status = column.dataset.status;
         if (status === 'reports') {
             openTaskModal(null, e.clientX, e.clientY, 'report');
@@ -1750,7 +1776,7 @@
         }
     });
 
-    // ---------- РњРѕР±РёР»СЊРЅС‹Рµ РєРЅРѕРїРєРё ----------
+    // ---------- Мобильные кнопки ----------
     var mobileAddBtn = document.getElementById('mobileAddBtn');
     var mobileManageBtn = document.getElementById('mobileManageBtn');
     var mobileSettingsBtn = document.getElementById('mobileSettingsBtn');
@@ -1787,7 +1813,7 @@
         });
     }
 
-    // ---------- Р”СЂРѕРїРґР°СѓРЅ РЅР°СЃС‚СЂРѕРµРє (РґРµСЃРєС‚РѕРї) ----------
+    // ---------- Дропдаун настроек (десктоп) ----------
     var toolbarSettingsBtn = document.getElementById('toolbarSettingsBtn');
     var toolbarSettingsDropdown = document.getElementById('toolbarSettingsDropdown');
     if (toolbarSettingsBtn) {
@@ -1802,29 +1828,33 @@
         if (toolbarSettingsDropdown) toolbarSettingsDropdown.classList.remove('active');
     });
 
-    // ---------- Р­РєСЃРїРѕСЂС‚ Excel ----------
+    // ---------- Экспорт Excel ----------
     exportBtn.addEventListener('click', function() {
+        if (!DeadlineHelpers.canDo(currentUser, 'exportData')) {
+            alert('У вас нет прав на экспорт данных');
+            return;
+        }
         if (typeof XLSX === 'undefined') {
-            alert('Р‘РёР±Р»РёРѕС‚РµРєР° XLSX РЅРµ Р·Р°РіСЂСѓР¶РµРЅР°. РџСЂРѕРІРµСЂСЊС‚Рµ РёРЅС‚РµСЂРЅРµС‚-СЃРѕРµРґРёРЅРµРЅРёРµ.');
+            alert('Библиотека XLSX не загружена. Проверьте интернет-соединение.');
             return;
         }
         var dataToExport = tasks.map(function(t) {
             return {
                 'ID': t.id,
-                'Р—Р°РіРѕР»РѕРІРѕРє': t.title,
-                'РћРїРёСЃР°РЅРёРµ': t.description || '',
-                'РЎС‚Р°С‚СѓСЃ': t.status === 'urgent' ? 'РЎСЂРѕС‡РЅРѕ' : (t.status === 'in_progress' ? 'Р’ СЂР°Р±РѕС‚Рµ' : 'Р’С‹РїРѕР»РЅРµРЅРѕ'),
-                'РЎРѕР·РґР°Р»': formatUserName(t.createdBy),
-                'РСЃРїРѕР»РЅРёС‚РµР»СЊ': formatUserName(t.assignedTo),
-                'РџСЂРёРѕСЂРёС‚РµС‚': t.priority || 'medium',
-                'РЎСЂРѕРє': formatDateTime(t.dueDate),
-                'Р”РµР»РµРіРёСЂРѕРІР°РЅРѕ': t.delegated ? (t.delegatedBy === 'admin' ? 'Р СѓРєРѕРІРѕРґРёС‚РµР»РµРј' : 'РЎРѕС‚СЂСѓРґРЅРёРєРѕРј') : '',
-                'РЎРѕР·РґР°РЅРѕ': formatDateTime(t.createdAt),
-                'РћР±РЅРѕРІР»РµРЅРѕ': formatDateTime(t.updatedAt)
+                'Заголовок': t.title,
+                'Описание': t.description || '',
+                'Статус': t.status === 'urgent' ? 'Срочно' : (t.status === 'in_progress' ? 'В работе' : 'Выполнено'),
+                'Создал': formatUserName(t.createdBy),
+                'Исполнитель': formatUserName(t.assignedTo),
+                'Приоритет': t.priority || 'medium',
+                'Срок': formatDateTime(t.dueDate),
+                'Делегировано': t.delegated ? delegatedByLabel(t.delegatedBy) : '',
+                'Создано': formatDateTime(t.createdAt),
+                'Обновлено': formatDateTime(t.updatedAt)
             };
         });
         if (dataToExport.length === 0) {
-            alert('РќРµС‚ Р·Р°РґР°С‡ РґР»СЏ СЌРєСЃРїРѕСЂС‚Р°');
+            alert('Нет задач для экспорта');
             return;
         }
         var wb = XLSX.utils.book_new();
@@ -1833,14 +1863,18 @@
             {wch:12}, {wch:25}, {wch:30}, {wch:15}, {wch:12},
             {wch:12}, {wch:10}, {wch:12}, {wch:25}, {wch:20}
         ];
-        XLSX.utils.book_append_sheet(wb, ws, 'Р—Р°РґР°С‡Рё');
-        XLSX.writeFile(wb, 'Р—Р°РґР°С‡Рё_' + new Date().toISOString().slice(0,10) + '.xlsx');
+        XLSX.utils.book_append_sheet(wb, ws, 'Задачи');
+        XLSX.writeFile(wb, 'Задачи_' + new Date().toISOString().slice(0,10) + '.xlsx');
     });
 
-    // ---------- РРјРїРѕСЂС‚ Excel ----------
+    // ---------- Импорт Excel ----------
     importBtn.addEventListener('click', function() {
+        if (!DeadlineHelpers.canDo(currentUser, 'exportData')) {
+            alert('У вас нет прав на импорт данных');
+            return;
+        }
         if (typeof XLSX === 'undefined') {
-            alert('Р‘РёР±Р»РёРѕС‚РµРєР° XLSX РЅРµ Р·Р°РіСЂСѓР¶РµРЅР°. РџСЂРѕРІРµСЂСЊС‚Рµ РёРЅС‚РµСЂРЅРµС‚-СЃРѕРµРґРёРЅРµРЅРёРµ.');
+            alert('Библиотека XLSX не загружена. Проверьте интернет-соединение.');
             return;
         }
         fileInput.click();
@@ -1862,42 +1896,42 @@
                     var existing = tasks.find(function(t) { return t.id === id; });
                     if (existing) {
                         var updated = Object.assign({}, existing, {
-                            title: row['Р—Р°РіРѕР»РѕРІРѕРє'] || existing.title,
-                            description: row['РћРїРёСЃР°РЅРёРµ'] || existing.description,
-                            status: row['РЎС‚Р°С‚СѓСЃ'] === 'РЎСЂРѕС‡РЅРѕ' ? 'urgent' : (row['РЎС‚Р°С‚СѓСЃ'] === 'Р’ СЂР°Р±РѕС‚Рµ' ? 'in_progress' : 'done'),
-                            assignedTo: row['РСЃРїРѕР»РЅРёС‚РµР»СЊ'] || existing.assignedTo,
-                            priority: row['РџСЂРёРѕСЂРёС‚РµС‚'] || existing.priority,
-                            dueDate: DeadlineHelpers.normalizeDueDate(row['РЎСЂРѕРє']) || existing.dueDate,
+                            title: row['Заголовок'] || existing.title,
+                            description: row['Описание'] || existing.description,
+                            status: row['Статус'] === 'Срочно' ? 'urgent' : (row['Статус'] === 'В работе' ? 'in_progress' : 'done'),
+                            assignedTo: row['Исполнитель'] || existing.assignedTo,
+                            priority: row['Приоритет'] || existing.priority,
+                            dueDate: DeadlineHelpers.normalizeDueDate(row['Срок']) || existing.dueDate,
                             updatedAt: new Date().toISOString()
                         });
                         saveTask(updated);
                     } else {
                         var newTask = {
                             id: id,
-                            title: row['Р—Р°РіРѕР»РѕРІРѕРє'] || 'Р‘РµР· РЅР°Р·РІР°РЅРёСЏ',
-                            description: row['РћРїРёСЃР°РЅРёРµ'] || '',
-                            status: row['РЎС‚Р°С‚СѓСЃ'] === 'РЎСЂРѕС‡РЅРѕ' ? 'urgent' : (row['РЎС‚Р°С‚СѓСЃ'] === 'Р’ СЂР°Р±РѕС‚Рµ' ? 'in_progress' : 'done'),
-                            createdBy: row['РЎРѕР·РґР°Р»'] || currentUser.login,
-                            assignedTo: row['РСЃРїРѕР»РЅРёС‚РµР»СЊ'] || '',
-                            priority: row['РџСЂРёРѕСЂРёС‚РµС‚'] || 'medium',
-                            dueDate: DeadlineHelpers.normalizeDueDate(row['РЎСЂРѕРє']) || '',
-                            createdAt: row['РЎРѕР·РґР°РЅРѕ'] ? new Date(row['РЎРѕР·РґР°РЅРѕ']).toISOString() : new Date().toISOString(),
+                            title: row['Заголовок'] || 'Без названия',
+                            description: row['Описание'] || '',
+                            status: row['Статус'] === 'Срочно' ? 'urgent' : (row['Статус'] === 'В работе' ? 'in_progress' : 'done'),
+                            createdBy: row['Создал'] || currentUser.login,
+                            assignedTo: row['Исполнитель'] || '',
+                            priority: row['Приоритет'] || 'medium',
+                            dueDate: DeadlineHelpers.normalizeDueDate(row['Срок']) || '',
+                            createdAt: row['Создано'] ? new Date(row['Создано']).toISOString() : new Date().toISOString(),
                             updatedAt: new Date().toISOString()
                         };
                         saveTask(newTask);
                         added++;
                     }
                 });
-                alert('РРјРїРѕСЂС‚ Р·Р°РІРµСЂС€С‘РЅ. Р”РѕР±Р°РІР»РµРЅРѕ ' + added + ' РЅРѕРІС‹С… Р·Р°РґР°С‡.');
+                alert('Импорт завершён. Добавлено ' + added + ' новых задач.');
             } catch(err) {
-                alert('РћС€РёР±РєР° РїСЂРё РёРјРїРѕСЂС‚Рµ: ' + err.message);
+                alert('Ошибка при импорте: ' + err.message);
             }
             fileInput.value = '';
         };
         reader.readAsArrayBuffer(file);
     });
 
-    // ---------- Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё ----------
+    // ---------- Вспомогательные функции ----------
     function escapeHtml(text) {
         var div = document.createElement('div');
         div.textContent = text;
@@ -1928,11 +1962,33 @@
     }
 
     function formatUserName(login) {
-        if (!login) return 'вЂ”';
+        if (!login) return '—';
         var u = users.find(function(u) { return u.login === login; });
         if (u && u.name) return u.name;
-        if (u && u.role === 'admin') return 'Р СѓРєРѕРІРѕРґРёС‚РµР»СЊ';
+        if (u && u.role) return formatRoleLabel(u.role);
         return login;
+    }
+
+    function formatRoleLabel(role) {
+        var labels = {
+            manager: 'Руководитель',
+            management: 'Управление',
+            department: 'Отдел',
+            specialist: 'Специалист'
+        };
+        return labels[role] || (role === 'admin' ? 'Руководитель' : role);
+    }
+
+    function delegatedByLabel(role) {
+        var labels = {
+            manager: 'Руководителем',
+            management: 'Управлением',
+            department: 'Отделом',
+            specialist: 'Специалистом',
+            admin: 'Руководителем',
+            employee: 'Сотрудником'
+        };
+        return labels[role] || '';
     }
 
     function computeReportNumber() {
@@ -1963,7 +2019,11 @@
     }
 
     function isMyReport(report) {
-        return DeadlineHelpers.itemVisibleToUser(report, currentUser.login, currentUser.role === 'admin', selectedEmployee);
+        var visible = DeadlineHelpers.visibleHierarchyReports([report], currentUser.login, currentUser.role, users);
+        if (visible.length && selectedEmployee && DeadlineHelpers.isManager(currentUser)) {
+            return report.createdBy === selectedEmployee || report.assignedTo === selectedEmployee;
+        }
+        return visible.length === 1;
     }
 
     function createReportCard(report) {
@@ -1973,37 +2033,37 @@
         div.dataset.id = report.id;
         if (report.dueDate) {
             div.setAttribute('role', 'listitem');
-            div.setAttribute('aria-label', (report.title || 'РћС‚С‡С‘С‚') + '. ' + deadlineStatusLabel(report.dueDate));
+            div.setAttribute('aria-label', (report.title || 'Отчёт') + '. ' + deadlineStatusLabel(report.dueDate));
         }
 
         var numberLabel = report.reportNumber
-            ? 'в„–' + report.reportNumber
-            : 'РћС‚С‡С‘С‚';
-        var assigneeLabel = report.assignedTo ? 'рџ‘¤ ' + escapeHtml(formatUserName(report.assignedTo)) : '';
+            ? '№' + report.reportNumber
+            : 'Отчёт';
+        var assigneeLabel = report.assignedTo ? '👤 ' + escapeHtml(formatUserName(report.assignedTo)) : '';
 
         div.innerHTML =
             (report.delegated
-                ? '<span class="task-delegate-arrow ' + (report.assignedTo === currentUser.login ? 'arrow-received' : 'arrow-delegated') + '">' + (report.assignedTo === currentUser.login ? 'в†™' : 'в†—') + '</span>'
+                ? '<span class="task-delegate-arrow ' + (report.assignedTo === currentUser.login ? 'arrow-received' : 'arrow-delegated') + '">' + (report.assignedTo === currentUser.login ? '↙' : '↗') + '</span>'
                 : '') +
-            '<div class="task-title">' + escapeHtml(report.title || 'Р‘РµР· РЅР°Р·РІР°РЅРёСЏ') + '</div>' +
+            '<div class="task-title">' + escapeHtml(report.title || 'Без названия') + '</div>' +
             '<div class="task-meta">' +
-                '<span>рџ“„ ' + escapeHtml(numberLabel) + '</span>' +
+                '<span>📄 ' + escapeHtml(numberLabel) + '</span>' +
                 (report.dueDate ? '<span><i class="fa-regular fa-calendar"></i> ' + formatDateTime(report.dueDate) + '</span>' : '') +
                 (assigneeLabel ? '<span>' + assigneeLabel + '</span>' : '') +
-                '<span>рџ‘¤ ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
+                '<span>👤 ' + escapeHtml(formatUserName(report.createdBy)) + '</span>' +
             '</div>' +
             '<div class="task-actions-row1">' +
-                '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> Р’С‹РїРѕР»РЅРёС‚СЊ</button>' +
-                (report.status !== 'done' && (currentUser.role === 'admin' || currentUser.login === report.createdBy)
-                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> Р”РµР»РµРіРёСЂРѕРІР°С‚СЊ</button>'
+                '<button class="btn-done" data-action="done"><i class="fa-solid fa-check"></i> Выполнить</button>' +
+                (report.status !== 'done' && DeadlineHelpers.canDo(currentUser, 'createTasks')
+                    ? '<button class="btn-delegate" data-action="delegate"><i class="fa-solid fa-paper-plane"></i> Делегировать</button>'
                     : '') +
             '</div>' +
             '<div class="task-actions-row2">' +
-                (currentUser.role === 'admin'
-                    ? '<button class="btn-delete" data-action="delete" title="РЈРґР°Р»РёС‚СЊ"><i class="fa-solid fa-trash"></i></button>'
+                (DeadlineHelpers.canDo(currentUser, 'deleteTasks')
+                    ? '<button class="btn-delete" data-action="delete" title="Удалить"><i class="fa-solid fa-trash"></i></button>'
                     : '') +
-                '<button class="btn-settings" data-action="settings" title="РР·РјРµРЅРёС‚СЊ"><i class="fa-solid fa-gear"></i></button>' +
-                '<button class="btn-open" data-action="open" title="РћС‚РєСЂС‹С‚СЊ"><i class="fa-solid fa-circle-info"></i></button>' +
+                '<button class="btn-settings" data-action="settings" title="Изменить"><i class="fa-solid fa-gear"></i></button>' +
+                '<button class="btn-open" data-action="open" title="Открыть"><i class="fa-solid fa-circle-info"></i></button>' +
             '</div>';
 
         div.querySelectorAll('[data-action]').forEach(function(btn) {
@@ -2013,16 +2073,20 @@
                 var x = e.clientX;
                 var y = e.clientY;
                 if (action === 'delete') {
-                    if (confirm('РЈРґР°Р»РёС‚СЊ РѕС‚С‡С‘С‚?')) {
+                    if (confirm('Удалить отчёт?')) {
                         removeReport(report.id);
                     }
                 } else if (action === 'done') {
                     changeReportStatus(report.id, 'done');
                 } else if (action === 'delegate') {
-                    showDelegateModal(report, saveReport, 'РѕС‚С‡С‘С‚', x, y);
+                    showDelegateModal(report, saveReport, 'отчёт', x, y);
                 } else if (action === 'open') {
                     showReportDetails(report, x, y);
                 } else if (action === 'settings') {
+                    if (!canEditItem(report)) {
+                        alert('Вы не можете редактировать этот отчёт');
+                        return;
+                    }
                     openReportModal(report, x, y);
                 }
             });
@@ -2049,7 +2113,7 @@
         countEl.textContent = visible.length;
         list.innerHTML = '';
         if (visible.length === 0) {
-            list.innerHTML = '<p style="color:#94a3b8;font-size:0.9rem;text-align:center;padding:1rem 0;">РќРµС‚ РѕС‚С‡С‘С‚РѕРІ</p>';
+            list.innerHTML = '<p style="color:#94a3b8;font-size:0.9rem;text-align:center;padding:1rem 0;">Нет отчётов</p>';
             return;
         }
         visible.forEach(function(r) {
@@ -2057,15 +2121,15 @@
         });
     }
 
-    // ---------- Р—Р°РїСѓСЃРє ----------
-    // РџСЂРёРІРµС‚СЃС‚РІРёРµ Рё С‚РµРєСѓС‰Р°СЏ РґР°С‚Р° РІ С€Р°РїРєРµ (РёРјСЏ РїРѕРґС‚СЏРіРёРІР°РµС‚СЃСЏ РёР· РїСЂРѕС„РёР»СЏ/СЃРµСЃСЃРёРё)
+    // ---------- Запуск ----------
+    // Приветствие и текущая дата в шапке (имя подтягивается из профиля/сессии)
     function updateHeaderGreeting(user) {
         var greetEl = document.getElementById('greeting');
         var dateEl = document.getElementById('currentDate');
         if (greetEl) {
             var now = new Date();
             var h = now.getHours();
-            var greetingText = h < 5 ? 'Р”РѕР±СЂРѕР№ РЅРѕС‡Рё' : h < 12 ? 'Р”РѕР±СЂРѕРµ СѓС‚СЂРѕ' : h < 18 ? 'Р”РѕР±СЂС‹Р№ РґРµРЅСЊ' : 'Р”РѕР±СЂС‹Р№ РІРµС‡РµСЂ';
+            var greetingText = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
             var displayName = (user && user.name) || (user && user.login) || '';
             greetEl.textContent = displayName ? greetingText + ', ' + displayName + '!' : greetingText + '!';
         }
@@ -2076,9 +2140,9 @@
         }
     }
 
-    updateHeaderGreeting(null); // РџРѕРєР°Р·С‹РІР°РµРј РїСЂРёРІРµС‚СЃС‚РІРёРµ/РґР°С‚Сѓ РґРѕ Р°РІС‚РѕСЂРёР·Р°С†РёРё
+    updateHeaderGreeting(null); // Показываем приветствие/дату до авторизации
 
-    // Р–РґС‘Рј Р·Р°РіСЂСѓР·РєРё Firebase SDK
+    // Ждём загрузки Firebase SDK
     function waitForFirebase(callback) {
         if (typeof firebase !== 'undefined' && firebase.database) {
             callback();
