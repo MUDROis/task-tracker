@@ -1,11 +1,11 @@
-const CACHE_NAME = 'task-tracker-v11';
+const CACHE_NAME = 'task-tracker-v12';
 const ASSETS = [
     './',
     './index.html',
-    './style.css?v=11',
-    './app.js?v=11',
-    './js/helpers.js?v=11',
-    './firebase-config.js?v=11',
+    './style.css?v=12',
+    './app.js?v=12',
+    './js/helpers.js?v=12',
+    './firebase-config.js?v=12',
     './manifest.json',
     './logo.png',
     './grifon.png',
@@ -37,35 +37,34 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-    // Документы: сеть в первую очередь (свежий index.html), оффлайн — из кэша
-    if (e.request.mode === 'navigate') {
-        e.respondWith(
-            fetch(e.request).then(function(response) {
+    var request = e.request;
+    if (request.method !== 'GET') return; // POST (логин, Firebase) не трогаем
+    var sameOrigin = request.url.indexOf(self.location.origin) === 0;
+
+    // Сеть в приоритете для всех своих файлов (нет устаревшего кэша после обновлений),
+    // кэш — только как оффлайн-фолбэк. Устаревший index.html/app.js на устройстве больше НЕ раздаётся.
+    e.respondWith(
+        fetch(request).then(function(response) {
+            if (response.status === 200) {
                 var clone = response.clone();
                 caches.open(CACHE_NAME).then(function(cache) {
-                    cache.put(e.request, clone);
-                    cache.put('./index.html', clone);
+                    cache.put(request, clone);
+                    if (request.mode === 'navigate') {
+                        cache.put('./index.html', clone);
+                    }
                 });
-                return response;
-            }).catch(function() {
-                return caches.match(e.request).then(function(cached) {
-                    return cached || caches.match('./index.html');
-                });
-            })
-        );
-        return;
-    }
-    // Остальное: кэш в первую очередь (активы версионированы, устаревание исключено)
-    e.respondWith(
-        caches.match(e.request).then(function(cached) {
-            return cached || fetch(e.request).then(function(response) {
-                if (response.status === 200) {
-                    var clone = response.clone();
-                    caches.open(CACHE_NAME).then(function(cache) {
-                        cache.put(e.request, clone);
-                    });
+            }
+            return response;
+        }).catch(function() {
+            return caches.match(request).then(function(cached) {
+                if (cached) return cached;
+                if (!sameOrigin) {
+                    // CDN: при установке кэшированы без query — ищем по базовому URL
+                    return caches.match(String(request.url).replace(/[?#].*$/, ''));
                 }
-                return response;
+                if (request.mode === 'navigate') return caches.match('./index.html');
+                // иначе отдаём индекс для не-навигационных запросов оффлайн
+                return caches.match('./index.html');
             });
         })
     );
