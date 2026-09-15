@@ -206,7 +206,18 @@
     const viewTasksBtn = document.getElementById('viewTasksBtn');
     const viewReportsBtn = document.getElementById('viewReportsBtn');
     const employeeFilter = document.getElementById('employeeFilter');
-    const reportsView = document.getElementById('reportsView');
+    const contentCols = document.getElementById('contentCols');
+    const menuBtn = document.getElementById('menuBtn');
+    const appMenu = document.getElementById('appMenu');
+    const statsRing = document.getElementById('statsRing');
+    const headerAddBtn = document.getElementById('headerAddBtn');
+    const employeeFilterMobile = document.getElementById('employeeFilterMobile');
+    const menuAddBtn = document.getElementById('menuAddBtn');
+    const menuExportBtn = document.getElementById('menuExportBtn');
+    const menuImportBtn = document.getElementById('menuImportBtn');
+    const menuManageBtn = document.getElementById('menuManageBtn');
+    const menuArchiveBtn = document.getElementById('menuArchiveBtn');
+    const menuLogoutBtn = document.getElementById('menuLogoutBtn');
 
     // ---------- Color picker interactivity ----------
     const DEFAULT_COLORS = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
@@ -601,6 +612,8 @@
         if (mobileManage) mobileManage.style.display = DeadlineHelpers.canDo(currentUser, 'manageRoles') ? 'flex' : 'none';
         const canCreate = DeadlineHelpers.canDo(currentUser, 'createTasks');
         addTaskBtn.style.display = canCreate ? '' : 'none';
+        if (headerAddBtn) headerAddBtn.style.display = canCreate ? 'inline-flex' : 'none';
+        if (menuManageBtn) menuManageBtn.style.display = DeadlineHelpers.canDo(currentUser, 'manageRoles') ? '' : 'none';
         const addReportBtn = document.getElementById('addReportBtn');
         if (addReportBtn) addReportBtn.style.display = canCreate ? '' : 'none';
         const mobileAddBtn = document.getElementById('mobileAddBtn');
@@ -941,46 +954,63 @@
         return visible;
     }
 
-    // ---------- Переключение вкладок «Задачи» / «Отчёты» ----------
+    // ---------- Переключение «Задачи» / «Отчёты» ----------
     function switchView(view) {
         activeView = view === 'reports' ? 'reports' : 'tasks';
         const onTasks = activeView === 'tasks';
         if (viewTasksBtn) viewTasksBtn.classList.toggle('active', onTasks);
         if (viewReportsBtn) viewReportsBtn.classList.toggle('active', !onTasks);
-        const boardEl = document.getElementById('board');
-        if (boardEl) boardEl.style.display = onTasks ? '' : 'none';
-        if (reportsView) reportsView.style.display = onTasks ? 'none' : '';
+        const wrap = document.getElementById('contentCols');
+        if (wrap) wrap.setAttribute('data-view', activeView);
         renderBoard();
     }
 
     // ---------- Фильтр по сотрудникам (только для руководителя) ----------
     function populateEmployeeFilter() {
-        if (!employeeFilter) return;
         const isAdmin = currentUser && DeadlineHelpers.isManager(currentUser);
-        employeeFilter.style.display = isAdmin ? '' : 'none';
+        if (employeeFilter) employeeFilter.style.display = isAdmin ? '' : 'none';
+        if (employeeFilterMobile) employeeFilterMobile.style.display = isAdmin ? '' : 'none';
         if (!isAdmin) {
-            employeeFilter.value = '';
+            if (employeeFilter) employeeFilter.value = '';
+            if (employeeFilterMobile) employeeFilterMobile.value = '';
             selectedEmployee = '';
             return;
         }
-        const prev = employeeFilter.value;
-        employeeFilter.innerHTML = '<option value="">Все сотрудники</option>';
-        users.slice().sort(function(a, b) {
+        const prev = employeeFilter ? employeeFilter.value : '';
+        const logins = users.slice().sort(function(a, b) {
             return (formatUserName(a.login) || a.login).localeCompare(formatUserName(b.login) || b.login, 'ru');
-        }).forEach(function(u) {
-            const opt = document.createElement('option');
-            opt.value = u.login;
-            opt.textContent = formatUserNameWithRole(u.login);
-            employeeFilter.appendChild(opt);
-        });
-        employeeFilter.value = prev;
-        if (employeeFilter.value !== prev) selectedEmployee = employeeFilter.value;
+        }).map(function(u) { return u.login; });
+        function fill(sel) {
+            if (!sel) return;
+            sel.innerHTML = '';
+            const all = document.createElement('option');
+            all.value = '';
+            all.textContent = 'Все сотрудники';
+            sel.appendChild(all);
+            logins.forEach(function(login) {
+                const opt = document.createElement('option');
+                opt.value = login;
+                opt.textContent = formatUserNameWithRole(login);
+                sel.appendChild(opt);
+            });
+        }
+        fill(employeeFilter);
+        fill(employeeFilterMobile);
+        if (employeeFilter) employeeFilter.value = prev;
+        if (employeeFilterMobile) employeeFilterMobile.value = prev;
+        const applied = prev;
+        let final = applied;
+        if (employeeFilter) final = employeeFilter.value;
+        if (employeeFilterMobile && employeeFilterMobile.value !== final) final = employeeFilterMobile.value;
+        selectedEmployee = final;
     }
 
     function renderBoard() {
         try {
-            const userTasks = getTasksForUser();
-            userTasks.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+            const ACTIVE = ['urgent', 'in_progress'];
+            const userTasks = getTasksForUser().filter(function(t) {
+                return ACTIVE.indexOf(t.status) !== -1;
+            });
 
             // Если задача имеет высокий приоритет, автоматически ставим её в 'urgent'
             userTasks.forEach(function(t) {
@@ -989,26 +1019,26 @@
                 }
             });
 
-            const columns = ['urgent', 'in_progress'];
-            columns.forEach(function(status) {
-                const list = document.getElementById('list_' + status);
-                const countEl = document.getElementById('count_' + status);
-                if (!list || !countEl) return;
-                const filtered = userTasks.filter(function(t) { return t.status === status; });
-                filtered.sort(sortByDueDate);
-                countEl.textContent = filtered.length;
+            // Единый список: сверху задачи без срока, далее по возрастанию срока
+            userTasks.sort(sortByDueDate);
+
+            const list = document.getElementById('list_all');
+            const countEl = document.getElementById('count_all');
+            if (list) {
+                if (countEl) countEl.textContent = userTasks.length;
                 list.innerHTML = '';
-                if (filtered.length === 0) {
-                    list.innerHTML = '<p style="color:#94a3b8;font-size:0.9rem;text-align:center;padding:1rem 0;">Нет задач</p>';
-                    return;
+                if (userTasks.length === 0) {
+                    list.innerHTML = '<p class="list-empty">Нет задач</p>';
+                } else {
+                    userTasks.forEach(function(task) {
+                        list.appendChild(createTaskCard(task));
+                    });
                 }
-                filtered.forEach(function(task) {
-                    list.appendChild(createTaskCard(task));
-                });
-            });
+            }
             renderReports();
             populateAssigneeSelect();
             updateStatsRing();
+            updateEmployeeNameBanner();
         } catch (e) {
             console.error('Ошибка при рендеринге доски:', e);
         }
@@ -1737,6 +1767,100 @@
         renderBoard();
     });
 
+    // ---------- Меню по клику на логотип ----------
+    function toggleMenu(force) {
+        if (!appMenu) return;
+        if (typeof force === 'boolean') appMenu.classList.toggle('active', force);
+        else appMenu.classList.toggle('active');
+    }
+    if (menuBtn) {
+        menuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleMenu();
+        });
+    }
+    if (menuAddBtn) menuAddBtn.addEventListener('click', function(e) {
+        toggleMenu(false);
+        openTaskModal(null, e.clientX, e.clientY, 'task');
+    });
+    if (menuExportBtn) menuExportBtn.addEventListener('click', function() {
+        toggleMenu(false);
+        exportBtn.click();
+    });
+    if (menuImportBtn) menuImportBtn.addEventListener('click', function() {
+        toggleMenu(false);
+        importBtn.click();
+    });
+    if (menuManageBtn) menuManageBtn.addEventListener('click', function(e) {
+        toggleMenu(false);
+        openManagePanel(e.clientX, e.clientY);
+    });
+    if (menuArchiveBtn) menuArchiveBtn.addEventListener('click', function(e) {
+        toggleMenu(false);
+        openArchive(e.clientX, e.clientY);
+    });
+    if (menuLogoutBtn) menuLogoutBtn.addEventListener('click', function() {
+        toggleMenu(false);
+        logoutBtn.click();
+    });
+    if (headerAddBtn) headerAddBtn.addEventListener('click', function(e) {
+        openTaskModal(null, e.clientX, e.clientY, 'task');
+    });
+
+    // ---------- Кольцо статистики -> фильтр по сотрудникам ----------
+    if (statsRing) {
+        statsRing.addEventListener('click', function() {
+            if (!currentUser || !DeadlineHelpers.isManager(currentUser)) return;
+            if (employeeFilterMobile) employeeFilterMobile.value = selectedEmployee || '';
+            const modal = document.getElementById('employeeFilterModal');
+            if (modal) modal.classList.add('active');
+        });
+        statsRing.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                statsRing.click();
+            }
+        });
+    }
+    if (employeeFilterMobile) {
+        employeeFilterMobile.addEventListener('change', function() {
+            selectedEmployee = employeeFilterMobile.value;
+            const modal = document.getElementById('employeeFilterModal');
+            if (modal) modal.classList.remove('active');
+            renderBoard();
+        });
+    }
+
+    // ---------- Баннер выбранного сотрудника над задачами ----------
+    function updateEmployeeNameBanner() {
+        const banner = document.getElementById('employeeNameBanner');
+        if (!banner) return;
+        if (selectedEmployee && currentUser && DeadlineHelpers.isManager(currentUser)) {
+            banner.textContent = '👤 ' + formatUserName(selectedEmployee);
+            banner.style.display = 'inline-flex';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+
+    // ---------- Свайп для переключения Задачи/Отчёты (мобайл) ----------
+    let swipeStartX = null;
+    if (contentCols) {
+        contentCols.addEventListener('touchstart', function(e) {
+            if (window.innerWidth > 768) return;
+            if (e.touches.length === 1) swipeStartX = e.touches[0].clientX;
+        }, { passive: true });
+        contentCols.addEventListener('touchend', function(e) {
+            if (window.innerWidth > 768) return;
+            if (swipeStartX === null) return;
+            const dx = e.changedTouches[0].clientX - swipeStartX;
+            swipeStartX = null;
+            if (Math.abs(dx) < 50) return;
+            if (dx < 0 && activeView === 'tasks') switchView('reports');
+            else if (dx > 0 && activeView === 'reports') switchView('tasks');
+        });
+    }
+
     // ---------- Создание по двойному клику в колонке ----------
     // Двойной клик/тап по пустому месту колонки открывает модалку создания
     // с автоматически подставленным статусом соответствующей колонки:
@@ -1746,6 +1870,8 @@
         var status = column.dataset.status;
         if (status === 'reports') {
             openTaskModal(null, e.clientX, e.clientY, 'report');
+        } else if (status === 'all') {
+            openTaskModal(null, e.clientX, e.clientY, 'task', 'in_progress');
         } else {
             openTaskModal(null, e.clientX, e.clientY, 'task', status);
         }
@@ -1825,6 +1951,7 @@
     document.addEventListener('click', function() {
         if (mobileSettingsDropdown) mobileSettingsDropdown.classList.remove('active');
         if (toolbarSettingsDropdown) toolbarSettingsDropdown.classList.remove('active');
+        if (appMenu) appMenu.classList.remove('active');
     });
 
     // ---------- Экспорт Excel ----------

@@ -61,7 +61,19 @@
         <div id="mainPage" class="page">
             <header class="app-header">
                 <div class="header-left">
-                    <img src="logo.png" alt="Логотип" class="logo-img">
+                    <div class="menu-anchor">
+                        <button id="menuBtn" class="logo-btn" type="button" aria-label="Открыть меню" aria-haspopup="true" title="Меню">
+                            <img src="logo.png" alt="Логотип" class="logo-img">
+                        </button>
+                        <div id="appMenu" class="app-menu">
+                            <button id="menuAddBtn" class="menu-item" type="button">➕ Новая задача</button>
+                            <button id="menuExportBtn" class="menu-item" type="button">📤 Экспорт Excel</button>
+                            <button id="menuImportBtn" class="menu-item" type="button">📥 Импорт Excel</button>
+                            <button id="menuManageBtn" class="menu-item" type="button" style="display:none;">👥 Управление</button>
+                            <button id="menuArchiveBtn" class="menu-item" type="button">🗂 Архив</button>
+                            <button id="menuLogoutBtn" class="menu-item" type="button">🚪 Выйти</button>
+                        </div>
+                    </div>
                     <div class="head-text">
                         <div class="head-title-row">
                             <h2>Задачи</h2>
@@ -74,12 +86,19 @@
                     </div>
                 </div>
                 <div class="header-right">
-                    <div class="ring" id="statsRing" role="img" aria-label="Процент выполненных задач" style="--p:0">
+                    <div class="ring" id="statsRing" role="button" tabindex="0" aria-label="Процент выполненных задач, фильтр по сотрудникам" style="--p:0">
                         <div class="ring-core"><b id="ringPct">0%</b><small>готово</small></div>
                     </div>
-                    <button id="logoutBtn" class="btn-logout-inline" title="Выйти" aria-label="Выйти"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    <button id="headerAddBtn" class="btn-logout-inline" type="button" title="Добавить задачу или отчёт" aria-label="Добавить задачу или отчёт" style="display:none;"><i class="fa-solid fa-plus"></i></button>
+                    <button id="logoutBtn" class="btn-logout-inline" type="button" title="Выйти" aria-label="Выйти"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
             </header>
+
+            <!-- Мобильный переключатель Задачи / Отчёты -->
+            <div class="view-toggle" id="viewToggle" role="group" aria-label="Переключение задач и отчётов">
+                <button id="viewTasksBtn" class="view-toggle-btn active" type="button" data-view="tasks"><span class="vt-ico">🍳</span><span>Задачи</span></button>
+                <button id="viewReportsBtn" class="view-toggle-btn" type="button" data-view="reports"><span class="vt-ico">🍢</span><span>Отчеты</span></button>
+            </div>
 
             <!-- Панель управления -->
             <div class="toolbar">
@@ -96,56 +115,33 @@
                 <button id="archiveBtn" class="btn outline btn-sm">🗂 Архив</button>
                 <div class="toolbar-view-switch">
                     <select id="employeeFilter" class="employee-filter" aria-label="Фильтр по сотрудникам" style="display:none;"></select>
-                    <div class="view-switcher" role="group" aria-label="Переключение вида">
-                        <button id="viewTasksBtn" type="button" class="view-switch-btn active" data-view="tasks">Задачи</button>
-                        <button id="viewReportsBtn" type="button" class="view-switch-btn" data-view="reports">Отчёты</button>
-                    </div>
                 </div>
             </div>
 
-            <!-- Мобильная нижняя панель -->
-            <div class="mobile-bar">
-                <button id="mobileManageBtn" class="mobile-bar-btn" title="Управление">👥</button>
-                <button id="mobileAddBtn" class="mobile-bar-btn mobile-bar-btn-main" title="Новая задача">➕</button>
-                <button id="mobileArchiveBtn" class="mobile-bar-btn" title="Архив">🗂</button>
-                <div class="mobile-bar-btn-group">
-                    <button id="mobileSettingsBtn" class="mobile-bar-btn" title="Настройки">⚙️</button>
-                    <div id="mobileSettingsDropdown" class="mobile-settings-dropdown">
-                        <button id="mobileExportBtn" class="mobile-dropdown-item">📤 Экспорт Excel</button>
-                        <button id="mobileImportBtn" class="mobile-dropdown-item">📥 Импорт Excel</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Доска Kanban -->
-            <div class="board" id="board">
-                <div class="column" data-status="urgent">
-                    <div class="column-header">
-                        <h3>🍳 Срочные</h3>
-                        <span class="count" id="count_urgent">0</span>
-                    </div>
-                    <div class="task-list" id="list_urgent"></div>
-                </div>
-                <div class="column" data-status="in_progress">
-                    <div class="column-header">
-                        <h3>▶️ В работе</h3>
-                        <span class="count" id="count_in_progress">0</span>
-                    </div>
-                    <div class="task-list" id="list_in_progress"></div>
-                </div>
-            </div>
-
-            <!-- Отчёты (отдельный вид) -->
-            <div id="reportsView" class="reports-view" style="display:none;">
-                <div class="column" data-status="reports">
-                    <div class="column-header">
-                        <h3>📄 Отчёты</h3>
-                        <div class="column-header-actions">
-                            <button id="addReportBtn" class="column-add-btn" title="Новый отчёт">➕</button>
-                            <span class="count" id="count_reports">0</span>
+            <!-- Задачи и отчёты (мобайл: переключение; десктоп: две колонки) -->
+            <div id="contentCols" class="content-cols" data-view="tasks">
+                <div class="board" id="board">
+                    <div class="column column-tasks" data-status="all">
+                        <div class="column-header">
+                            <h3>🍳 Задачи</h3>
+                            <span class="count" id="count_all">0</span>
                         </div>
+                        <div class="employee-name-banner" id="employeeNameBanner" style="display:none;"></div>
+                        <div class="task-list" id="list_all"></div>
                     </div>
-                    <div class="task-list" id="list_reports"></div>
+                </div>
+
+                <div id="reportsView" class="reports-view">
+                    <div class="column" data-status="reports">
+                        <div class="column-header">
+                            <h3>📄 Отчёты</h3>
+                            <div class="column-header-actions">
+                                <button id="addReportBtn" class="column-add-btn" title="Новый отчёт">➕</button>
+                                <span class="count" id="count_reports">0</span>
+                            </div>
+                        </div>
+                        <div class="task-list" id="list_reports"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,6 +258,16 @@
                     <button id="archiveExportBtn" class="btn secondary btn-sm">📤 Выгрузить Excel</button>
                 </div>
                 <div id="archiveList" class="archive-list"></div>
+            </div>
+        </div>
+    <!-- Модальное окно фильтра по сотрудникам (вызывается кольцом статистики) -->
+        <div id="employeeFilterModal" class="modal">
+            <div class="modal-content filter-modal-content">
+                <span class="close-modal">&times;</span>
+                <h3>Фильтр по сотрудникам</h3>
+                <div class="form-group">
+                    <select id="employeeFilterMobile" aria-label="Фильтр по сотрудникам"></select>
+                </div>
             </div>
         </div>
     </div>

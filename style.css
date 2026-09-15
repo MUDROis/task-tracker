@@ -433,33 +433,6 @@ button { font-family: inherit; }
     gap: 0.75rem;
     margin-left: auto;
 }
-.view-switcher {
-    display: flex;
-    gap: 0.25rem;
-    padding: 0.2rem;
-    background: var(--surface2);
-    border: 1px solid var(--line);
-    border-radius: 0.65rem;
-}
-.view-switch-btn {
-    padding: 0.4rem 1.05rem;
-    border: none;
-    background: transparent;
-    border-radius: 0.5rem;
-    color: var(--muted);
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s, color 0.15s;
-}
-.view-switch-btn:hover {
-    color: var(--text);
-}
-.view-switch-btn.active {
-    background: var(--accent);
-    color: var(--accent-ink);
-}
 .employee-filter {
     padding: 0.45rem 0.75rem;
     border: 1px solid var(--line);
@@ -775,11 +748,6 @@ button { font-family: inherit; }
     margin: 1.25rem 0;
 }
 
-/* ===== MOBILE BAR ===== */
-.mobile-bar {
-    display: none;
-}
-
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
     .board {
@@ -788,83 +756,6 @@ button { font-family: inherit; }
     }
     .toolbar {
         display: none;
-    }
-    .mobile-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: rgba(15,19,28,.92);
-        -webkit-backdrop-filter: blur(12px);
-        backdrop-filter: blur(12px);
-        border-top: 1px solid var(--line);
-        padding: 0.5rem 1rem;
-        z-index: 100;
-    }
-    .mobile-bar-btn {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        border: none;
-        background: transparent;
-        font-size: 1.4rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.15s;
-    }
-    .mobile-bar-btn:hover {
-        background: rgba(255,255,255,.07);
-    }
-    .mobile-bar-btn-main {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--accent);
-        color: var(--accent-ink);
-        font-size: 1.1rem;
-        box-shadow: 0 8px 20px rgba(255,180,84,.35);
-    }
-    .mobile-bar-btn-main:hover {
-        background: var(--accent-hi);
-    }
-    .mobile-bar-btn-group {
-        position: relative;
-    }
-    .mobile-settings-dropdown {
-        display: none;
-        position: absolute;
-        bottom: 56px;
-        right: 0;
-        background: var(--surface2);
-        border: 1px solid var(--line);
-        border-radius: 0.75rem;
-        box-shadow: 0 14px 34px rgba(0,0,0,.5);
-        min-width: 180px;
-        overflow: hidden;
-        z-index: 200;
-    }
-    .mobile-settings-dropdown.active {
-        display: block;
-    }
-    .mobile-dropdown-item {
-        display: block;
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: none;
-        background: none;
-        font-size: 0.9rem;
-        text-align: left;
-        cursor: pointer;
-        color: var(--text);
-        transition: background 0.15s;
-    }
-    .mobile-dropdown-item:hover {
-        background: rgba(255,255,255,.05);
     }
     .app-header {
         flex-direction: row;
@@ -1311,34 +1202,230 @@ button { font-family: inherit; }
 /* ===== МОБИЛЬНОЕ ПЕРЕКЛЮЧЕНИЕ ВИДА ===== */
 @media (max-width: 768px) {
     .toolbar {
-        display: flex;
-        flex-wrap: nowrap;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .toolbar > #addTaskBtn,
-    .toolbar > .toolbar-settings-group,
-    .toolbar > #fileInput,
-    .toolbar > #manageUsersBtn,
-    .toolbar > #archiveBtn {
         display: none;
     }
-    .toolbar-view-switch {
-        margin-left: 0;
-        flex: 1;
-        justify-content: space-between;
-        gap: 0.5rem;
+}
+
+/* ===== НОВЫЙ ХЕДЕР: ЛОГО-МЕНЮ, ПЛЮС, КОЛЬЦО-ФИЛЬТР ===== */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 300;
+    background: linear-gradient(to bottom, var(--bg0) 55%, rgba(10,13,19,.96));
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.menu-anchor {
+    position: relative;
+    display: flex;
+}
+
+.logo-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    border-radius: 12px;
+}
+.logo-btn:hover {
+    opacity: 0.92;
+}
+
+.app-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    min-width: 220px;
+    padding: 0.35rem;
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    border-radius: 0.85rem;
+    box-shadow: 0 18px 44px rgba(0,0,0,.55);
+    z-index: 400;
+}
+.app-menu.active {
+    display: block;
+}
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: none;
+    background: none;
+    border-radius: 0.6rem;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    transition: background .15s;
+}
+.menu-item:hover {
+    background: rgba(255,255,255,.06);
+}
+
+#headerAddBtn {
+    display: none;
+}
+@media (min-width: 769px) {
+    #headerAddBtn {
+        display: none !important;
     }
-    .view-switcher {
-        flex: 1;
+    #logoutBtn {
+        display: inline-flex;
     }
-    .view-switch-btn {
-        flex: 1;
-        padding: 0.55rem 1rem;
+}
+
+.filter-modal-content {
+    max-width: 360px;
+}
+
+/* Кольцо статистики — кнопка фильтра по сотрудникам */
+.ring {
+    cursor: pointer;
+    transition: filter .2s;
+}
+.ring:hover {
+    filter: brightness(1.07);
+}
+
+/* ===== ПЕРЕКЛЮЧАТЕЛЬ ЗАДАЧИ/ОТЧЁТЫ (мобайл) ===== */
+.view-toggle {
+    display: none;
+}
+
+/* ===== КОЛОНКИ КОНТЕНТА ===== */
+.content-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.board {
+    display: block;
+}
+
+.reports-view {
+    display: block;
+}
+
+/* Баннер выбранного сотрудника над задачами */
+.employee-name-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    margin-bottom: 0.75rem;
+    padding: 0.45rem 0.8rem;
+    background: rgba(255,180,84,.10);
+    border: 1px solid rgba(255,180,84,.25);
+    border-radius: 0.7rem;
+    color: var(--accent-hi);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Пустой список задач */
+.list-empty {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+/* Кнопки Удалить / Настройки / Открыть на карточке — серые */
+.task-card .btn-delete,
+.task-card .btn-settings,
+.task-card .btn-open {
+    background: transparent;
+    color: var(--muted);
+}
+.task-card .btn-delete:hover,
+.task-card .btn-settings:hover,
+.task-card .btn-open:hover {
+    background: rgba(255,255,255,.08);
+    color: #aab3c5;
+}
+
+/* ===== МОБИЛЬНАЯ АДАПТАЦИЯ НОВОГО ИНТЕРФЕЙСА ===== */
+@media (max-width: 768px) {
+    /* В заголовке убираем слово «Задачи» и центрируем приветствие с датой по логотипу */
+    .header-left h2 {
+        display: none;
     }
-    .employee-filter {
+    #headerAddBtn {
+        display: inline-flex;
+    }
+    #logoutBtn {
+        display: none;
+    }
+
+    /* Не обрезаем выпадающее меню логотипа */
+    .header-left {
+        overflow: visible;
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 0.3rem;
+        padding: 0.25rem;
+        margin-bottom: 1rem;
+        background: var(--surface2);
+        border: 1px solid var(--line);
+        border-radius: 0.8rem;
+    }
+    .view-toggle-btn {
         flex: 1;
-        min-width: 0;
-        max-width: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.5rem;
+        border: none;
+        background: transparent;
+        border-radius: 0.6rem;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .18s, color .18s, box-shadow .18s, transform .12s;
+    }
+    .view-toggle-btn:active {
+        transform: scale(.97);
+    }
+    .view-toggle-btn.active {
+        background: var(--accent);
+        color: var(--accent-ink);
+        box-shadow: 0 4px 14px rgba(255,180,84,.3);
+    }
+
+    /* Слайдер-контейнер для переключения Задачи/Отчёты свайпом */
+    .content-cols {
+        display: flex;
+        width: 100%;
+        overflow: hidden;
+        align-items: flex-start;
+        transition: transform .35s cubic-bezier(.22,1,.36,1);
+    }
+    .content-cols[data-view="reports"] {
+        transform: translateX(-100%);
+    }
+    .content-cols > .board,
+    .content-cols > .reports-view {
+        flex: 0 0 100%;
+        width: 100%;
+    }
+    .board {
+        padding-bottom: 1rem;
     }
 }
