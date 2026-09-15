@@ -1,11 +1,11 @@
-const CACHE_NAME = 'task-tracker-v10';
+const CACHE_NAME = 'task-tracker-v11';
 const ASSETS = [
     './',
     './index.html',
-    './style.css',
-    './app.js',
-    './js/helpers.js',
-    './firebase-config.js',
+    './style.css?v=11',
+    './app.js?v=11',
+    './js/helpers.js?v=11',
+    './firebase-config.js?v=11',
     './manifest.json',
     './logo.png',
     './grifon.png',
@@ -37,6 +37,25 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
+    // Документы: сеть в первую очередь (свежий index.html), оффлайн — из кэша
+    if (e.request.mode === 'navigate') {
+        e.respondWith(
+            fetch(e.request).then(function(response) {
+                var clone = response.clone();
+                caches.open(CACHE_NAME).then(function(cache) {
+                    cache.put(e.request, clone);
+                    cache.put('./index.html', clone);
+                });
+                return response;
+            }).catch(function() {
+                return caches.match(e.request).then(function(cached) {
+                    return cached || caches.match('./index.html');
+                });
+            })
+        );
+        return;
+    }
+    // Остальное: кэш в первую очередь (активы версионированы, устаревание исключено)
     e.respondWith(
         caches.match(e.request).then(function(cached) {
             return cached || fetch(e.request).then(function(response) {
@@ -48,10 +67,6 @@ self.addEventListener('fetch', function(e) {
                 }
                 return response;
             });
-        }).catch(function() {
-            if (e.request.destination === 'document') {
-                return caches.match('./index.html');
-            }
         })
     );
 });

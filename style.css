@@ -1310,6 +1310,14 @@ button { font-family: inherit; }
     align-items: start;
 }
 
+/* Страховка от устаревшего кэша index.html (старое inline display:none больше не прячет отчёты) */
+#reportsView {
+    display: block !important;
+}
+#board {
+    display: block !important;
+}
+
 .board {
     display: block;
 }
