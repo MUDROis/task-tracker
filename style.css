@@ -1310,14 +1310,6 @@ button { font-family: inherit; }
     align-items: start;
 }
 
-/* Страховка от устаревшего кэша index.html (старое inline display:none больше не прячет отчёты) */
-#reportsView {
-    display: block !important;
-}
-#board {
-    display: block !important;
-}
-
 .board {
     display: block;
 }
@@ -1417,21 +1409,22 @@ button { font-family: inherit; }
         box-shadow: 0 4px 14px rgba(255,180,84,.3);
     }
 
-    /* Слайдер-контейнер для переключения Задачи/Отчёты свайпом */
+    /* Переключение Задачи/Отчёты на мобайле — смена панелей через display,
+       без сдвигов/трансформаций (работает в любом браузере/webview) */
     .content-cols {
-        display: flex;
-        width: 100%;
-        overflow: hidden;
-        align-items: flex-start;
-        transition: transform .35s cubic-bezier(.22,1,.36,1);
-    }
-    .content-cols[data-view="reports"] {
-        transform: translateX(-100%);
+        display: block;
+        overflow: visible;
+        transition: none;
     }
     .content-cols > .board,
     .content-cols > .reports-view {
-        flex: 0 0 100%;
         width: 100%;
+    }
+    .content-cols[data-view="tasks"] .reports-view {
+        display: none;
+    }
+    .content-cols[data-view="reports"] .board {
+        display: none;
     }
     .board {
         padding-bottom: 1rem;

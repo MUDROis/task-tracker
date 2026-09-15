@@ -2248,11 +2248,22 @@
         list.innerHTML = '';
         if (visible.length === 0) {
             list.innerHTML = '<p style="color:#94a3b8;font-size:0.9rem;text-align:center;padding:1rem 0;">Нет отчётов</p>';
-            return;
+        } else {
+            visible.forEach(function(r) {
+                list.appendChild(createReportCard(r));
+            });
         }
-        visible.forEach(function(r) {
-            list.appendChild(createReportCard(r));
-        });
+        updateReportsDiag();
+    }
+
+    // Диагностика: показывает на экране число отчётов и активный вид
+    function updateReportsDiag() {
+        var diag = document.getElementById('reportsDiag');
+        if (!diag) return;
+        var wrap = document.getElementById('contentCols');
+        diag.textContent = 'N=' + document.getElementById('list_reports').children.length +
+            ' · view=' + (wrap ? wrap.getAttribute('data-view') : '?') +
+            ' · w=' + window.innerWidth + ' · v' + '13';
     }
 
     // ---------- Запуск ----------
