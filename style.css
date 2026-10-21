@@ -144,6 +144,62 @@ button { font-family: inherit; }
     background: #1d2637;
 }
 
+/* ===== ПАРОЛЬ: глаз для показа/скрытия ===== */
+.password-field {
+    position: relative;
+}
+
+.password-field input {
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.3rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.3rem;
+    height: 2.3rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.6rem;
+    background: transparent;
+    color: var(--faint);
+    cursor: pointer;
+    transition: color .2s, background .2s;
+}
+
+.password-toggle:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, .07);
+}
+
+.password-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.password-toggle svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    display: block;
+}
+
+.password-toggle .icon-off {
+    display: none;
+}
+
+.password-toggle[aria-pressed="true"] .icon-on {
+    display: none;
+}
+
+.password-toggle[aria-pressed="true"] .icon-off {
+    display: block;
+}
+
 /* ===== BUTTONS ===== */
 .btn {
     display: inline-flex;

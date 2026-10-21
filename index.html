@@ -13,7 +13,7 @@
 <link rel="icon" href="logo.png?v=2" type="image/png">
     <link rel="shortcut icon" href="logo.png?v=2" type="image/png">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=16">
+    <link rel="stylesheet" href="style.css?v=17">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <!-- SheetJS для Excel (CDN с fallback) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -31,7 +31,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <!-- Firebase конфигурация (создайте свой файл firebase-config.js) -->
-    <script src="firebase-config.js?v=16"></script>
+    <script src="firebase-config.js?v=17"></script>
 </head>
 <body>
     <div class="orb orb-a" aria-hidden="true"></div>
@@ -50,7 +50,13 @@
                     </div>
                     <div class="form-group">
                         <label for="passwordInput">Пароль</label>
-                        <input type="password" id="passwordInput" placeholder="Введите пароль" required autocomplete="current-password">
+                        <div class="password-field">
+                            <input type="password" id="passwordInput" placeholder="Введите пароль" required autocomplete="current-password">
+                            <button type="button" class="password-toggle" data-toggle-password="passwordInput" aria-label="Показать пароль" aria-pressed="false">
+                                <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                                <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" class="btn primary">Войти</button>
                     <div id="loginError" class="error-message"></div>
@@ -273,7 +279,8 @@
             </div>
         </div>
     </div>
-    <script src="js/helpers.js?v=16"></script>
-    <script src="app.js?v=16"></script>
+    <script src="js/helpers.js?v=17"></script>
+    <script src="js/password-toggle.js?v=17"></script>
+    <script src="app.js?v=17"></script>
 </body>
 </html>
