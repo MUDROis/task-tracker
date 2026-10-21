@@ -1,11 +1,11 @@
-﻿const CACHE_NAME = 'task-tracker-v13';
+﻿const CACHE_NAME = 'task-tracker-v14';
 const ASSETS = [
     './',
     './index.html',
-    './style.css?v=13',
-    './app.js?v=13',
-    './js/helpers.js?v=13',
-    './firebase-config.js?v=13',
+    './style.css?v=14',
+    './app.js?v=14',
+    './js/helpers.js?v=14',
+    './firebase-config.js?v=14',
     './manifest.json',
     './logo.png',
     './grifon.png',

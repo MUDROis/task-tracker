@@ -10,10 +10,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/500.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/600.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/600.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="admin-style.css">
-    <script src="js/helpers.js"></script>
-    <script src="firebase-config.js"></script>
+    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="admin-style.css?v=14">
+    <script src="js/helpers.js?v=14"></script>
+    <script src="firebase-config.js?v=14"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -42,6 +42,7 @@
                     <div class="form-group">
                         <label for="addLogin">Логин</label>
                         <input type="text" id="addLogin" required minlength="3" placeholder="ivanov" autocomplete="username">
+                        <small class="muted">Буквы (в т.ч. кириллица), цифры, «_» и «-». Без пробелов — этот логин сотрудник вводит при входе.</small>
                     </div>
                     <div class="form-group">
                         <label for="addPassword">Пароль</label>
@@ -107,6 +108,6 @@
             </aside>
         </div>
     </main>
-    <script src="admin.js"></script>
+    <script src="admin.js?v=14"></script>
 </body>
 </html>

@@ -183,6 +183,54 @@
     }
 
     // ====================================================================
+    //  Логин сотрудника.
+    //  Логин используется одновременно:
+    //    1) как ключ записи в Firebase RTDB (users/<login>);
+    //    2) как local-part синтетического email (login@tasktracker.local).
+    //  Firebase Auth отклоняет пробелы и спецсимволы в email
+    //  (auth/invalid-email), а Firebase RTDB запрещает в ключе . # $ [ ] /.
+    //  Поэтому логин проверяется до обращения к Firebase — иначе пользователю
+    //  показывается сырая ошибка «The email address is badly formatted».
+    //  Кириллица допустима (в проде есть логины «Анна», «Рыжий»).
+    // --------------------------------------------------------------------
+    var LOGIN_MAX_LENGTH = 64;
+    var LOGIN_FORBIDDEN_CHARS = /[.#$\[\]\/@:]/;
+
+    function validateLogin(login) {
+        var value = (login === null || login === undefined) ? '' : String(login).trim();
+        if (!value) return 'Укажите логин';
+        if (/\s/.test(value)) {
+            return 'Логин не может содержать пробелов — введите логин, который выдал администратор (например, «Иванов», а не «Иван Иванов»)';
+        }
+        if (LOGIN_FORBIDDEN_CHARS.test(value)) {
+            return 'Логин не может содержать символы . # $ [ ] / @ : — используйте буквы, цифры, «_» и «-»';
+        }
+        if (value.length > LOGIN_MAX_LENGTH) {
+            return 'Логин слишком длинный — максимум ' + LOGIN_MAX_LENGTH + ' символов';
+        }
+        return null;
+    }
+
+    // Поиск сотрудника по логину без учёта регистра.
+    // Firebase нормализует email в нижний регистр: 'Kupriyanov@tasktracker.local'
+    // возвращается как 'kupriyanov@tasktracker.local'. Запись в БД при этом лежит
+    // под ключом 'Kupriyanov', поэтому поиск по точному логину не находит сотрудника
+    // и приложение показывает «Ваш аккаунт удалён администратором».
+    function findUserByLogin(usersObj, login) {
+        if (!usersObj || !login) return null;
+        var wanted = String(login).trim().toLowerCase();
+        if (!wanted) return null;
+        var keys = Object.keys(usersObj);
+        for (var i = 0; i < keys.length; i++) {
+            var rec = usersObj[keys[i]];
+            if (!rec) continue;
+            var candidate = rec.login || keys[i];
+            if (String(candidate).trim().toLowerCase() === wanted) return rec;
+        }
+        return null;
+    }
+
+    // ====================================================================
     //  Роли, права (чекбоксы функций) и иерархическая видимость.
     //  Полный перечень функций системы — ровно 15 пунктов (по ТЗ).
     // ====================================================================
@@ -374,6 +422,8 @@
         isManager: isManager,
         collectSubordinateLogins: collectSubordinateLogins,
         visibleHierarchyTasks: visibleHierarchyTasks,
-        visibleHierarchyReports: visibleHierarchyReports
+        visibleHierarchyReports: visibleHierarchyReports,
+        validateLogin: validateLogin,
+        findUserByLogin: findUserByLogin
     };
 }));

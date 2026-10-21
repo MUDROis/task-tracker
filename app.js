@@ -311,7 +311,7 @@
             });
             // Если текущий пользователь есть в списке — обновляем его данные
             if (currentUser) {
-                const fresh = users.find(function(u) { return u.login === currentUser.login; });
+                const fresh = DeadlineHelpers.findUserByLogin(users, currentUser.login);
                 if (fresh) {
                     currentUser = { uid: fresh.uid, login: fresh.login, name: fresh.name || '', role: fresh.role, color: fresh.color, email: fresh.email, emoji: fresh.emoji };
                 }
@@ -502,6 +502,16 @@
         }));
     }
 
+    // Запись сотрудника по логину без учёта регистра.
+    // Firebase нормализует email в нижний регистр, поэтому логин, восстановленный
+    // из user.email ('kupriyanov'), не совпадает с ключом записи в БД ('Kupriyanov')
+    // и сотрудник получает «Ваш аккаунт удалён администратором».
+    function findUserRecord(login) {
+        return getUsersRef().once('value').then(function(snapshot) {
+            return DeadlineHelpers.findUserByLogin(snapshot.val(), login);
+        });
+    }
+
     // ---------- Автосоздание admin-пользователя ----------
     function ensureAdminUser() {
         console.log('ensureAdminUser: попытка создания admin...');
@@ -541,8 +551,7 @@
         auth.onAuthStateChanged(function(user) {
             if (user) {
                 const login = user.email.replace('@tasktracker.local', '');
-                getUsersRef().child(login).once('value').then(function(snapshot) {
-                    const userData = snapshot.val();
+                findUserRecord(login).then(function(userData) {
                     if (userData) {
                         currentUser = buildCurrentUser(userData, user.uid);
                         // Первичная миграция существующей записи admin: добавляем имя
@@ -646,18 +655,28 @@
             return;
         }
 
+        // Логин подставляется в local-part синтетического email (login@tasktracker.local)
+        // и в ключ записи в RTDB. Проверяем его заранее, иначе Firebase отвечает
+        // «The email address is badly formatted» без понятного объяснения.
+        const loginProblem = DeadlineHelpers.validateLogin(login);
+        if (loginProblem) {
+            loginError.textContent = loginProblem;
+            return;
+        }
+
         const email = login + '@tasktracker.local';
         console.log('Вход: email=' + email);
+        let signedInUid = '';
         auth.signInWithEmailAndPassword(email, password)
             .then(function(userCredential) {
                 console.log('Вход успешен, uid=' + userCredential.user.uid);
-                return getUsersRef().child(login).once('value');
+                signedInUid = userCredential.user.uid;
+                return findUserRecord(login);
             })
-            .then(function(snapshot) {
-                const userData = snapshot.val();
+            .then(function(userData) {
                 console.log('Данные из DB:', userData);
                 if (userData) {
-                    currentUser = buildCurrentUser(userData, user.uid);
+                    currentUser = buildCurrentUser(userData, signedInUid);
                     saveSession(currentUser);
                     showMainPage();
                 }
@@ -669,10 +688,15 @@
                 console.error('Ошибка:', error.code, error.message);
                 if (error.code === 'auth/user-not-found') {
                     loginError.textContent = 'Пользователь не найден';
-                } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    loginError.textContent = 'Неверный пароль';
+                } else if (error.code === 'auth/wrong-password' ||
+                           error.code === 'auth/invalid-credential' ||
+                           error.code === 'auth/invalid-login-credentials') {
+                    loginError.textContent = 'Неверный логин или пароль';
                 } else if (error.code === 'auth/too-many-requests') {
                     loginError.textContent = 'Слишком много попыток. Попробуйте позже';
+                } else if (error.code === 'auth/invalid-email') {
+                    loginError.textContent = DeadlineHelpers.validateLogin(login) ||
+                        'Неверный формат логина — укажите логин, который выдал администратор';
                 } else {
                     loginError.textContent = 'Ошибка: ' + error.message;
                 }

@@ -13,8 +13,68 @@
         return firebase.database().ref('teams/' + TEAM_ID + '/users');
     }
 
+    // ---------- Отдельное приложение Firebase Auth для учётных записей сотрудников ----------
+    // Firebase Auth в основном приложении переключает текущего пользователя на созданного
+    // сотрудника: администратора выбрасывает из панели (onAuthStateChanged -> редирект),
+    // а запись сотрудника в БД не успевает сохраниться. Вторичное приложение имеет
+    // собственную сессию, поэтому основная сессия администратора не затрагивается.
+    var staffApp = null;
+
+    function getStaffAuth() {
+        if (!staffApp) {
+            try {
+                staffApp = firebase.initializeApp(FIREBASE_CONFIG, 'staff-accounts');
+            } catch (e) {
+                staffApp = firebase.app('staff-accounts');
+            }
+        }
+        return staffApp.auth();
+    }
+
     function copyPreset(roleKey) {
         return JSON.parse(JSON.stringify(DeadlineHelpers.ROLE_PRESETS[roleKey] || {}));
+    }
+
+    // Запись сотрудника в БД. login используется как ключ, поэтому он должен
+    // проходить DeadlineHelpers.validateLogin (см. ограничения Firebase/RTDB).
+    function writeUserRecord(login, uid, name, role, email) {
+        var rec = DeadlineHelpers.normalizeUser({
+            uid: uid || '',
+            login: login,
+            name: name || login,
+            role: role,
+            email: email,
+            color: '#3b82f6',
+            emoji: '👤',
+            createdAt: new Date().toISOString()
+        });
+        rec.createdBy = selectedLogin || '';
+        return getUsersRef().child(login).set(rec);
+    }
+
+    // Восстановление сотрудника, у которого учётная запись в Firebase Auth уже есть,
+    // а записи в БД нет (чаще всего — сотрудник был удалён из панели).
+    // Без этого сотрудник не может войти: Auth проходит, а записи в БД нет,
+    // и приложение показывает «Ваш аккаунт удалён администратором».
+    // UID берём входом во вторичное приложение: основная сессия не меняется.
+    function restoreUserRecord(login, password, name, role, email) {
+        var uid = '';
+        var passwordMatches = false;
+        return getStaffAuth()
+            .signInWithEmailAndPassword(login + '@tasktracker.local', password)
+            .then(function (cred) {
+                uid = cred.user.uid;
+                passwordMatches = true;
+            })
+            .catch(function () {
+                passwordMatches = false;
+            })
+            .then(function () {
+                return writeUserRecord(login, uid, name, role, email);
+            })
+            .then(function () {
+                return passwordMatches;
+            });
     }
 
     var selectedLogin = null;
@@ -168,8 +228,8 @@
                 return;
             }
             var login = fbUser.email.replace('@tasktracker.local', '');
-            getUsersRef().child(login).once('value').then(function (snap) {
-                var me = snap.val();
+            getUsersRef().once('value').then(function (snap) {
+                var me = DeadlineHelpers.findUserByLogin(snap.val(), login);
                 if (!me || !DeadlineHelpers.canDo(DeadlineHelpers.normalizeUser(me), 'manageRoles')) {
                     location.href = 'index.html';
                     return;
@@ -219,26 +279,27 @@
             var role = addRoleSelect.value;
             var name = document.getElementById('addName').value.trim();
             if (!login || !password || !email || !role) return;
+
+            // Логин подставляется в local-part синтетического email (login@tasktracker.local)
+            // и в ключ записи в RTDB. Проверяем заранее — иначе Firebase отвечает
+            // «The email address is badly formatted» без понятного объяснения.
+            var loginProblem = DeadlineHelpers.validateLogin(login);
+            if (loginProblem) {
+                alert(loginProblem);
+                return;
+            }
+
             if (users.some(function (u) { return u.login.toLowerCase() === login.toLowerCase(); })) {
                 alert('Сотрудник с таким логином уже существует.');
                 return;
             }
             var btnSubmit = addUserForm.querySelector('button[type="submit"]');
             if (btnSubmit) btnSubmit.disabled = true;
-            firebase.auth().createUserWithEmailAndPassword(login + '@tasktracker.local', password)
+            var createdUser = null;
+            getStaffAuth().createUserWithEmailAndPassword(login + '@tasktracker.local', password)
                 .then(function (cred) {
-                    var rec = DeadlineHelpers.normalizeUser({
-                        uid: cred.user.uid,
-                        login: login,
-                        name: name || login,
-                        role: role,
-                        email: email,
-                        color: '#3b82f6',
-                        emoji: '👤',
-                        createdAt: new Date().toISOString()
-                    });
-                    rec.createdBy = selectedLogin || '';
-                    return getUsersRef().child(login).set(rec);
+                    createdUser = cred.user;
+                    return writeUserRecord(login, createdUser.uid, name, role, email);
                 })
                 .then(function () {
                     addUserForm.reset();
@@ -248,6 +309,33 @@
                     saveStatus.textContent = 'Сотрудник добавлен. При необходимости измените функции и сохраните.';
                 })
                 .catch(function (err) {
+                    if (err && err.code === 'auth/email-already-in-use') {
+                        // Учётная запись уже существует (например, сотрудник был удалён из БД).
+                        // Восстанавливаем запись в БД — иначе сотрудник не сможет войти.
+                        return restoreUserRecord(login, password, name, role, email)
+                            .then(function (passwordMatches) {
+                                addUserForm.reset();
+                                addUserPanel.hidden = true;
+                                selectedLogin = login;
+                                renderAll();
+                                saveStatus.textContent = passwordMatches
+                                    ? 'Сотрудник восстановлен: учётная запись уже существовала, пароль прежний.'
+                                    : 'Сотрудник восстановлен: учётная запись уже существовала с другим паролем — новый пароль не применился, сообщите сотруднику прежний.';
+                            })
+                            .catch(function (restoreErr) {
+                                alert('Не удалось восстановить сотрудника: ' + restoreErr.message);
+                            });
+                    }
+                    // Откат: учётная запись создана, но запись в БД не записалась.
+                    // Удаляем аккаунт, иначе сотрудник войдёт без записи в БД
+                    // и увидит «Ваш аккаунт удалён администратором».
+                    if (createdUser) {
+                        return createdUser.delete()
+                            .catch(function () { return null; })
+                            .then(function () {
+                                alert('Ошибка создания: ' + err.message + '\n\nУчётная запись удалена — можно повторить попытку.');
+                            });
+                    }
                     alert('Ошибка создания: ' + err.message);
                 })
                 .finally(function () {
@@ -307,7 +395,7 @@
                 alert('Нельзя удалить последнего пользователя с ролью «Менеджер».');
                 return;
             }
-            if (!confirm('Удалить пользователя «' + user.login + '»?')) return;
+            if (!confirm('Удалить пользователя «' + user.login + '»?\n\nУчётная запись в Firebase останется. Чтобы вернуть сотрудника, создайте его снова с тем же логином — запись восстановится, но пароль останется прежним.')) return;
             getUsersRef().child(user.login).remove();
         });
 
