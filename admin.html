@@ -88,6 +88,14 @@
                         <select id="roleSelect"></select>
                     </div>
                     <div class="role-hint" id="roleHint"></div>
+                    <div class="form-group" id="loginChangeBlock" hidden>
+                        <label for="editLogin">Логин</label>
+                        <input type="text" id="editLogin" placeholder="Kupriyanov" autocomplete="off">
+                        <small class="muted">Смена логина переносит задачи, отчёты и карточку сотрудника. Учётная запись создаётся заново — введите пароль, по которому сотрудник будет входить.</small>
+                        <input type="password" id="editLoginPassword" placeholder="Новый пароль" minlength="6" autocomplete="new-password">
+                        <button class="btn btn--charcoal" type="button" id="changeLoginBtn">🔑 Сменить логин</button>
+                        <p id="loginChangeStatus" class="admin-status" role="status"></p>
+                    </div>
                     <fieldset class="permissions-fieldset">
                         <legend>Функции пользователя</legend>
                         <div id="permissionsList" class="permissions"></div>

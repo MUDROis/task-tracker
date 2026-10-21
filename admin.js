@@ -13,6 +13,18 @@
         return firebase.database().ref('teams/' + TEAM_ID + '/users');
     }
 
+    function getTasksRef() {
+        return firebase.database().ref('teams/' + TEAM_ID + '/tasks');
+    }
+
+    function getReportsRef() {
+        return firebase.database().ref('teams/' + TEAM_ID + '/reports');
+    }
+
+    function getTeamRef() {
+        return firebase.database().ref('teams/' + TEAM_ID);
+    }
+
     // ---------- Отдельное приложение Firebase Auth для учётных записей сотрудников ----------
     // Firebase Auth в основном приложении переключает текущего пользователя на созданного
     // сотрудника: администратора выбрасывает из панели (onAuthStateChanged -> редирект),
@@ -94,6 +106,11 @@
     var editName = document.getElementById('editName');
     var editEmail = document.getElementById('editEmail');
     var editEmoji = document.getElementById('editEmoji');
+    var loginChangeBlock = document.getElementById('loginChangeBlock');
+    var editLogin = document.getElementById('editLogin');
+    var editLoginPassword = document.getElementById('editLoginPassword');
+    var changeLoginBtn = document.getElementById('changeLoginBtn');
+    var loginChangeStatus = document.getElementById('loginChangeStatus');
     var roleSelect = document.getElementById('roleSelect');
     var roleHint = document.getElementById('roleHint');
     var permissionsList = document.getElementById('permissionsList');
@@ -169,6 +186,12 @@
         editName.value = user.name || '';
         editEmail.value = user.email || '';
         editEmoji.value = user.emoji || '';
+        editLogin.value = user.login || '';
+        editLoginPassword.value = '';
+        loginChangeStatus.textContent = '';
+        // Логин служебной учётки admin не меняется: от него зависят
+        // ensureAdminUser и автосоздание записи при первом входе.
+        loginChangeBlock.hidden = (user.login === 'admin');
         fillRoleSelect(roleSelect, user.role);
         roleHint.textContent = DeadlineHelpers.ROLES[user.role] ? DeadlineHelpers.ROLES[user.role].description : '';
         renderPermissions(user);
@@ -397,6 +420,103 @@
             }
             if (!confirm('Удалить пользователя «' + user.login + '»?\n\nУчётная запись в Firebase останется. Чтобы вернуть сотрудника, создайте его снова с тем же логином — запись восстановится, но пароль останется прежним.')) return;
             getUsersRef().child(user.login).remove();
+        });
+
+        // ---------- Смена логина сотрудника ----------
+        // Логин — это ключ записи в БД, local-part email в Firebase Auth и строка-ссылка
+        // в задачах/отчётах. Меняем всё сразу: создаём новую учётную запись, одной
+        // атомарной операцией переносим карточку и ссылки, затем удаляем старую запись.
+        changeLoginBtn.addEventListener('click', function () {
+            var user = users.find(function (u) { return u.login === selectedLogin; });
+            if (!user) return;
+            if (dirty) {
+                alert('Сначала сохраните права или отмените изменения.');
+                return;
+            }
+            var oldLogin = selectedLogin;
+            var newLogin = editLogin.value.trim();
+            var newPassword = editLoginPassword.value;
+
+            var problem = DeadlineHelpers.validateLogin(newLogin);
+            if (problem) { alert(problem); return; }
+            if (newLogin.toLowerCase() === oldLogin.toLowerCase()) {
+                alert('Логин не изменился.');
+                return;
+            }
+            if (DeadlineHelpers.findUserByLogin(users, newLogin)) {
+                alert('Сотрудник с таким логином уже существует.');
+                return;
+            }
+            if (!newPassword || newPassword.length < 6) {
+                alert('Пароль должен быть не короче 6 символов.');
+                return;
+            }
+            if (!confirm('Сменить логин «' + oldLogin + '» на «' + newLogin + '»?\n\n' +
+                    'Задачи, отчёты и карточка сотрудника переезжают вместе с ним.\n' +
+                    'Будет создана новая учётная запись с введённым паролем. Старая запись ' +
+                    oldLogin + '@tasktracker.local останется в Firebase и больше не будет работать.')) return;
+
+            changeLoginBtn.disabled = true;
+            loginChangeStatus.textContent = '';
+            var createdUser = null;
+            var oldKey = null;
+
+            getStaffAuth().createUserWithEmailAndPassword(newLogin + '@tasktracker.local', newPassword)
+                .then(function (cred) {
+                    createdUser = cred.user;
+                    return Promise.all([
+                        getUsersRef().once('value'),
+                        getTasksRef().once('value'),
+                        getReportsRef().once('value')
+                    ]);
+                })
+                .then(function (snaps) {
+                    var usersRaw = snaps[0].val() || {};
+                    var tasksRaw = snaps[1].val() || {};
+                    var reportsRaw = snaps[2].val() || {};
+                    oldKey = Object.keys(usersRaw).filter(function (key) {
+                        var rec = usersRaw[key] || {};
+                        var candidate = String(rec.login || key);
+                        return candidate.trim().toLowerCase() === oldLogin.trim().toLowerCase();
+                    })[0];
+                    if (!oldKey) throw new Error('Запись сотрудника не найдена в базе.');
+                    var newRecord = DeadlineHelpers.normalizeUser(Object.assign({}, usersRaw[oldKey], {
+                        login: newLogin,
+                        uid: createdUser.uid
+                    }));
+                    var patch = DeadlineHelpers.buildLoginChangePatch(usersRaw, tasksRaw, reportsRaw, oldLogin, newLogin, newRecord);
+                    return getTeamRef().update(patch);
+                })
+                .then(function () {
+                    return getUsersRef().child(oldKey).remove();
+                })
+                .then(function () {
+                    selectedLogin = newLogin;
+                    editLogin.value = newLogin;
+                    editLoginPassword.value = '';
+                    renderAll();
+                    loginChangeStatus.textContent = 'Логин изменён на «' + newLogin + '». Задачи, отчёты и карточка сотрудника перенесены. ' +
+                        'Старая учётная запись ' + oldLogin + '@tasktracker.local осталась в Firebase — удалить её можно только в консоли Firebase.';
+                })
+                .catch(function (err) {
+                    if (err && err.code === 'auth/email-already-in-use') {
+                        loginChangeStatus.textContent = 'Учётная запись «' + newLogin + '» уже существует (сотрудник был удалён ранее). ' +
+                            'Восстановить его можно через «Добавить сотрудника» — сохранится прежний пароль.';
+                        return;
+                    }
+                    if (createdUser) {
+                        // Перенос не удался — откатываем учётную запись, чтобы повторная
+                        // попытка шла с чистого листа.
+                        createdUser.delete().catch(function () { return null; }).then(function () {
+                            loginChangeStatus.textContent = 'Ошибка переноса: ' + err.message + '. Учётная запись удалена — можно повторить попытку.';
+                        });
+                        return;
+                    }
+                    loginChangeStatus.textContent = 'Ошибка: ' + err.message;
+                })
+                .finally(function () {
+                    changeLoginBtn.disabled = false;
+                });
         });
 
         window.addEventListener('beforeunload', function (e) {
