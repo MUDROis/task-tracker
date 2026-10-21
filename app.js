@@ -314,6 +314,12 @@
                 const fresh = DeadlineHelpers.findUserByLogin(users, currentUser.login);
                 if (fresh) {
                     currentUser = { uid: fresh.uid, login: fresh.login, name: fresh.name || '', role: fresh.role, color: fresh.color, email: fresh.email, emoji: fresh.emoji };
+                } else if (users.length) {
+                    // Запись сотрудника исчезла: логин изменён администратором
+                    // или учётка удалена. Закрываем сессию, иначе сотрудник
+                    // продолжит создавать задачи со старым логином.
+                    blockedMessage = 'Ваша учётная запись в трекере изменилась — войдите заново';
+                    auth.signOut();
                 }
             }
             populateAssigneeSelect();
