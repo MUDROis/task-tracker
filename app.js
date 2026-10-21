@@ -301,11 +301,14 @@
         // Слушаем пользователей в реальном времени
         getUsersRef().on('value', function(snapshot) {
             const data = snapshot.val();
-            const rawUsers = data ? Object.values(data) : [];
-            users = rawUsers.map(function(u) {
-                var normalized = DeadlineHelpers.normalizeUser(u);
+            const entries = data ? Object.entries(data) : [];
+            users = entries.map(function(entry, index) {
+                var normalized = DeadlineHelpers.normalizeUser(entry[1]);
+                // У легаси-записей поле login может отсутствовать — логином
+                // сотрудника является ключ записи в БД.
+                if (!normalized.login) normalized.login = entry[0];
                 if (!normalized.color) {
-                    normalized.color = DEFAULT_COLORS[rawUsers.indexOf(u) % DEFAULT_COLORS.length];
+                    normalized.color = DEFAULT_COLORS[index % DEFAULT_COLORS.length];
                 }
                 return normalized;
             });

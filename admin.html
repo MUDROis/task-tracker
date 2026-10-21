@@ -10,10 +10,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/500.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/600.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/600.css">
-    <link rel="stylesheet" href="style.css?v=15">
-    <link rel="stylesheet" href="admin-style.css?v=15">
-    <script src="js/helpers.js?v=15"></script>
-    <script src="firebase-config.js?v=15"></script>
+    <link rel="stylesheet" href="style.css?v=16">
+    <link rel="stylesheet" href="admin-style.css?v=16">
+    <script src="js/helpers.js?v=16"></script>
+    <script src="firebase-config.js?v=16"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -88,14 +88,6 @@
                         <select id="roleSelect"></select>
                     </div>
                     <div class="role-hint" id="roleHint"></div>
-                    <div class="form-group" id="loginChangeBlock" hidden>
-                        <label for="editLogin">Логин</label>
-                        <input type="text" id="editLogin" placeholder="Kupriyanov" autocomplete="off">
-                        <small class="muted">Смена логина переносит задачи, отчёты и карточку сотрудника. Учётная запись создаётся заново — введите пароль, по которому сотрудник будет входить.</small>
-                        <input type="password" id="editLoginPassword" placeholder="Новый пароль" minlength="6" autocomplete="new-password">
-                        <button class="btn btn--charcoal" type="button" id="changeLoginBtn">🔑 Сменить логин</button>
-                        <p id="loginChangeStatus" class="admin-status" role="status"></p>
-                    </div>
                     <fieldset class="permissions-fieldset">
                         <legend>Функции пользователя</legend>
                         <div id="permissionsList" class="permissions"></div>
@@ -107,6 +99,16 @@
                     </div>
                     <p id="saveStatus" class="admin-status" role="status"></p>
                 </form>
+                <!-- Смена логина — вне формы прав: Enter в поле пароля не должен
+                     сохранять права сотрудника. -->
+                <div class="form-group" id="loginChangeBlock" hidden>
+                    <label for="editLogin">Логин</label>
+                    <input type="text" id="editLogin" placeholder="Kupriyanov" autocomplete="off">
+                    <small class="muted">Смена логина переносит задачи, отчёты и карточку сотрудника. Учётная запись создаётся заново — введите пароль, по которому сотрудник будет входить.</small>
+                    <input type="password" id="editLoginPassword" placeholder="Новый пароль" minlength="6" autocomplete="new-password">
+                    <button class="btn btn--charcoal" type="button" id="changeLoginBtn">🔑 Сменить логин</button>
+                    <p id="loginChangeStatus" class="admin-status" role="status"></p>
+                </div>
             </section>
 
             <aside class="admin-card">
@@ -116,6 +118,6 @@
             </aside>
         </div>
     </main>
-    <script src="admin.js?v=15"></script>
+    <script src="admin.js?v=16"></script>
 </body>
 </html>

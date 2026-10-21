@@ -127,3 +127,53 @@ test('buildLoginChangePatch: пустые коллекции дают патч �
   assert.deepStrictEqual(Object.keys(patch), ['users/new']);
 });
 
+// ---------- Регрессы, найденные ревью ветки ----------
+
+test('resolveLoginChange: находит ключ записи и действующий логин', () => {
+  const usersRaw = {
+    Kupriyanov: { login: 'Kupriyanov', name: 'Артём' },
+    legacy: { name: 'Легаси без поля login' }
+  };
+  assert.deepStrictEqual(DH.resolveLoginChange(usersRaw, 'Kupriyanov'),
+    { key: 'Kupriyanov', login: 'Kupriyanov' });
+  // у легаси-записи логином является ключ в БД
+  assert.deepStrictEqual(DH.resolveLoginChange(usersRaw, 'legacy'),
+    { key: 'legacy', login: 'legacy' });
+  assert.deepStrictEqual(DH.resolveLoginChange(usersRaw, 'LEGACY'),
+    { key: 'legacy', login: 'legacy' });
+  assert.strictEqual(DH.resolveLoginChange(usersRaw, 'нет такого'), null);
+  assert.strictEqual(DH.resolveLoginChange(null, 'admin'), null);
+});
+
+test('isLoginTaken: логин занят, если совпадает ключ записи ИЛИ поле login', () => {
+  const usersRaw = {
+    Ivanov: { name: 'Легаси без поля login' },
+    Petya: { login: 'petrov' },
+    Sidorov: { login: 'Sidorov' }
+  };
+  assert.strictEqual(DH.isLoginTaken(usersRaw, 'ivanov'), true, 'занят по ключу записи');
+  assert.strictEqual(DH.isLoginTaken(usersRaw, 'PETROV'), true, 'занят по полю login');
+  assert.strictEqual(DH.isLoginTaken(usersRaw, 'sidorov'), true);
+  assert.strictEqual(DH.isLoginTaken(usersRaw, 'Новый'), false);
+  assert.strictEqual(DH.isLoginTaken({}, 'Ivanov'), false);
+  assert.strictEqual(DH.isLoginTaken(null, 'Ivanov'), false);
+});
+
+test('loginChangeFailure: откат учётки делается только при сбое переноса данных', () => {
+  const already = DH.loginChangeFailure('create', { code: 'auth/email-already-in-use', message: 'EMAIL_EXISTS' }, 'Ivanov');
+  assert.strictEqual(already.rollback, false, 'учётка не создана — откатывать нечего');
+  assert.match(already.message, /уже существует/);
+
+  const create = DH.loginChangeFailure('create', { message: 'WEAK_PASSWORD' }, 'Ivanov');
+  assert.strictEqual(create.rollback, false);
+  assert.match(create.message, /Ошибка/);
+
+  const transfer = DH.loginChangeFailure('transfer', { message: 'NETWORK_ERROR' }, 'Ivanov');
+  assert.strictEqual(transfer.rollback, true, 'перенос не удался — учётку откатываем');
+  assert.match(transfer.message, /Ошибка переноса/);
+
+  const remove = DH.loginChangeFailure('remove', { message: 'PERMISSION_DENIED' }, 'Ivanov');
+  assert.strictEqual(remove.rollback, false, 'данные уже перенесены — учётку не откатываем');
+  assert.match(remove.message, /старую запись удалить не удалось/);
+});
+

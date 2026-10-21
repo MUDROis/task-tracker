@@ -275,6 +275,67 @@
         return patch;
     }
 
+    // Ключ записи сотрудника и его действующий логин.
+    // У легаси-записей поле login может отсутствовать — тогда логином является
+    // ключ в БД. Возвращает { key, login } или null, если запись не найдена.
+    function resolveLoginChange(usersRaw, selectedLogin) {
+        if (!usersRaw || !selectedLogin) return null;
+        var wanted = String(selectedLogin).trim().toLowerCase();
+        if (!wanted) return null;
+        var keys = Object.keys(usersRaw);
+        for (var i = 0; i < keys.length; i++) {
+            var rec = usersRaw[keys[i]] || {};
+            var candidate = String(rec.login || keys[i]).trim();
+            if (candidate.toLowerCase() === wanted) {
+                return { key: keys[i], login: candidate };
+            }
+        }
+        return null;
+    }
+
+    // Занят ли логин: совпадение по ключу записи ИЛИ по полю login.
+    // Проверка только по полю пропускала бы легаси-записи и приводила к
+    // молчаливому перезаписыванию чужой карточки при смене логина.
+    function isLoginTaken(usersRaw, newLogin) {
+        if (!usersRaw || !newLogin) return false;
+        var wanted = String(newLogin).trim().toLowerCase();
+        if (!wanted) return false;
+        var keys = Object.keys(usersRaw);
+        for (var i = 0; i < keys.length; i++) {
+            var rec = usersRaw[keys[i]] || {};
+            if (keys[i].trim().toLowerCase() === wanted) return true;
+            if (rec.login && String(rec.login).trim().toLowerCase() === wanted) return true;
+        }
+        return false;
+    }
+
+    // Решение по неудачной смене логина.
+    // phase: 'create'   — не удалось создать учётную запись;
+    //         'transfer' — не удалось перенести данные (учётку откатываем);
+    //         'remove'   — данные перенесены, но старую запись удалить не удалось
+    //                       (откатывать нечего, учётка уже работает).
+    function loginChangeFailure(phase, err, newLogin) {
+        var message = (err && err.message) ? err.message : 'неизвестная ошибка';
+        if (phase === 'create') {
+            if (err && err.code === 'auth/email-already-in-use') {
+                return {
+                    rollback: false,
+                    message: 'Учётная запись «' + newLogin + '» уже существует (сотрудник был удалён ранее). ' +
+                        'Восстановить его можно через «Добавить сотрудника» — сохранится прежний пароль.'
+                };
+            }
+            return { rollback: false, message: 'Ошибка: ' + message };
+        }
+        if (phase === 'transfer') {
+            return { rollback: true, message: 'Ошибка переноса: ' + message + '.' };
+        }
+        return {
+            rollback: false,
+            message: 'Данные сотрудника перенесены, но старую запись удалить не удалось: ' + message + '. ' +
+                'Учётная запись работает — старую запись удалите вручную.'
+        };
+    }
+
     // ====================================================================
     //  Роли, права (чекбоксы функций) и иерархическая видимость.
     //  Полный перечень функций системы — ровно 15 пунктов (по ТЗ).
@@ -470,6 +531,9 @@
         visibleHierarchyReports: visibleHierarchyReports,
         validateLogin: validateLogin,
         findUserByLogin: findUserByLogin,
-        buildLoginChangePatch: buildLoginChangePatch
+        buildLoginChangePatch: buildLoginChangePatch,
+        resolveLoginChange: resolveLoginChange,
+        isLoginTaken: isLoginTaken,
+        loginChangeFailure: loginChangeFailure
     };
 }));
