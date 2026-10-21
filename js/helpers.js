@@ -230,6 +230,51 @@
         return null;
     }
 
+    // Патч атомарного переноса при смене логина сотрудника.
+    // users/tasks/reports — сырые карты RTDB (объекты). Возвращает объект,
+    // ключи которого — пути относительно teams/<TEAM_ID>:
+    //   users/<newLogin>            — новая запись сотрудника;
+    //   tasks/<id>/createdBy|assignedTo, reports/<id>/createdBy|assignedTo,
+    //   users/<key>/createdBy        — ссылки, где было старое значение.
+    // Сравнение ссылок без учёта регистра: Firebase приводит ASCII-часть email
+    // к нижнему регистру, поэтому в ссылке может лежать другой регистр.
+    function buildLoginChangePatch(users, tasks, reports, oldLogin, newLogin, newRecord) {
+        var patch = {};
+        patch['users/' + newLogin] = newRecord;
+        var wanted = String(oldLogin || '').trim().toLowerCase();
+        if (!wanted) return patch;
+
+        function matches(value) {
+            if (value === undefined || value === null) return false;
+            var v = String(value).trim().toLowerCase();
+            return v !== '' && v === wanted;
+        }
+
+        function rewriteLinks(collection, map) {
+            if (!map) return;
+            Object.keys(map).forEach(function (id) {
+                var item = map[id] || {};
+                ['createdBy', 'assignedTo'].forEach(function (field) {
+                    if (matches(item[field])) {
+                        patch[collection + '/' + id + '/' + field] = newLogin;
+                    }
+                });
+            });
+        }
+
+        rewriteLinks('tasks', tasks);
+        rewriteLinks('reports', reports);
+        if (users) {
+            Object.keys(users).forEach(function (key) {
+                var rec = users[key] || {};
+                if (matches(rec.createdBy)) {
+                    patch['users/' + key + '/createdBy'] = newLogin;
+                }
+            });
+        }
+        return patch;
+    }
+
     // ====================================================================
     //  Роли, права (чекбоксы функций) и иерархическая видимость.
     //  Полный перечень функций системы — ровно 15 пунктов (по ТЗ).
@@ -424,6 +469,7 @@
         visibleHierarchyTasks: visibleHierarchyTasks,
         visibleHierarchyReports: visibleHierarchyReports,
         validateLogin: validateLogin,
-        findUserByLogin: findUserByLogin
+        findUserByLogin: findUserByLogin,
+        buildLoginChangePatch: buildLoginChangePatch
     };
 }));

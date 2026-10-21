@@ -77,3 +77,53 @@ test('findUserByLogin: берёт логин из ключа, если в зап
   assert.strictEqual(DH.findUserByLogin(users, 'legacy').name, 'Без логина');
 });
 
+test('buildLoginChangePatch: переносит запись сотрудника и ссылки в задачах/отчётах', () => {
+  const users = {
+    Kupriyanov: { login: 'Kupriyanov', name: 'Артём', role: 'management' },
+    admin: { login: 'admin', createdBy: 'Kupriyanov' }
+  };
+  const tasks = {
+    t1: { createdBy: 'Kupriyanov', assignedTo: 'admin' },
+    t2: { createdBy: 'admin', assignedTo: 'Kupriyanov' }
+  };
+  const reports = { r1: { createdBy: 'Kupriyanov', assignedTo: 'Kupriyanov' } };
+  const newRecord = { login: 'Куприянов', name: 'Артём', role: 'management', uid: 'NEWUID' };
+  const patch = DH.buildLoginChangePatch(users, tasks, reports, 'Kupriyanov', 'Куприянов', newRecord);
+
+  assert.deepStrictEqual(patch['users/Куприянов'], newRecord);
+  assert.strictEqual(patch['tasks/t1/createdBy'], 'Куприянов');
+  assert.strictEqual(patch['tasks/t2/assignedTo'], 'Куприянов');
+  assert.strictEqual(patch['reports/r1/createdBy'], 'Куприянов');
+  assert.strictEqual(patch['reports/r1/assignedTo'], 'Куприянов');
+  assert.strictEqual(patch['users/admin/createdBy'], 'Куприянов');
+  // ссылки, не относящиеся к сотруднику, не трогаются
+  assert.strictEqual(patch['tasks/t1/assignedTo'], undefined);
+  assert.strictEqual(patch['tasks/t2/createdBy'], undefined);
+});
+
+test('buildLoginChangePatch: сравнение ссылок без учёта регистра', () => {
+  const tasks = { t1: { assignedTo: 'kupriyanov' } };
+  const patch = DH.buildLoginChangePatch({}, tasks, {}, 'Kupriyanov', 'Куприянов', { login: 'Куприянов' });
+  assert.strictEqual(patch['tasks/t1/assignedTo'], 'Куприянов');
+});
+
+test('buildLoginChangePatch: пустые значения не переписываются', () => {
+  const tasks = { t1: { assignedTo: '', createdBy: 'admin' } };
+  const patch = DH.buildLoginChangePatch({}, tasks, {}, 'Kupriyanov', 'Куприянов', { login: 'Куприянов' });
+  assert.strictEqual(patch['tasks/t1/assignedTo'], undefined);
+  assert.strictEqual(patch['tasks/t1/createdBy'], undefined);
+});
+
+test('buildLoginChangePatch: легаси-запись без поля login берёт логин из ключа', () => {
+  const users = { legacy: { name: 'Без логина' } };
+  const tasks = { t1: { createdBy: 'legacy' } };
+  const patch = DH.buildLoginChangePatch(users, tasks, {}, 'legacy', 'Новый', { login: 'Новый' });
+  assert.strictEqual(patch['tasks/t1/createdBy'], 'Новый');
+  assert.ok(patch['users/Новый']);
+});
+
+test('buildLoginChangePatch: пустые коллекции дают патч только с новой записью', () => {
+  const patch = DH.buildLoginChangePatch(null, null, null, 'old', 'new', { login: 'new' });
+  assert.deepStrictEqual(Object.keys(patch), ['users/new']);
+});
+
