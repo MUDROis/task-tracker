@@ -180,11 +180,15 @@
         userName.textContent = user.name || user.login;
         var roleLabel = DeadlineHelpers.ROLES[user.role] ? DeadlineHelpers.ROLES[user.role].label : user.role;
         var createdStr = user.createdAt ? new Date(user.createdAt).toLocaleString('ru-RU') : '—';
+        var creatorEl = user.createdBy ? users.find(function (u) { return u.login === user.createdBy; }) : null;
+        var createdByLabel = user.createdBy
+            ? ' • Создал: ' + ((creatorEl && creatorEl.name) || user.createdBy)
+            : '';
         userMeta.textContent = 'Логин: ' + user.login +
             (user.email ? ' • Email: ' + user.email : '') +
             ' • Роль: ' + roleLabel +
             ' • Создан: ' + createdStr +
-            (user.createdBy ? ' • Создал: ' + (users.find(function(u){return u.login===user.createdBy;}) || {}).name || user.createdBy : '');
+            createdByLabel;
         editName.value = user.name || '';
         editEmail.value = user.email || '';
         editEmoji.value = user.emoji || '';
