@@ -979,7 +979,7 @@
 
     function getTasksForUser() {
         var visible = DeadlineHelpers.visibleHierarchyTasks(tasks, currentUser.login, currentUser.role, users);
-        if (selectedEmployee && DeadlineHelpers.isManager(currentUser)) {
+        if (selectedEmployee && DeadlineHelpers.canFilterEmployees(currentUser)) {
             visible = visible.filter(function(t) {
                 return t.createdBy === selectedEmployee || t.assignedTo === selectedEmployee;
             });
@@ -1000,10 +1000,10 @@
 
     // ---------- Фильтр по сотрудникам (только для руководителя) ----------
     function populateEmployeeFilter() {
-        const isAdmin = currentUser && DeadlineHelpers.isManager(currentUser);
-        if (employeeFilter) employeeFilter.style.display = isAdmin ? '' : 'none';
-        if (employeeFilterMobile) employeeFilterMobile.style.display = isAdmin ? '' : 'none';
-        if (!isAdmin) {
+        const canFilter = currentUser && DeadlineHelpers.canFilterEmployees(currentUser);
+        if (employeeFilter) employeeFilter.style.display = canFilter ? '' : 'none';
+        if (employeeFilterMobile) employeeFilterMobile.style.display = canFilter ? '' : 'none';
+        if (!canFilter) {
             if (employeeFilter) employeeFilter.value = '';
             if (employeeFilterMobile) employeeFilterMobile.value = '';
             selectedEmployee = '';
@@ -1084,7 +1084,7 @@
         if (!ringEl || !pctEl || !currentUser) return;
         var ringTasks = getTasksForUser();
         var ringReports = reports.filter(isMyReport);
-        var stats = DeadlineHelpers.statsSummary(ringTasks, ringReports, currentUser.login, DeadlineHelpers.isManager(currentUser));
+        var stats = DeadlineHelpers.statsSummary(ringTasks, ringReports, currentUser.login, DeadlineHelpers.canFilterEmployees(currentUser));
         ringEl.style.setProperty('--p', stats.pct);
         pctEl.textContent = stats.pct + '%';
     }
@@ -1843,7 +1843,7 @@
     // ---------- Кольцо статистики -> фильтр по сотрудникам ----------
     if (statsRing) {
         statsRing.addEventListener('click', function() {
-            if (!currentUser || !DeadlineHelpers.isManager(currentUser)) return;
+            if (!currentUser || !DeadlineHelpers.canFilterEmployees(currentUser)) return;
             if (employeeFilterMobile) employeeFilterMobile.value = selectedEmployee || '';
             const modal = document.getElementById('employeeFilterModal');
             if (modal) modal.classList.add('active');
@@ -1868,7 +1868,7 @@
     function updateEmployeeNameBanner() {
         const banner = document.getElementById('employeeNameBanner');
         if (!banner) return;
-        if (selectedEmployee && currentUser && DeadlineHelpers.isManager(currentUser)) {
+        if (selectedEmployee && currentUser && DeadlineHelpers.canFilterEmployees(currentUser)) {
             banner.textContent = '👤 ' + formatUserName(selectedEmployee);
             banner.style.display = 'inline-flex';
         } else {
@@ -2187,7 +2187,7 @@
 
     function isMyReport(report) {
         var visible = DeadlineHelpers.visibleHierarchyReports([report], currentUser.login, currentUser.role, users);
-        if (visible.length && selectedEmployee && DeadlineHelpers.isManager(currentUser)) {
+        if (visible.length && selectedEmployee && DeadlineHelpers.canFilterEmployees(currentUser)) {
             return report.createdBy === selectedEmployee || report.assignedTo === selectedEmployee;
         }
         return visible.length === 1;

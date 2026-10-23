@@ -444,6 +444,13 @@
         return !!(user && user.role === 'manager');
     }
 
+    // Может ли пользователь фильтровать задачи/отчёты по сотрудникам
+    // (кнопка-кольцо статистики и фильтр по сотрудникам). Оба руководителя —
+    // manager и management — видят всё и могут фильтровать.
+    function canFilterEmployees(user) {
+        return !!(user && (user.role === 'manager' || user.role === 'management'));
+    }
+
     function canDo(user, permissionKey) {
         if (!user) return false;
         if (user.role === 'manager') return true;
@@ -526,6 +533,7 @@
         canDo: canDo,
         canAssignTo: canAssignTo,
         isManager: isManager,
+        canFilterEmployees: canFilterEmployees,
         collectSubordinateLogins: collectSubordinateLogins,
         visibleHierarchyTasks: visibleHierarchyTasks,
         visibleHierarchyReports: visibleHierarchyReports,

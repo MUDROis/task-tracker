@@ -79,6 +79,14 @@ test('manager и management видят всё', () => {
   }
 });
 
+test('canFilterEmployees: manager и management могут фильтровать, department/specialist нет', () => {
+  assert.strictEqual(DH.canFilterEmployees({ role: 'manager' }), true);
+  assert.strictEqual(DH.canFilterEmployees({ role: 'management' }), true);
+  assert.strictEqual(DH.canFilterEmployees({ role: 'department' }), false);
+  assert.strictEqual(DH.canFilterEmployees({ role: 'specialist' }), false);
+  assert.strictEqual(DH.canFilterEmployees(null), false);
+});
+
 test('collectSubordinateLogins рекурсивно собирает цепочку', () => {
   const users = [
     { login: 'dep', createdBy: '' },
