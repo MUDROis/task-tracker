@@ -1,10 +1,4 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml"><url>
-    <loc>https://rkkt.ru/mery-podderjki/analiz-primenimosti</loc>
-    <lastmod>2026-11-18T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/baza-yanao</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
     <loc>https://rkkt.ru/mery-podderjki/federalnye-mery</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
@@ -17,378 +11,165 @@
     <loc>https://rkkt.ru/mery-podderjki/normativnaya-baza</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/razrabotka/arhitektura</loc>
-    <lastmod>2026-11-18T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/razrabotka/istochniki-kontenta</loc>
-    <lastmod>2026-11-18T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/razrabotka/publikaciya-quartz</loc>
-    <lastmod>2026-11-18T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/razrabotka/</loc>
-    <lastmod>2026-11-18T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tablica-primenimosti</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
     <loc>https://rkkt.ru/mery-podderjki/</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/kray/krasnodarskiy-kray</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8/detskiy-sad</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/kray/nalogi-i-transport</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8/nalogovaya-lgota</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/kray/obrazovanie-i-deti</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8/pogrebenie-i-pamyatnik</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/kray/zemlya-532-kz</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8/poryadok-polucheniya</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/deti-sad-i-shkola</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8/vyplata-kontraktniku</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/kontakty</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8/zemelnyy-uchastok</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/medicina</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BA%D1%80%D0%B0%D0%B9/krasnodarskiy-kray</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/nalogi-i-zhkh</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BA%D1%80%D0%B0%D0%B9/nalogi-i-transport</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/pamyatnik-i-pogrebenie</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BA%D1%80%D0%B0%D0%B9/obrazovanie-i-deti</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/rabota-i-obuchenie</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BA%D1%80%D0%B0%D0%B9/zemlya-532-kz</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/vyplaty</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/deti-sad-i-shkola</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/zemlya-i-zhilyo</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/kontakty</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/poryadok/detskiy-sad</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/medicina</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/poryadok/nalogovaya-lgota</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/nalogi-i-zhkh</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/poryadok/pogrebenie-i-pamyatnik</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/pamyatnik-i-pogrebenie</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/poryadok/poryadok-polucheniya</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/rabota-i-obuchenie</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/poryadok/vyplata-kontraktniku</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/vyplaty</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/poryadok/zemelnyy-uchastok</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/zemlya-i-zhilyo</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/scenarii/chlen-semi</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D1%81%D0%B8%D1%82%D1%83%D0%B0%D1%86%D0%B8%D0%B8/chlen-semi</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/scenarii/ranenie-i-invalidnost</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D1%81%D0%B8%D1%82%D1%83%D0%B0%D1%86%D0%B8%D0%B8/ranenie-i-invalidnost</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/scenarii/</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D1%81%D0%B8%D1%82%D1%83%D0%B0%D1%86%D0%B8%D0%B8/scenarii</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/scenarii/semya-pogibshego</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D1%81%D0%B8%D1%82%D1%83%D0%B0%D1%86%D0%B8%D0%B8/semya-pogibshego</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/scenarii/uchastnik-svo</loc>
+    <loc>https://rkkt.ru/mery-podderjki/%D1%81%D0%B8%D1%82%D1%83%D0%B0%D1%86%D0%B8%D0%B8/uchastnik-svo</loc>
     <lastmod>2026-11-18T21:00:00.000Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/01-postanovka-na-uchet-dlya-polucheniya-besplatnogo-zem</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D0%B8/</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/02-socialnaya-vyplata-mnogodetnoy-seme-vzamen-zemelnogo</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BA%D1%80%D0%B0%D0%B9/</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/03-socialnoe-obsluzhivanie</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
+    <loc>https://rkkt.ru/mery-podderjki/%D0%BC%D0%B5%D1%80%D1%8B/</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/04-sodeystvie-predprinimatelskoy-deyatelnosti-bezrabotn</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/05-kompensaciya-roditelyu-za-rebenka-ne-poseschayuscheg</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/06-obespechenie-materialnymi-sredstvami-lic-veduschih-t</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/07-celevaya-obrazovatelnaya-subsidiya-na-poluchenie-vys</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/08-vyplata-seme-pogibshego-uchastnika-svo</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/09-edinovremennaya-vyplata-300-000-rubley-uchastniku-sv</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/10-edinovremennaya-vyplata-ranenomu-uchastniku-svo</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/11-preimuschestvennoe-pravo-na-ostavlenie-na-rabote-pri</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/12-priostanovlenie-kreditnyh-obyazatelstv-dlya-uchastni</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/13-prekraschenie-kreditnyh-obyazatelstv-dlya-uchastnika</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/14-priostanovlenie-imuschestvennyh-vzyskaniy-dlya-uchas</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/15-goryachaya-liniya-po-voprosam-mobilizacii</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/16-obzhalovanie-resheniya-po-prizyvu-v-ramkah-chastichn</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/17-pomosch-volonterskogo-dvizheniya-myvmeste-dlya-mobil</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/18-besplatnoe-poseschenie-zanyatiy-kruzhkov-sekciy-i-in</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/19-vyplata-po-dogazifikacii-gazifikacii-zhilogo-doma-i</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/20-vyplata-na-zhile-v-tyumenskoy-oblasti</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/21-sodeystvie-v-poiske-raboty</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/22-kompensaciya-obucheniya-voditeley-kategorii-b-dlya-c</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/23-vozmeschenie-rashodov-stoimosti-proezda-uchastniku-s</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/24-ezhemesyachnoe-denezhnoe-soderzhanie-dlya-uchastnika</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/25-edinovremennaya-vyplata-ko-dnyu-zaschitnika-otechest</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/26-vydacha-reabilitacionnogo-sertifikata-dlya-uchastnik</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/27-zemelnyy-uchastok-uchastnikam-svo-i-chlenam-ih-semey</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/28-vyplata-uchastniku-svo-dlya-priobreteniya-veschevogo</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/29-transportirovka-pogibshego-uchastnika-svo</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/30-pitanie-dlya-beremennoy-kormyaschey-materi-i-rebenka</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/31-okazanie-psihologicheskoy-pomoschi-uchastnikam-svo-i</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/32-socialnaya-vyplata-rebenku-uchastnika-boevyh-deystvi</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/33-podderzhka-grazhdan-prozhivayuschih-v-otdelnyh-nasel</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/34-besplatnyy-vyezd-rabotnika-mfc-dlya-okazaniya-uslug</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/35-socialnaya-vyplata-vzamen-zemelnogo-uchastka-voennos</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/36-kompensaciya-roditelskoy-platy-za-detskiy-sad</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/37-predostavlenie-socialnyh-vyplat-molodym-semyam-za-sc</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/38-vyplata-na-priobretenie-ili-stroitelstvo-zhilya-vete</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/39-predostavlenie-socialnyh-vyplat-semyam-isklyuchennym</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/40-sterilizaciya-domashnih-zhivotnyh-koshek-sobak</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/41-vneocherednoe-okazanie-med-pomoschi-veteranam-svo</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/42-besplatnaya-yuridicheskaya-pomosch</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/43-organizaciya-professionalnogo-obucheniya-uchastnikov</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/44-predostavlenie-svedeniy-iz-uchetno-tehnicheskoy-doku</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/45-edinovremennaya-vyplata-1-1-mln-rubley-zaklyuchivshi</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/46-kompensaciya-chasti-rashodov-svyazannyh-s-priobreten</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/47-edinovremennaya-vyplata-3-6-mln-rubley-zaklyuchivshi</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/48-elektronnyy-sertifikat-dlya-shkolnika-iz-semi-uchast</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/49-osvobozhdenie-uchastnikov-svo-i-chlenov-ih-semey-ot</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/50-lekarstvennye-preparaty-i-medicinskie-izdeliya</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/arhiv-yanao</loc>
-    <lastmod>2026-10-24T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F-%D0%BF%D0%BE-%D1%81%D0%B1%D0%BE%D1%80%D0%BA%D0%B5-%D0%B8-%D0%B4%D0%B5%D0%BF%D0%BB%D0%BE%D1%8E-%D0%B1%D0%BE%D1%82%D0%BE%D0%B2-%D1%81%D0%B2%D0%BE</loc>
-    <lastmod>2026-11-18T21:00:00.000Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/kray/</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/mery/</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/poryadok/</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/yanao/</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <loc>https://rkkt.ru/mery-podderjki/%D1%81%D0%B8%D1%82%D1%83%D0%B0%D1%86%D0%B8%D0%B8/</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D1%81%D0%B2%D0%BE</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B0%D0%BD%D0%B0%D0%BB%D0%B8%D0%B7</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BA%D1%80%D0%B0%D1%81%D0%BD%D0%BE%D0%B4%D0%B0%D1%80%D1%81%D0%BA%D0%B8%D0%B9-%D0%BA%D1%80%D0%B0%D0%B9</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%8F%D0%BD%D0%B0%D0%BE</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B0%D1%80%D1%85%D0%B8%D0%B2</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BC%D0%B5%D1%80%D1%8B-%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B8</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D1%84%D0%B5%D0%B4%D0%B5%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B8%D1%81%D1%82%D0%BE%D1%87%D0%BD%D0%B8%D0%BA%D0%B8</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BC%D0%B5%D1%82%D0%BE%D0%B4%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%8F</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BA%D0%BE%D0%BD%D1%82%D0%B0%D0%BA%D1%82%D1%8B</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D1%82%D1%83%D0%B0%D0%BF%D1%81%D0%B8%D0%BD%D1%81%D0%BA%D0%B8%D0%B9-%D0%BE%D0%BA%D1%80%D1%83%D0%B3</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BD%D0%BE%D1%80%D0%BC%D0%B0%D1%82%D0%B8%D0%B2%D1%8B</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B1%D0%BE%D1%82%D1%8B</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BA%D0%BE%D0%BD%D1%82%D0%B5%D0%BD%D1%82</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/quartz</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B4%D0%B5%D0%BF%D0%BB%D0%BE%D0%B9</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BC%D1%8B%D0%B2%D0%BC%D0%B5%D1%81%D1%82%D0%B5</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BD%D0%B0%D0%BB%D0%BE%D0%B3%D0%B8</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%82%D1%80%D0%B0%D0%BD%D1%81%D0%BF%D0%BE%D1%80%D1%82</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B4%D0%B5%D1%82%D0%B8</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B7%D0%B5%D0%BC%D0%BB%D1%8F</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BC%D0%B5%D0%B4%D0%B8%D1%86%D0%B8%D0%BD%D0%B0</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%80%D0%B5%D0%B0%D0%B1%D0%B8%D0%BB%D0%B8%D1%82%D0%B0%D1%86%D0%B8%D1%8F</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B6%D0%BA%D1%85</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BF%D0%BE%D0%B3%D1%80%D0%B5%D0%B1%D0%B5%D0%BD%D0%B8%D0%B5</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D0%BD%D0%B8%D0%BA</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BE%D0%B1%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%81%D0%BE%D1%86%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B2%D1%8B%D0%BF%D0%BB%D0%B0%D1%82%D1%8B</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B6%D0%B8%D0%BB%D1%8C%D1%91</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BA%D1%80%D0%B0%D1%81%D0%BD%D0%BE%D0%B4%D0%B0%D1%80%D1%81%D0%BA%D0%B8%D0%B9-%D0%BA%D1%80%D0%B0%D0%B9</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BF%D0%BE%D1%80%D1%8F%D0%B4%D0%BE%D0%BA-%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D1%8F</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B4%D0%B5%D1%82%D0%B8</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BD%D0%B0%D0%BB%D0%BE%D0%B3%D0%B8</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BF%D0%BE%D0%B3%D1%80%D0%B5%D0%B1%D0%B5%D0%BD%D0%B8%D0%B5</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D0%BD%D0%B8%D0%BA</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B2%D1%8B%D0%BF%D0%BB%D0%B0%D1%82%D1%8B</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B7%D0%B5%D0%BC%D0%BB%D1%8F</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%82%D1%80%D0%B0%D0%BD%D1%81%D0%BF%D0%BE%D1%80%D1%82</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BC%D0%B5%D0%B4%D0%B8%D1%86%D0%B8%D0%BD%D0%B0</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%80%D0%B5%D0%B0%D0%B1%D0%B8%D0%BB%D0%B8%D1%82%D0%B0%D1%86%D0%B8%D1%8F</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B6%D0%BA%D1%85</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%BE%D0%B1%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D1%81%D0%BE%D1%86%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%B0%D0%BA%D1%82</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
+  </url><url>
+    <loc>https://rkkt.ru/mery-podderjki/tags/%D0%B6%D0%B8%D0%BB%D1%8C%D1%91</loc>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/%D1%81%D0%B8%D1%82%D1%83%D0%B0%D1%86%D0%B8%D0%B8</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/cloudflare</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/vk</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
-  </url><url>
-    <loc>https://rkkt.ru/mery-podderjki/tags/max</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url><url>
     <loc>https://rkkt.ru/mery-podderjki/tags/</loc>
-    <lastmod>2026-11-19T19:54:49.274Z</lastmod>
+    <lastmod>2026-11-19T20:10:59.293Z</lastmod>
   </url></urlset>
